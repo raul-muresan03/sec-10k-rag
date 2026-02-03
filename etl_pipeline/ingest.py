@@ -9,7 +9,7 @@ def download_10k(ticker: str):
     if not email:
         raise ValueError("Email is missing in .env")
 
-    dl = Downloader("SecRagTool", email, "data")
+    dl = Downloader("SecRagTool", email, "../data/raw")
     
     print(f"[{ticker}] 10-K is downloading...")
     
@@ -18,4 +18,4 @@ def download_10k(ticker: str):
     print(f"[{ticker}] Download successful!")
 
 if __name__ == "__main__":
-    download_10k("AAPL")
+    download_10k("NVDA")
