@@ -1,0 +1,43 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sec-rag-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    networks:
+      - sec-rag-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sec-rag-frontend
+    ports:
+      - "8501:8501"
+    environment:
+      - BACKEND_URL=http://backend:8000
+    depends_on:
+      - backend
+    networks:
+      - sec-rag-network
+
+  ingestion:
+    build:
+      context: ./etl_pipeline
+      dockerfile: Dockerfile
+    container_name: sec-rag-ingestion
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    networks:
+      - sec-rag-network
+    command: tail -f /dev/null 
+
+networks:
+  sec-rag-network:
+    driver: bridge

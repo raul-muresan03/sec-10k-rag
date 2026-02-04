@@ -1,0 +1,16 @@
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.venv
+venv
+.env
+.git
+.gitignore
+.dockerignore
+data/
+etl_pipeline/data/
+README.md
+implementation_plan.md
+task.md
+tests/

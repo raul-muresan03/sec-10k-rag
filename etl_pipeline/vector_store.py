@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from langchain_core.documents import Document
-from pinecone import Pinecone
+from pinecone import Pinecone, ServerlessSpec
 
 load_dotenv()
 
@@ -17,9 +17,9 @@ def get_embedding_model():
     
     return GoogleGenerativeAIEmbeddings(model="models/text-embedding-004", google_api_key=api_key)
 
-def verify_index(index_name: str):
+def verify_and_create_index(index_name: str):
     """
-    Verifies if the specified index exists in the vector store. If not, it creates a new index.
+    Verifies if the specified index exists. If not, creates a new Serverless index.
     """
     
     api_key = os.getenv("PINECONE_API_KEY")
@@ -31,15 +31,32 @@ def verify_index(index_name: str):
     existing_indexes = [index.name for index in pc.list_indexes()]
     
     if index_name not in existing_indexes:
-        print(f"The index '{index_name}' was not found in Pinecone!")
-        print(f"Available indexes: {existing_indexes}")
-        
+        print(f"Index '{index_name}' not found. Creating it...")
+        try:
+            pc.create_index(
+                name=index_name,
+                dimension=768,
+                metric="cosine",
+                spec=ServerlessSpec(
+                    cloud="aws",
+                    region="us-east-1"
+                )
+            )
+            print(f"Index '{index_name}' created successfully.")
+        except Exception as e:
+            print(f"Error creating index: {e}")
+            return False
+    else:
+        print(f"Index '{index_name}' exists.")
+
+    try:
+        index = pc.Index(index_name)
+        stats = index.describe_index_stats()
+        print(f"Status Pinecone ('{index_name}'): {stats['total_vector_count']} total vectors.")
+        return True
+    except Exception as e:
+        print(f"Error connecting to index: {e}")
         return False
-    
-    index = pc.Index(index_name)
-    stats = index.describe_index_stats()
-    print(f"Status Pinecone ('{index_name}'): {stats['total_vector_count']} total vectors.")
-    return True
 
 def delete_all_vectors(index_name=os.getenv("PINECONE_INDEX_NAME")):
     """
@@ -73,7 +90,7 @@ def upload_chunks_to_pinecone(chunks, index_name=os.getenv("PINECONE_INDEX_NAME"
         print("No chunks to upload.")
         return None
 
-    if not verify_index(index_name):
+    if not verify_and_create_index(index_name):
         return None
 
     print(f"Upserting {len(chunks)} chunks to Pinecone index '{index_name}'...")
