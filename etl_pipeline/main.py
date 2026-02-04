@@ -1,9 +1,11 @@
 import os
 import glob
+import argparse
 from dotenv import load_dotenv
 from ingest import download_10k
 from parser import SECParser
 from chunker import Chunker
+from vector_store import upload_chunks_to_pinecone, delete_all_vectors
 
 load_dotenv()
 
@@ -44,7 +46,12 @@ def run_pipeline(ticker: str, year: str):
     print(f"Chunking complete. Generated {len(chunks)} chunks.")
     print(f"Average chunk size: {average_chunk_size:.2f} characters")
     
-    # 4. PREVIEW
+    # 4. UPLOAD TO PINECONE
+    if chunks:
+        print("\n--- Step 4: Storing Vectors in Pinecone ---")
+        upload_chunks_to_pinecone(chunks)
+
+    # 5. PREVIEW
     if chunks:
         print("\n--- Preview First 2 Chunks ---")
         print("--- Chunk 1 ---")
@@ -57,4 +64,16 @@ def run_pipeline(ticker: str, year: str):
 
 
 if __name__ == "__main__":
-    run_pipeline("AAPL", "2024")
+    parser = argparse.ArgumentParser(description="Run the SEC data ingestion pipeline.")
+    parser.add_argument("ticker", type=str, help="The company ticker symbol (e.g., AAPL).")
+    parser.add_argument("year", type=str, help="The fiscal year of the 10-K report (e.g., 2023).")
+    parser.add_argument("--clean", action="store_true", help="Delete all vectors from the Pinecone index before running the pipeline.")
+
+    args = parser.parse_args()
+
+    if args.clean:
+        print("\n--- Pre-run Step: Clearing Pinecone Index ---")
+        delete_all_vectors()
+        print("--- Index Cleared ---\n")
+
+    run_pipeline(ticker=args.ticker, year=args.year)

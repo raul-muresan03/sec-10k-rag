@@ -1,6 +1,7 @@
 from typing import List, Dict, Any
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 import re
+import hashlib
 
 
 class Chunker:
@@ -72,14 +73,19 @@ class Chunker:
         """
         Takes logical segments and applies RecursiveCharacterTextSplitter 
         to ensure chunks fit within the context window (e.g., 1000 chars).
+        It also generates a stable, unique ID for each chunk.
         """
         splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200, separators=["\n\n", "\n", " ", ""])
         physical_chunks = []
-        for segment in logical_segments:
+        for segment_idx, segment in enumerate(logical_segments):
             text_chunks = splitter.split_text(segment["text"])
-            for chunk in text_chunks:
+            for chunk_idx, chunk_text in enumerate(text_chunks):
+                unique_string = f"{segment['ticker']}-{segment['year']}-{segment_idx}-{chunk_idx}"
+                chunk_id = hashlib.sha256(unique_string.encode('utf-8')).hexdigest()
+
                 physical_chunks.append({
-                    "text": chunk,
+                    "id": chunk_id,
+                    "text": chunk_text,
                     "page": segment["page"],
                     "section": segment["section"],
                     "ticker": segment["ticker"],
