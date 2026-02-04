@@ -72,19 +72,32 @@ for message in st.session_state.messages:
                 for s in message["sources"]:
                     st.markdown(f"- {s}")
 
+with st.sidebar:
+    st.header("Configuration")
+    company_map = {
+        "Apple (AAPL)": "AAPL",
+        "Tesla (TSLA)": "TSLA",
+        "Google (GOOGL)": "GOOGL",
+        "Nvidia (NVDA)": "NVDA"
+    }
+    selected_option = st.selectbox("Select Company:", list(company_map.keys()))
+    selected_ticker = company_map[selected_option]
+    
+    st.info(f"Analyzing: **{selected_ticker}**")
+
 if prompt := st.chat_input("Ex: What were the total sales in 2024?"):
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    st.session_state.messages.append({"role": "user", "content": prompt, "sources": []})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         
-        with st.spinner("Analyzing financial data..."):
+        with st.spinner(f"Analyzing financial data for {selected_ticker}..."):
             try:
-                payload = {"question": prompt}
+                payload = {"question": prompt, "namespace": selected_ticker}
                 response = requests.post(API_URL, json=payload, timeout=60)
-                
+            
                 if response.status_code == 200:
                     data = response.json()
                     answer = data.get("answer", "No answer provided.")
@@ -108,7 +121,7 @@ if prompt := st.chat_input("Ex: What were the total sales in 2024?"):
                 else:
                     error_msg = f"Server Error ({response.status_code}): {response.text}"
                     message_placeholder.error(error_msg)
-            
+        
             except requests.exceptions.ConnectionError:
                 message_placeholder.error("Backend is not running. Make sure it's running on port 8000.")
             except Exception as e:

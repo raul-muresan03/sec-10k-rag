@@ -10,6 +10,7 @@ engine = RAGEngine()
 
 class QueryRequest(BaseModel):
     question: str
+    namespace: str = "default"
 
 class QueryResponse(BaseModel):
     answer: str
@@ -32,8 +33,12 @@ async def ask(request: QueryRequest):
         raise HTTPException(status_code=400, detail="The question cannot be empty.")
     
     try:
-        result = engine.ask(request.question)
-        return result
+        result = engine.ask(request.question, namespace=request.namespace)
+        return {
+            "answer": result["answer"],
+            "sources": result["sources"]
+        }
+    
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
 
