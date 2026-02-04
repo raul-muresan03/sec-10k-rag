@@ -132,7 +132,7 @@ class SECParser:
                 current_row_cells = []
                 cells = tr.find_all(["td", "th"])
                 for cell in cells:
-                    cell_text = cell.get_text(separator=" ", strip=True).replace("|", "")
+                    cell_text = cell.get_text(separator=" ", strip=True).replace("|", "").replace("\xa0", " ")
                     colspan_val = cell.get("colspan")
                     n = int(colspan_val) if colspan_val else 1
 
@@ -222,6 +222,12 @@ class SECParser:
             table.replace_with(placeholder)
 
         cleaned_text = soup.get_text(separator="\n", strip=True)
+        
+        # Normalize non-breaking spaces and horizontal whitespace
+        cleaned_text = cleaned_text.replace("\xa0", " ")
+        cleaned_text = re.sub(r'[ \t]+', ' ', cleaned_text)
+        
+        cleaned_text = re.sub(r' *\n *', '\n', cleaned_text)
 
         for placeholder, md_table in table_placeholders.items():
             cleaned_text = cleaned_text.replace(placeholder, "\n\n" + md_table + "\n\n")
@@ -229,16 +235,22 @@ class SECParser:
         # {Company} | {year} Form 10-K | {number}
         footer_pattern = r"(?m)^.*?\|\s+\d{4}\s+Form\s+10-K\s+\|\s+(\d+)$"
         cleaned_text = re.sub(footer_pattern, r"\n[[PAGE_\1]]\n", cleaned_text)
-        
-        item_section_pattern = r"(?m)^(\s*Item\s+\d+[A-Z]?\.\s+.*?)(?=\n|$)"
-        cleaned_text = re.sub(item_section_pattern, r"\n[[SECTION_\1]]\n\1", cleaned_text)
-        
-        part_section_pattern = r"(?m)^(\s*PART\s+[IVXLCDM]+\.?\s*.*?)(?=\n|$)"
-        cleaned_text = re.sub(part_section_pattern, r"\n[[SECTION_\1]]\n\1", cleaned_text)
 
         cleaned_text = self._remove_table_of_contents(cleaned_text)
         cleaned_text = self._remove_part3_and_part4(cleaned_text)
         cleaned_text = self._remove_empty_sections(cleaned_text)
+
+        def create_section_tag(match):
+            original_text = match.group(1)
+            clean_tag_content = re.sub(r'\s+', ' ', original_text).strip()
+            
+            return f"\n[[SECTION_{clean_tag_content}]]\n{original_text}"
+        
+        item_section_pattern = r"(?m)^(\s*Item\s+\d+[A-Z]?\.\s+.*?)(?=\n|$)"
+        cleaned_text = re.sub(item_section_pattern, create_section_tag, cleaned_text)
+        
+        part_section_pattern = r"(?m)^(\s*PART\s+[IVXLCDM]+\.?\s*.*?)(?=\n|$)"
+        cleaned_text = re.sub(part_section_pattern, create_section_tag, cleaned_text)
 
         # remove ® and bullet points on their own lines
         cleaned_text = re.sub(r"(?:^|\n)\s*®\s*(?:\n|$)", " ", cleaned_text)

@@ -2,3 +2,4 @@ python-dotenv==1.2.1
 sec_edgar_downloader==5.0.3
 beautifulsoup4==4.12.3
 lxml==5.1.0
+langchain_text_splitters==1.1.0
