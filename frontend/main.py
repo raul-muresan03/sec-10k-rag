@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import time
+import os
 
 def convert_chat_to_txt():
     log_content = ""
@@ -23,8 +24,9 @@ st.set_page_config(
     layout="centered"
 )
 
-API_URL = "http://localhost:8000/ask"
-HEALTH_URL = "http://localhost:8000/health"
+BACKEND_BASE_URL = os.getenv("BACKEND_URL", "http://localhost:8000").rstrip("/")
+API_URL = f"{BACKEND_BASE_URL}/ask"
+HEALTH_URL = f"{BACKEND_BASE_URL}/health"
 
 col1, col2, col3 = st.columns([3, 1, 1])
 
@@ -95,7 +97,10 @@ if prompt := st.chat_input("Ex: What were the total sales in 2024?"):
         
         with st.spinner(f"Analyzing financial data for {selected_ticker}..."):
             try:
-                payload = {"question": prompt, "namespace": selected_ticker}
+                payload = {
+                    "question": prompt, 
+                    "namespace": selected_ticker
+                }
                 response = requests.post(API_URL, json=payload, timeout=60)
             
                 if response.status_code == 200:
