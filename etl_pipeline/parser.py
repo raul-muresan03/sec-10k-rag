@@ -11,8 +11,10 @@ class SECParser:
     Extracts only the 10-K document content and cleans the HTML.
     """
 
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str, ticker: str = "UNKNOWN", year: str = "UNKNOWN"):
         self.file_path = file_path
+        self.ticker = ticker
+        self.year = year
 
     def _read_file(self) -> str:
         """
@@ -107,8 +109,10 @@ class SECParser:
         5. Removes completely empty columns from tables to reduce noise.
         6. Replaces HTML tables with unique placeholders, then injects formatted Markdown tables with proper spacing
            after the initial text extraction.
-        7. Cleans up specific formatting issues like standalone '®' and '•' symbols, and excessive newlines.
-        8. Removes specific audit report sections that are not relevant for RAG.
+        7. Replaces page footers (e.g., "Company | Year Form 10-K | Page") with `[[PAGE_X]]` markers for metadata extraction.
+        8. Marks document sections (e.g., "Item 1. Business", "PART I.") with `[[SECTION_...]]` markers for metadata.
+        9. Cleans up specific formatting issues like standalone '®' and '•' symbols, and excessive newlines.
+        10. Removes specific audit report sections that are not relevant for RAG.
         """
         soup = BeautifulSoup(html_content, "lxml")
 
@@ -224,7 +228,13 @@ class SECParser:
 
         # {Company} | {year} Form 10-K | {number}
         footer_pattern = r"(?m)^.*?\|\s+\d{4}\s+Form\s+10-K\s+\|\s+(\d+)$"
-        cleaned_text = re.sub(footer_pattern, "", cleaned_text)
+        cleaned_text = re.sub(footer_pattern, r"\n[[PAGE_\1]]\n", cleaned_text)
+        
+        item_section_pattern = r"(?m)^(\s*Item\s+\d+[A-Z]?\.\s+.*?)(?=\n|$)"
+        cleaned_text = re.sub(item_section_pattern, r"\n[[SECTION_\1]]\n\1", cleaned_text)
+        
+        part_section_pattern = r"(?m)^(\s*PART\s+[IVXLCDM]+\.?\s*.*?)(?=\n|$)"
+        cleaned_text = re.sub(part_section_pattern, r"\n[[SECTION_\1]]\n\1", cleaned_text)
 
         cleaned_text = self._remove_table_of_contents(cleaned_text)
         cleaned_text = self._remove_part3_and_part4(cleaned_text)
@@ -254,6 +264,6 @@ class SECParser:
 
 if __name__ == "__main__":
     load_dotenv()
-    parser = SECParser(os.getenv("RAW_NVIDIA_10K_PATH"))
+    parser = SECParser(os.getenv("RAW_APPLE_10K_PATH"), ticker="APPL", year="2024")
     
     parser.parse()
