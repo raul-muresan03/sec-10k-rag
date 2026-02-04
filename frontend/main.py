@@ -2,21 +2,48 @@ import streamlit as st
 import requests
 import time
 
+def convert_chat_to_txt():
+    log_content = ""
+    
+    if "messages" in st.session_state:
+        for msg in st.session_state.messages:
+            role = "USER" if msg["role"] == "user" else "ASSISTANT"
+            log_content += f"[{role}]:\n{msg['content']}\n"
+            
+            if "sources" in msg and msg["sources"]:
+                source_list = ", ".join(msg["sources"])
+                log_content += f"[Sources]: {source_list}\n"
+            
+            log_content += "\n" + "-"*30 + "\n\n"
+            
+    return log_content
+
 st.set_page_config(
     page_title="SEC RAG TOOL",
-    page_icon="",
     layout="centered"
 )
 
 API_URL = "http://localhost:8000/ask"
 HEALTH_URL = "http://localhost:8000/health"
 
-col1, col2 = st.columns([3, 1])
+col1, col2, col3 = st.columns([3, 1, 1])
 
 with col1:
     st.title("SEC RAG TOOL")
 
 with col2:
+    st.write("##")
+    chat_log = convert_chat_to_txt()
+    
+    st.download_button(
+        label="Download Log",
+        data=chat_log,
+        file_name="chat_log.txt",
+        mime="text/plain",
+        use_container_width=True
+    )
+
+with col3:
     st.write("##")
     if st.button("System Check", use_container_width=True):
         try:
@@ -75,6 +102,8 @@ if prompt := st.chat_input("Ex: What were the total sales in 2024?"):
                         "content": answer,
                         "sources": sources
                     })
+
+                    st.rerun()
                     
                 else:
                     error_msg = f"Server Error ({response.status_code}): {response.text}"
