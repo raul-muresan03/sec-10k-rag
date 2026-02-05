@@ -7,5 +7,4 @@ data/
 sec_edgar_filings/
 .vscode/
 .idea/
-*.md
-*.txt
+*.md*.txt
