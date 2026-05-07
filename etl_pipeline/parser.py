@@ -31,7 +31,7 @@ class SECParser:
     def _extract_10k_document(self, raw_content: str) -> str:
         """
         The raw file contains many documents (<DOCUMENT>).
-        We need to find the section that is of type "10-K".        
+        We need to find the section that is of type "10-K".
         """
 
         doc_list = re.findall(r"<DOCUMENT>.*?</DOCUMENT>", raw_content, re.DOTALL)
@@ -41,16 +41,16 @@ class SECParser:
                 if text_match:
                     return text_match.group(1)
                 return item
-        return None    
-    
+        return None
+
     def _remove_table_of_contents(self, text: str) -> str:
         """
         Removes Table of Contents (TOC) based on the occurrence of "Item 1. Business".
         """
-    
+
         pattern = re.compile(r"^(?!\|)\s*Item\s+1\.?\s+Business", re.IGNORECASE | re.MULTILINE)
         matches = list(pattern.finditer(text))
-    
+
         if len(matches) >= 2:
             return text[matches[1].start():]
         elif len(matches) == 1:
@@ -76,12 +76,12 @@ class SECParser:
         for pattern_str in stop_patterns:
             pattern = re.compile(pattern_str, re.IGNORECASE | re.MULTILINE)
             match = pattern.search(text)
-            
+
             if match:
                 return text[:match.start()]
 
         return text
-    
+
     def _remove_empty_sections(self, text: str) -> str:
         """
         Removes standard legal sections that are empty or marked 'Not applicable'.
@@ -94,12 +94,12 @@ class SECParser:
         for pattern in patterns:
             text = re.sub(pattern, "", text)
         return text
-    
+
     def _clean_html(self, html_content: str) -> str:
         """
         Sanitizes HTML content and converts complex structures (like tables) into LLM-friendly text. This method
         orchestrates a series of cleaning and transformation steps to prepare the raw HTML for downstream processing.
-        
+
         Key operations:
         1. Removes noise tags (scripts, styles, images, links, XBRL-specific tags, hidden elements based on style).
         2. Parses HTML tables into a matrix structure, handling 'colspan' attributes to preserve grid alignment.
@@ -119,7 +119,7 @@ class SECParser:
         for tag_name in ["script", "style", "header", "img", "a", "ix:header", "ix:hidden"]:
             for tag in soup.find_all(tag_name):
                 tag.decompose()
-        
+
         for hidden in soup.find_all(['div', 'span'], style=True):
             if 'display:none' in hidden['style'].lower().replace(" ", ""):
                 hidden.decompose()
@@ -169,14 +169,14 @@ class SECParser:
 
                     has_digit_curr = any(c.isdigit() for c in curr_val)
                     has_digit_next = any(c.isdigit() for c in next_val)
-                    
+
                     if has_digit_curr and has_digit_next:
                         is_distinct_column = True
                         break
 
                     if curr_val == "$":
                         should_merge = True
-                    elif next_val == "%": 
+                    elif next_val == "%":
                         should_merge = True
 
 
@@ -222,11 +222,11 @@ class SECParser:
             table.replace_with(placeholder)
 
         cleaned_text = soup.get_text(separator="\n", strip=True)
-        
+
         # Normalize non-breaking spaces and horizontal whitespace
         cleaned_text = cleaned_text.replace("\xa0", " ")
         cleaned_text = re.sub(r'[ \t]+', ' ', cleaned_text)
-        
+
         cleaned_text = re.sub(r' *\n *', '\n', cleaned_text)
 
         for placeholder, md_table in table_placeholders.items():
@@ -243,12 +243,12 @@ class SECParser:
         def create_section_tag(match):
             original_text = match.group(1)
             clean_tag_content = re.sub(r'\s+', ' ', original_text).strip()
-            
+
             return f"\n[[SECTION_{clean_tag_content}]]\n{original_text}"
-        
+
         item_section_pattern = r"(?m)^(\s*Item\s+\d+[A-Z]?\.\s+.*?)(?=\n|$)"
         cleaned_text = re.sub(item_section_pattern, create_section_tag, cleaned_text)
-        
+
         part_section_pattern = r"(?m)^(\s*PART\s+[IVXLCDM]+\.?\s*.*?)(?=\n|$)"
         cleaned_text = re.sub(part_section_pattern, create_section_tag, cleaned_text)
 
@@ -277,5 +277,5 @@ class SECParser:
 if __name__ == "__main__":
     load_dotenv()
     parser = SECParser(os.getenv("RAW_APPLE_10K_PATH"), ticker="APPL", year="2024")
-    
+
     parser.parse()

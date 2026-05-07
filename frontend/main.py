@@ -5,18 +5,18 @@ import os
 
 def convert_chat_to_txt():
     log_content = ""
-    
+
     if "messages" in st.session_state:
         for msg in st.session_state.messages:
             role = "USER" if msg["role"] == "user" else "ASSISTANT"
             log_content += f"[{role}]:\n{msg['content']}\n"
-            
+
             if "sources" in msg and msg["sources"]:
                 source_list = ", ".join(msg["sources"])
                 log_content += f"[Sources]: {source_list}\n"
-            
+
             log_content += "\n" + "-"*30 + "\n\n"
-            
+
     return log_content
 
 st.set_page_config(
@@ -36,7 +36,7 @@ with col1:
 with col2:
     st.write("##")
     chat_log = convert_chat_to_txt()
-    
+
     st.download_button(
         label="Download Log",
         data=chat_log,
@@ -84,7 +84,7 @@ with st.sidebar:
     }
     selected_option = st.selectbox("Select Company:", list(company_map.keys()))
     selected_ticker = company_map[selected_option]
-    
+
     st.info(f"Analyzing: **{selected_ticker}**")
 
 if prompt := st.chat_input("Ex: What were the total sales in 2024?"):
@@ -94,27 +94,27 @@ if prompt := st.chat_input("Ex: What were the total sales in 2024?"):
 
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
-        
+
         with st.spinner(f"Analyzing financial data for {selected_ticker}..."):
             try:
                 payload = {
-                    "question": prompt, 
+                    "question": prompt,
                     "namespace": selected_ticker
                 }
                 response = requests.post(API_URL, json=payload, timeout=60)
-            
+
                 if response.status_code == 200:
                     data = response.json()
                     answer = data.get("answer", "No answer provided.")
                     sources = data.get("sources", [])
-                    
+
                     message_placeholder.markdown(answer)
-                    
+
                     if sources:
                         with st.expander("Sources (Click for details)"):
                             for s in sources:
                                 st.markdown(f"- `{s}`")
-                    
+
                     st.session_state.messages.append({
                         "role": "assistant",
                         "content": answer,
@@ -122,11 +122,11 @@ if prompt := st.chat_input("Ex: What were the total sales in 2024?"):
                     })
 
                     st.rerun()
-                    
+
                 else:
                     error_msg = f"Server Error ({response.status_code}): {response.text}"
                     message_placeholder.error(error_msg)
-        
+
             except requests.exceptions.ConnectionError:
                 message_placeholder.error("Backend is not running. Make sure it's running on port 8000.")
             except Exception as e:

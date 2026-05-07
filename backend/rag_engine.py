@@ -30,18 +30,19 @@ SYSTEM_PROMPT = (
 class RAGEngine:
     def __init__(self, index_name=os.getenv("PINECONE_INDEX_NAME")):
         self.index_name = index_name
-        
+
         self.embeddings = GoogleGenerativeAIEmbeddings(
-            model="models/text-embedding-004"
+            model=os.getenv("EMBEDDING_MODEL", "models/gemini-embedding-001"),
+            output_dimensionality=int(os.getenv("EMBEDDING_DIMENSION", 768))
         )
-        
+
         self.vector_store = PineconeVectorStore(
-            index_name=self.index_name, 
+            index_name=self.index_name,
             embedding=self.embeddings
         )
-        
+
         self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash", 
+            model=os.getenv("LLM_MODEL", "gemini-3-flash-preview"),
             temperature=0
         )
 
@@ -52,23 +53,23 @@ class RAGEngine:
             filter_dict = {}
             if namespace and namespace != "default":
                 filter_dict["ticker"] = namespace
-            
+
             if filter_dict:
                 search_kwargs["filter"] = filter_dict
-            
+
             retriever = self.vector_store.as_retriever(search_kwargs=search_kwargs)
-            
+
             prompt_template = ChatPromptTemplate.from_messages([
                 ("system", SYSTEM_PROMPT),
                 ("human", "{input}"),
             ])
-            
+
             question_answer_chain = create_stuff_documents_chain(self.llm, prompt_template)
             chain = create_retrieval_chain(retriever, question_answer_chain)
-            
+
             response = chain.invoke({"input": query})
             answer = response["answer"]
-        
+
             sources = []
             if "context" in response:
                 for doc in response["context"]:
@@ -76,10 +77,10 @@ class RAGEngine:
                     section = doc.metadata.get('section', 'Unknown Section')
                     ticker = doc.metadata.get('ticker', 'Unknown Ticker')
                     source_str = f"{ticker} - Page {page} ({section})"
-                    
+
                     if source_str not in sources:
                         sources.append(source_str)
-            
+
             return {
                 "answer": answer,
                 "sources": sources
@@ -87,7 +88,7 @@ class RAGEngine:
 
         except Exception as e:
             return {
-                "answer": f"Error processing request: {str(e)}", 
+                "answer": f"Error processing request: {str(e)}",
                 "sources": []
             }
 

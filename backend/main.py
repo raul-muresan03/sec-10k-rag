@@ -31,14 +31,14 @@ def check_pinecone_connection():
 async def ask(request: QueryRequest):
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="The question cannot be empty.")
-    
+
     try:
         result = engine.ask(request.question, namespace=request.namespace)
         return {
             "answer": result["answer"],
             "sources": result["sources"]
         }
-    
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
 
@@ -46,9 +46,9 @@ async def ask(request: QueryRequest):
 async def health(response: Response):
     pinecone_status = check_pinecone_connection()
     google_api = "configured" if os.getenv("GOOGLE_API_KEY") else "missing"
-    
+
     is_healthy = pinecone_status == "connected" and google_api == "configured"
-    
+
     if not is_healthy:
         response.status_code = 503
         status_label = "degraded"

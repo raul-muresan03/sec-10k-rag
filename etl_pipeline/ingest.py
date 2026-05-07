@@ -10,9 +10,9 @@ def download_10k(ticker: str):
         raise ValueError("Email is missing in .env")
 
     dl = Downloader("SecRagTool", email, "../data/raw")
-    
+
     print(f"[{ticker}] 10-K is downloading...")
-    
+
     dl.get("10-K", ticker, limit=1, after="2023-01-01")
 
     print(f"[{ticker}] Download successful!")

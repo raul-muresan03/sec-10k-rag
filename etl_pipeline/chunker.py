@@ -6,7 +6,7 @@ import hashlib
 
 class Chunker:
     """
-    Responsible for splitting the cleaned 10-K text into semantic chunks 
+    Responsible for splitting the cleaned 10-K text into semantic chunks
     enriched with metadata (page number, section, ticker, year).
     """
 
@@ -21,7 +21,7 @@ class Chunker:
     def _create_logical_segments(self) -> List[Dict[str, Any]]:
         """
         Parses the text to identify [[PAGE_...]] and [[SECTION_...]] markers.
-        Splits the text into 'logical segments' where each segment has a specific 
+        Splits the text into 'logical segments' where each segment has a specific
         page and section context.
         """
 
@@ -71,7 +71,7 @@ class Chunker:
 
     def _split_physically(self, logical_segments: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
-        Takes logical segments and applies RecursiveCharacterTextSplitter 
+        Takes logical segments and applies RecursiveCharacterTextSplitter
         to ensure chunks fit within the context window (e.g., 1000 chars).
         It also generates a stable, unique ID for each chunk.
         """
