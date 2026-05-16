@@ -1,3 +1,4 @@
+import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 
@@ -22,3 +23,6 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+os.environ["GOOGLE_API_KEY"] = settings.google_api_key
+os.environ["PINECONE_API_KEY"] = settings.pinecone_api_key
