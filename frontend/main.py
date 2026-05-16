@@ -1,7 +1,10 @@
 import streamlit as st
 import requests
 import time
+import sys
 import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config import settings
 
 def convert_chat_to_txt():
     log_content = ""
@@ -24,7 +27,7 @@ st.set_page_config(
     layout="centered"
 )
 
-BACKEND_BASE_URL = os.getenv("BACKEND_URL", "http://localhost:8000").rstrip("/")
+BACKEND_BASE_URL = settings.backend_url.rstrip("/")
 API_URL = f"{BACKEND_BASE_URL}/ask"
 HEALTH_URL = f"{BACKEND_BASE_URL}/health"
 

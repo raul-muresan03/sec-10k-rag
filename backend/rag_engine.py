@@ -1,16 +1,9 @@
-import os
-from dotenv import load_dotenv
-
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
-
 from langchain_pinecone import PineconeVectorStore
-
 from langchain_classic.chains import create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
-
 from langchain_core.prompts import ChatPromptTemplate
-
-load_dotenv()
+from config import settings
 
 SYSTEM_PROMPT = (
     "You are a Senior Financial Analyst expert in SEC filings (10-K, 10-Q). "
@@ -28,12 +21,12 @@ SYSTEM_PROMPT = (
 )
 
 class RAGEngine:
-    def __init__(self, index_name=os.getenv("PINECONE_INDEX_NAME")):
-        self.index_name = index_name
+    def __init__(self, index_name=None):
+        self.index_name = index_name or settings.pinecone_index_name
 
         self.embeddings = GoogleGenerativeAIEmbeddings(
-            model=os.getenv("EMBEDDING_MODEL", "models/gemini-embedding-001"),
-            output_dimensionality=int(os.getenv("EMBEDDING_DIMENSION", 768))
+            model=settings.embedding_model,
+            output_dimensionality=settings.embedding_dimension
         )
 
         self.vector_store = PineconeVectorStore(
@@ -42,7 +35,7 @@ class RAGEngine:
         )
 
         self.llm = ChatGoogleGenerativeAI(
-            model=os.getenv("LLM_MODEL", "gemini-3-flash-preview"),
+            model=settings.llm_model,
             temperature=0
         )
 

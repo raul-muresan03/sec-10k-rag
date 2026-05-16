@@ -1,8 +1,8 @@
-import os
 from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel
 from typing import List
 from backend.rag_engine import RAGEngine
+from config import settings
 
 app = FastAPI(title="SEC RAG API")
 
@@ -45,7 +45,7 @@ async def ask(request: QueryRequest):
 @app.get("/health")
 async def health(response: Response):
     pinecone_status = check_pinecone_connection()
-    google_api = "configured" if os.getenv("GOOGLE_API_KEY") else "missing"
+    google_api = "configured" if settings.google_api_key else "missing"
 
     is_healthy = pinecone_status == "connected" and google_api == "configured"
 

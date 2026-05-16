@@ -1,8 +1,10 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from email.mime import text
 import re
 from bs4 import BeautifulSoup
-from dotenv import load_dotenv
-import os
+from config import settings
 
 
 class SECParser:
@@ -275,7 +277,6 @@ class SECParser:
         return content
 
 if __name__ == "__main__":
-    load_dotenv()
     parser = SECParser(os.getenv("RAW_APPLE_10K_PATH"), ticker="APPL", year="2024")
 
     parser.parse()

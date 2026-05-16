@@ -1,24 +1,17 @@
+import sys
 import os
-from dotenv import load_dotenv
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from langchain_core.documents import Document
 from pinecone import Pinecone, ServerlessSpec
-
-load_dotenv()
+from config import settings
 
 def get_embedding_model():
-    """
-    Initializes and returns the GoogleGenerativeAIEmbeddings model using the API key from environment variables.
-    """
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        raise ValueError("GOOGLE_API_KEY not found in environment variables.")
-
     return GoogleGenerativeAIEmbeddings(
-        model=os.getenv("EMBEDDING_MODEL", "models/gemini-embedding-001"),
-        google_api_key=api_key,
-        output_dimensionality=int(os.getenv("EMBEDDING_DIMENSION", 768))
+        model=settings.embedding_model,
+        google_api_key=settings.google_api_key,
+        output_dimensionality=settings.embedding_dimension
     )
 
 def verify_and_create_index(index_name: str):
@@ -26,11 +19,7 @@ def verify_and_create_index(index_name: str):
     Verifies if the specified index exists. If not, creates a new Serverless index.
     """
 
-    api_key = os.getenv("PINECONE_API_KEY")
-    if not api_key:
-        raise ValueError("PINECONE_API_KEY not found in environment variables.")
-
-    pc = Pinecone(api_key=api_key)
+    pc = Pinecone(api_key=settings.pinecone_api_key)
 
     existing_indexes = [index.name for index in pc.list_indexes()]
 
@@ -39,7 +28,7 @@ def verify_and_create_index(index_name: str):
         try:
             pc.create_index(
                 name=index_name,
-                dimension=int(os.getenv("EMBEDDING_DIMENSION", 768)),
+                dimension=settings.embedding_dimension,
                 metric="cosine",
                 spec=ServerlessSpec(
                     cloud="aws",
@@ -62,15 +51,9 @@ def verify_and_create_index(index_name: str):
         print(f"Error connecting to index: {e}")
         return False
 
-def delete_all_vectors(index_name=os.getenv("PINECONE_INDEX_NAME")):
-    """
-    Deletes all vectors from the specified Pinecone index.
-    """
-    api_key = os.getenv("PINECONE_API_KEY")
-    if not api_key:
-        raise ValueError("PINECONE_API_KEY not found in environment variables.")
-
-    pc = Pinecone(api_key=api_key)
+def delete_all_vectors(index_name=None):
+    index_name = index_name or settings.pinecone_index_name
+    pc = Pinecone(api_key=settings.pinecone_api_key)
 
     if index_name not in [index.name for index in pc.list_indexes()]:
         print(f"Index '{index_name}' not found. Nothing to delete.")
@@ -84,12 +67,13 @@ def delete_all_vectors(index_name=os.getenv("PINECONE_INDEX_NAME")):
     except Exception as e:
         print(f"An error occurred while deleting vectors: {e}")
 
-def upload_chunks_to_pinecone(chunks, index_name=os.getenv("PINECONE_INDEX_NAME")):
+def upload_chunks_to_pinecone(chunks, index_name=None):
     """
     Uploads or updates the provided chunks to Pinecone using stable IDs to prevent duplicates.
     This function handles the entire process: verifying the index, preparing documents with IDs,
     and upserting them to Pinecone.
     """
+    index_name = index_name or settings.pinecone_index_name
     if not chunks:
         print("No chunks to upload.")
         return None
