@@ -1,4 +1,5 @@
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_community.embeddings import OllamaEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from langchain_classic.chains import create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
@@ -24,9 +25,9 @@ class RAGEngine:
     def __init__(self, index_name=None):
         self.index_name = index_name or settings.pinecone_index_name
 
-        self.embeddings = GoogleGenerativeAIEmbeddings(
+        self.embeddings = OllamaEmbeddings(
             model=settings.embedding_model,
-            output_dimensionality=settings.embedding_dimension
+            base_url=settings.ollama_base_url
         )
 
         self.vector_store = PineconeVectorStore(
