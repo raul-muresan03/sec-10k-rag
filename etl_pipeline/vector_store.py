@@ -1,41 +1,29 @@
+import sys
 import os
-from dotenv import load_dotenv
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+import time
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from langchain_ollama import OllamaEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from langchain_core.documents import Document
 from pinecone import Pinecone, ServerlessSpec
-
-load_dotenv()
+from config import settings
 
 def get_embedding_model():
-    """
-    Initializes and returns the GoogleGenerativeAIEmbeddings model using the API key from environment variables.
-    """
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        raise ValueError("GOOGLE_API_KEY not found in environment variables.")
-    
-    return GoogleGenerativeAIEmbeddings(model="models/text-embedding-004", google_api_key=api_key)
+    return OllamaEmbeddings(
+        model=settings.embedding_model,
+        base_url=settings.ollama_base_url
+    )
 
 def verify_and_create_index(index_name: str):
-    """
-    Verifies if the specified index exists. If not, creates a new Serverless index.
-    """
-    
-    api_key = os.getenv("PINECONE_API_KEY")
-    if not api_key:
-        raise ValueError("PINECONE_API_KEY not found in environment variables.")
-    
-    pc = Pinecone(api_key=api_key)
-    
+    pc = Pinecone(api_key=settings.pinecone_api_key)
     existing_indexes = [index.name for index in pc.list_indexes()]
-    
+
     if index_name not in existing_indexes:
         print(f"Index '{index_name}' not found. Creating it...")
         try:
             pc.create_index(
                 name=index_name,
-                dimension=768,
+                dimension=settings.embedding_dimension,
                 metric="cosine",
                 spec=ServerlessSpec(
                     cloud="aws",
@@ -58,16 +46,10 @@ def verify_and_create_index(index_name: str):
         print(f"Error connecting to index: {e}")
         return False
 
-def delete_all_vectors(index_name=os.getenv("PINECONE_INDEX_NAME")):
-    """
-    Deletes all vectors from the specified Pinecone index.
-    """
-    api_key = os.getenv("PINECONE_API_KEY")
-    if not api_key:
-        raise ValueError("PINECONE_API_KEY not found in environment variables.")
-    
-    pc = Pinecone(api_key=api_key)
-    
+def delete_all_vectors(index_name=None):
+    index_name = index_name or settings.pinecone_index_name
+    pc = Pinecone(api_key=settings.pinecone_api_key)
+
     if index_name not in [index.name for index in pc.list_indexes()]:
         print(f"Index '{index_name}' not found. Nothing to delete.")
         return
@@ -80,12 +62,8 @@ def delete_all_vectors(index_name=os.getenv("PINECONE_INDEX_NAME")):
     except Exception as e:
         print(f"An error occurred while deleting vectors: {e}")
 
-def upload_chunks_to_pinecone(chunks, index_name=os.getenv("PINECONE_INDEX_NAME")):
-    """
-    Uploads or updates the provided chunks to Pinecone using stable IDs to prevent duplicates.
-    This function handles the entire process: verifying the index, preparing documents with IDs,
-    and upserting them to Pinecone.
-    """
+def upload_chunks_to_pinecone(chunks, index_name=None):
+    index_name = index_name or settings.pinecone_index_name
     if not chunks:
         print("No chunks to upload.")
         return None
@@ -100,33 +78,29 @@ def upload_chunks_to_pinecone(chunks, index_name=os.getenv("PINECONE_INDEX_NAME"
     for chunk in chunks:
         if isinstance(chunk, dict) and "id" in chunk and "text" in chunk:
             ids.append(chunk['id'])
-            
             meta = chunk.copy()
             text_content = meta.pop("text")
             meta.pop("id")
-            
             doc = Document(page_content=text_content, metadata=meta)
             documents.append(doc)
-        else:
-            print(f"Skipping a chunk because it's malformed or missing an 'id': {chunk}")
-            continue
 
     if not documents:
         print("No valid documents with IDs were created from chunks.")
         return None
 
     embeddings = get_embedding_model()
-    
+    batch_size = 100
+
     try:
         vector_store = PineconeVectorStore(index_name=index_name, embedding=embeddings)
-        vector_store.add_documents(
-            documents=documents,
-            ids=ids
-        )
-        
+        for i in range(0, len(documents), batch_size):
+            batch_docs = documents[i : i + batch_size]
+            batch_ids = ids[i : i + batch_size]
+            print(f"Uploading batch {i // batch_size + 1}...")
+            vector_store.add_documents(documents=batch_docs, ids=batch_ids)
+
         print(f"Upsert completed.")
         return vector_store
-        
     except Exception as e:
         print(f"CRITICAL ERROR during upload: {e}")
         return None

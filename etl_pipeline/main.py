@@ -1,13 +1,13 @@
+import sys
 import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import glob
 import argparse
-from dotenv import load_dotenv
 from ingest import download_10k
 from parser import SECParser
 from chunker import Chunker
 from vector_store import upload_chunks_to_pinecone, delete_all_vectors
-
-load_dotenv()
+from config import settings
 
 def run_pipeline(ticker: str, year: str):
     print(f"Starting pipeline for {ticker} ({year})...")
@@ -15,21 +15,21 @@ def run_pipeline(ticker: str, year: str):
     # 1. DOWNLOAD
     print(f"\n--- Step 1: Downloading 10-K ---")
     download_10k(ticker)
-    
+
     base_path = f"../data/raw/sec-edgar-filings/{ticker}/10-K"
-    
+
     files = glob.glob(f"{base_path}/*/full-submission.txt")
     if not files:
         print("Error: No file downloaded.")
         return
-    
+
     raw_file_path = files[0]
     print(f"File found: {raw_file_path}")
 
     # 2. PARSE
     print(f"\n--- Step 2: Parsing HTML ---")
     os.makedirs("../data/parsed", exist_ok=True)
-    
+
     parser = SECParser(raw_file_path, ticker=ticker, year=year)
     clean_text = parser.parse()
     print(f"Parsing complete. Text length: {len(clean_text)} characters")
@@ -42,10 +42,10 @@ def run_pipeline(ticker: str, year: str):
     for chunk in chunks:
         average_chunk_size += len(chunk['text'])
     average_chunk_size /= len(chunks) if chunks else 1
-    
+
     print(f"Chunking complete. Generated {len(chunks)} chunks.")
     print(f"Average chunk size: {average_chunk_size:.2f} characters")
-    
+
     # 4. UPLOAD TO PINECONE
     if chunks:
         print("\n--- Step 4: Storing Vectors in Pinecone ---")
@@ -57,7 +57,7 @@ def run_pipeline(ticker: str, year: str):
         print("--- Chunk 1 ---")
         print(chunks[0]["text"])
         print(f"\n[Metadata] Page: {chunks[0]['page']}, Section: {chunks[0]['section']}")
-        
+
         print("\n--- Chunk 2 ---")
         print(chunks[1]["text"])
         print(f"\n[Metadata] Page: {chunks[1]['page']}, Section: {chunks[1]['section']}")
