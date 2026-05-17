@@ -15,11 +15,13 @@ services:
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend/Dockerfile
     container_name: sec-rag-frontend
     ports:
       - "8501:8501"
+    env_file:
+      - .env
     environment:
       - BACKEND_URL=http://backend:8000
     depends_on:
