@@ -5,6 +5,7 @@ from langchain_classic.chains import create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from config import settings
+from backend.token_tracker import TokenTrackerCallback, log_query_usage
 
 SYSTEM_PROMPT = (
     "You are a Senior Financial Analyst expert in SEC filings (10-K, 10-Q). "
@@ -60,8 +61,8 @@ class RAGEngine:
 
             question_answer_chain = create_stuff_documents_chain(self.llm, prompt_template)
             chain = create_retrieval_chain(retriever, question_answer_chain)
-
-            response = chain.invoke({"input": query})
+            cb = TokenTrackerCallback()
+            response = chain.invoke({"input": query}, config={"callbacks": [cb]})
             answer = response["answer"]
 
             sources = []
@@ -75,15 +76,19 @@ class RAGEngine:
                     if source_str not in sources:
                         sources.append(source_str)
 
+            usage = log_query_usage(query, namespace, cb.input_tokens, cb.output_tokens, settings.llm_model)
+
             return {
                 "answer": answer,
-                "sources": sources
+                "sources": sources,
+                "usage": usage
             }
 
         except Exception as e:
             return {
                 "answer": f"Error processing request: {str(e)}",
-                "sources": []
+                "sources": [],
+                "usage": None
             }
 
 if __name__ == "__main__":
