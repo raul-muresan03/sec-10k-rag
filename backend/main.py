@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 from backend.rag_engine import RAGEngine
 from config import settings
 
@@ -12,9 +12,17 @@ class QueryRequest(BaseModel):
     question: str
     namespace: str = "default"
 
+class TokenUsage(BaseModel):
+    input_tokens: int
+    output_tokens: int
+    total_tokens: int
+    estimated_cost: float
+
 class QueryResponse(BaseModel):
     answer: str
     sources: List[str]
+    usage: Optional[TokenUsage] = None
+
 
 def check_pinecone_connection():
     """
@@ -36,7 +44,8 @@ async def ask(request: QueryRequest):
         result = engine.ask(request.question, namespace=request.namespace)
         return {
             "answer": result["answer"],
-            "sources": result["sources"]
+            "sources": result["sources"],
+            "usage": result.get("usage")
         }
 
     except Exception as e:
