@@ -76,6 +76,9 @@ for message in st.session_state.messages:
             with st.expander("Sources (Click for details)"):
                 for s in message["sources"]:
                     st.markdown(f"- {s}")
+        if "usage" in message and message["usage"]:
+            u = message["usage"]
+            st.caption(f"Estimated cost: **${u['estimated_cost']:.6f}** | Total Tokens: **{u['total_tokens']}** (Input tokens: {u['input_tokens']}, Output tokens: {u['output_tokens']})")
 
 with st.sidebar:
     st.header("Configuration")
@@ -110,6 +113,7 @@ if prompt := st.chat_input("Ex: What were the total sales in 2024?"):
                     data = response.json()
                     answer = data.get("answer", "No answer provided.")
                     sources = data.get("sources", [])
+                    usage = data.get("usage")
 
                     message_placeholder.markdown(answer)
 
@@ -118,10 +122,14 @@ if prompt := st.chat_input("Ex: What were the total sales in 2024?"):
                             for s in sources:
                                 st.markdown(f"- `{s}`")
 
+                    if usage:
+                        st.caption(f"Estimated cost: **${usage['estimated_cost']:.6f}** | Total Tokens: **{usage['total_tokens']}** (Input Tokens: {usage['input_tokens']}, Output Tokens: {usage['output_tokens']})")
+
                     st.session_state.messages.append({
                         "role": "assistant",
                         "content": answer,
-                        "sources": sources
+                        "sources": sources,
+                        "usage": usage
                     })
 
                     st.rerun()
