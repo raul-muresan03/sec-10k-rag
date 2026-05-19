@@ -33,11 +33,13 @@ class Chunker:
         all_markers = list(re.finditer(r"\[\[(PAGE|SECTION)_(.*?)\]\]", self.text))
 
         for marker in all_markers:
+            if marker.group(1) == "PAGE":
+                current_page = marker.group(2)
+                break
+
+        for marker in all_markers:
             marker_type = marker.group(1)
             marker_value = marker.group(2)
-
-            if marker_type == "PAGE":
-                current_page = marker_value
 
             if last_pos < marker.start():
                 segment_text = self.text[last_pos:marker.start()].strip()
@@ -50,7 +52,9 @@ class Chunker:
                         "year": self.year
                     })
 
-            if marker_type == "SECTION":
+            if marker_type == "PAGE":
+                current_page = marker_value
+            elif marker_type == "SECTION":
                 current_section = marker_value
 
             last_pos = marker.end()

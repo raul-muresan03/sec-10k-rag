@@ -250,10 +250,10 @@ class SECParser:
             return f"\n[[SECTION_{clean_tag_content}]]\n{original_text}"
 
         item_section_pattern = r"(?m)^(\s*Item\s+\d+[A-Z]?\.\s+.*?)(?=\n|$)"
-        cleaned_text = re.sub(item_section_pattern, create_section_tag, cleaned_text)
+        cleaned_text = re.sub(item_section_pattern, create_section_tag, cleaned_text, flags=re.IGNORECASE)
 
         part_section_pattern = r"(?m)^(\s*PART\s+[IVXLCDM]+\.?\s*.*?)(?=\n|$)"
-        cleaned_text = re.sub(part_section_pattern, create_section_tag, cleaned_text)
+        cleaned_text = re.sub(part_section_pattern, create_section_tag, cleaned_text, flags=re.IGNORECASE)
 
         # remove ® and bullet points on their own lines
         cleaned_text = re.sub(r"(?:^|\n)\s*®\s*(?:\n|$)", " ", cleaned_text)
@@ -261,7 +261,39 @@ class SECParser:
         cleaned_text = re.sub(r'\n{3,}', '\n\n', cleaned_text)
         cleaned_text = re.sub(r"Report of Independent Registered Public Accounting Firm[\s\S]*?\/s\/ [A-Za-z &]+ LLP", "", cleaned_text)
 
+        cleaned_text = self._filter_page_markers(cleaned_text)
+
         return cleaned_text
+
+    def _filter_page_markers(self, text_content: str) -> str:
+        pattern = r"\[\[PAGE_(\d+)\]\]"
+        matches = list(re.finditer(pattern, text_content))
+
+        if not matches:
+            return text_content
+
+        valid_pages = set()
+        current_page = 0
+
+        for match in matches:
+            page_val = int(match.group(1))
+            if current_page == 0:
+                if page_val <= 10:
+                    valid_pages.add(page_val)
+                    current_page = page_val
+            else:
+                if 0 <= (page_val - current_page) <= 3:
+                    valid_pages.add(page_val)
+                    current_page = page_val
+
+        def replace_invalid(match):
+            page_val = int(match.group(1))
+            if page_val in valid_pages:
+                return match.group(0)
+            else:
+                return str(page_val)
+
+        return re.sub(pattern, replace_invalid, text_content)
 
     def parse(self) -> str:
         """
