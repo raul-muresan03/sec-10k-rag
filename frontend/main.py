@@ -82,16 +82,40 @@ for message in st.session_state.messages:
 
 with st.sidebar:
     st.header("Configuration")
-    company_map = {
-        "Apple (AAPL)": "AAPL",
-        "Tesla (TSLA)": "TSLA",
-        "Google (GOOGL)": "GOOGL",
-        "Nvidia (NVDA)": "NVDA"
-    }
-    selected_option = st.selectbox("Select Company:", list(company_map.keys()))
-    selected_ticker = company_map[selected_option]
 
+    available_tickers = ["AAPL", "TSLA", "GOOGL", "NVDA"]
+    try:
+        companies_response = requests.get(f"{BACKEND_BASE_URL}/companies", timeout=5)
+        if companies_response.status_code == 200:
+            available_tickers = companies_response.json()
+    except Exception:
+        pass
+
+    selected_ticker = st.selectbox("Select Company:", available_tickers)
     st.info(f"Analyzing: **{selected_ticker}**")
+
+    st.markdown("---")
+    st.header("Ingest New Data")
+    new_ticker = st.text_input("Ticker Symbol (e.g., MSFT):").strip().upper()
+    new_year = st.text_input("Fiscal Year (e.g., 2024):").strip()
+
+    if st.button("Start Ingestion", use_container_width=True):
+        if not new_ticker or not new_year:
+            st.error("Please enter both ticker and year.")
+        else:
+            with st.spinner(f"Ingesting {new_ticker} for {new_year}..."):
+                try:
+                    payload = {"ticker": new_ticker, "year": new_year}
+                    ingest_url = f"{BACKEND_BASE_URL}/ingest"
+                    resp = requests.post(ingest_url, json=payload, timeout=120)
+                    if resp.status_code == 200:
+                        st.success(f"Successfully ingested {new_ticker}!")
+                        time.sleep(1)
+                        st.rerun()
+                    else:
+                        st.error(f"Ingestion failed: {resp.text}")
+                except Exception as e:
+                    st.error(f"Error connecting to server: {str(e)}")
 
 if prompt := st.chat_input("Ex: What were the total sales in 2024?"):
     st.session_state.messages.append({"role": "user", "content": prompt, "sources": []})

@@ -9,3 +9,5 @@ python-dotenv==1.2.1
 pydantic-settings>=2.0.0
 sec_edgar_downloader==5.1.0
 lxml
+fastapi>=0.115.0
+uvicorn>=0.31.0

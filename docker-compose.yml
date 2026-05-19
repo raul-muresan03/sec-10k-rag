@@ -36,6 +36,11 @@ services:
       context: .
       dockerfile: etl_pipeline/Dockerfile
     container_name: sec-rag-ingestion
+    ports:
+      - "8001:8001"
+    working_dir: /app/etl_pipeline
+    environment:
+      - PYTHONPATH=/app:/app/etl_pipeline
     env_file:
       - .env
     extra_hosts:
@@ -44,7 +49,7 @@ services:
       - ./data:/app/data
     networks:
       - sec-rag-network
-    command: tail -f /dev/null 
+    command: uvicorn api:app --host 0.0.0.0 --port 8001
 
 networks:
   sec-rag-network:
