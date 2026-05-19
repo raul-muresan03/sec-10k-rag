@@ -250,10 +250,10 @@ class SECParser:
             return f"\n[[SECTION_{clean_tag_content}]]\n{original_text}"
 
         item_section_pattern = r"(?m)^(\s*Item\s+\d+[A-Z]?\.\s+.*?)(?=\n|$)"
-        cleaned_text = re.sub(item_section_pattern, create_section_tag, cleaned_text)
+        cleaned_text = re.sub(item_section_pattern, create_section_tag, cleaned_text, flags=re.IGNORECASE)
 
         part_section_pattern = r"(?m)^(\s*PART\s+[IVXLCDM]+\.?\s*.*?)(?=\n|$)"
-        cleaned_text = re.sub(part_section_pattern, create_section_tag, cleaned_text)
+        cleaned_text = re.sub(part_section_pattern, create_section_tag, cleaned_text, flags=re.IGNORECASE)
 
         # remove ® and bullet points on their own lines
         cleaned_text = re.sub(r"(?:^|\n)\s*®\s*(?:\n|$)", " ", cleaned_text)
