@@ -13,6 +13,8 @@ engine = RAGEngine()
 class QueryRequest(BaseModel):
     question: str
     namespace: str = "default"
+    provider: str = "google"
+    model_name: str = "gemini-3.1-flash"
 
 class TokenUsage(BaseModel):
     input_tokens: int
@@ -46,7 +48,12 @@ async def ask(request: QueryRequest):
         raise HTTPException(status_code=400, detail="The question cannot be empty.")
 
     try:
-        result = engine.ask(request.question, namespace=request.namespace)
+        result = engine.ask(
+            query=request.question,
+            namespace=request.namespace,
+            provider=request.provider,
+            model_name=request.model_name
+        )
         return {
             "answer": result["answer"],
             "sources": result["sources"],
@@ -103,3 +110,37 @@ async def get_companies():
     tickers = [d for d in os.listdir(base_path) if os.path.isdir(os.path.join(base_path, d))]
     all_tickers = sorted(list(set(tickers + default_companies)))
     return all_tickers
+
+@app.get("/models")
+async def get_models():
+    models = {
+        "Cloud": {
+            "google": [],
+            "openai": [],
+            "anthropic": []
+        },
+        "Local": {
+            "ollama": []
+        }
+    }
+
+    if settings.google_api_key:
+        models["Cloud"]["google"] = ["gemini-2.5-flash-lite", "gemini-3.1-flash", "gemini-3.1-pro"]
+
+    if settings.openai_api_key:
+        models["Cloud"]["openai"] = ["gpt-5.4-nano", "gpt-5.4-mini", "o4-mini", "gpt-5.4", "o3"]
+
+    if settings.anthropic_api_key:
+        models["Cloud"]["anthropic"] = ["claude-haiku-4.5", "claude-sonnet-4.6", "claude-opus-4.7"]
+
+    async with httpx.AsyncClient() as client:
+        try:
+            ollama_url = f"{settings.ollama_base_url.rstrip('/')}/api/tags"
+            response = await client.get(ollama_url, timeout=5.0)
+            if response.status_code == 200:
+                data = response.json()
+                models["Local"]["ollama"] = [model["name"] for model in data.get("models", [])]
+        except Exception:
+            pass
+
+    return models

@@ -95,6 +95,41 @@ with st.sidebar:
     st.info(f"Analyzing: **{selected_ticker}**")
 
     st.markdown("---")
+    st.header("AI Model Selection")
+
+    models_data = {"Cloud": {}, "Local": {"ollama": []}}
+    try:
+        models_response = requests.get(f"{BACKEND_BASE_URL}/models", timeout=5)
+        if models_response.status_code == 200:
+            models_data = models_response.json()
+    except Exception:
+        pass
+
+    ai_source = st.radio("AI Source", ["Cloud", "Local"], horizontal=True)
+
+    selected_provider = "google"
+    selected_model = "gemini-3.1-flash"
+
+    if ai_source == "Cloud":
+        cloud_providers = list(models_data.get("Cloud", {}).keys())
+        active_cloud_providers = [p for p in cloud_providers if models_data["Cloud"][p]]
+
+        if not active_cloud_providers:
+            st.warning("No Cloud API keys configured. Check .env file.")
+        else:
+            selected_provider = st.selectbox("Select Provider", active_cloud_providers, format_func=lambda x: x.capitalize())
+            available_models = models_data["Cloud"][selected_provider]
+            selected_model = st.selectbox("Select Model", available_models)
+    else:
+        selected_provider = "ollama"
+        local_models = models_data.get("Local", {}).get("ollama", [])
+        if not local_models:
+            st.warning("Ollama is not installed or no models are downloaded. Please visit [ollama.com](https://ollama.com) to install it, then run `ollama pull model_name`.")
+            selected_model = ""
+        else:
+            selected_model = st.selectbox("Select Local Model", local_models)
+
+    st.markdown("---")
     st.header("Ingest New Data")
     new_ticker = st.text_input("Ticker Symbol (e.g., MSFT):").strip().upper()
     new_year = st.text_input("Fiscal Year (e.g., 2024):").strip()
@@ -129,7 +164,9 @@ if prompt := st.chat_input("Ex: What were the total sales in 2024?"):
             try:
                 payload = {
                     "question": prompt,
-                    "namespace": selected_ticker
+                    "namespace": selected_ticker,
+                    "provider": selected_provider,
+                    "model_name": selected_model
                 }
                 response = requests.post(API_URL, json=payload, timeout=60)
 

@@ -6,14 +6,26 @@ from langchain_core.outputs import LLMResult
 
 DB_PATH = "data/token_usage.db"
 
-GEMINI_PRICING = {
-    "flash": {
-        "input": 0.075 / 1000000,
-        "output": 0.30 / 1000000
+PRICING_TIERS = {
+    "google": {
+        "gemini-2.5-flash-lite": {"input": 0.10 / 1000000, "output": 0.40 / 1000000},
+        "gemini-3.1-flash": {"input": 0.30 / 1000000, "output": 1.20 / 1000000},
+        "gemini-3.1-pro": {"input": 1.25 / 1000000, "output": 5.00 / 1000000},
+        "default": {"input": 0.30 / 1000000, "output": 1.20 / 1000000}
     },
-    "pro": {
-        "input": 1.25 / 1000000,
-        "output": 5.00 / 1000000
+    "openai": {
+        "gpt-5.4-nano": {"input": 0.20 / 1000000, "output": 0.60 / 1000000},
+        "gpt-5.4-mini": {"input": 0.75 / 1000000, "output": 3.00 / 1000000},
+        "o4-mini": {"input": 1.10 / 1000000, "output": 4.40 / 1000000},
+        "gpt-5.4": {"input": 2.50 / 1000000, "output": 10.00 / 1000000},
+        "o3": {"input": 2.00 / 1000000, "output": 8.00 / 1000000},
+        "default": {"input": 0.75 / 1000000, "output": 3.00 / 1000000}
+    },
+    "anthropic": {
+        "claude-haiku-4.5": {"input": 1.00 / 1000000, "output": 5.00 / 1000000},
+        "claude-sonnet-4.6": {"input": 3.00 / 1000000, "output": 15.00 / 1000000},
+        "claude-opus-4.7": {"input": 5.00 / 1000000, "output": 25.00 / 1000000},
+        "default": {"input": 3.00 / 1000000, "output": 15.00 / 1000000}
     }
 }
 
@@ -58,14 +70,20 @@ def init_db() -> None:
     conn.commit()
     conn.close()
 
-def log_query_usage(query: str, namespace: str, input_tokens: int, output_tokens: int, model_name: str) -> Dict[str, Any]:
+def log_query_usage(query: str, namespace: str, input_tokens: int, output_tokens: int, provider: str, model_name: str) -> Dict[str, Any]:
     init_db()
 
-    model_name_lowercase = model_name.lower()
-    pricing_tier = "pro" if "pro" in model_name_lowercase else "flash"
+    provider_lowercase = provider.lower()
+    model_lowercase = model_name.lower()
 
-    input_rate = GEMINI_PRICING[pricing_tier]["input"]
-    output_rate = GEMINI_PRICING[pricing_tier]["output"]
+    if provider_lowercase == "ollama":
+        input_rate = 0.0
+        output_rate = 0.0
+    else:
+        provider_pricing = PRICING_TIERS.get(provider_lowercase, {})
+        model_pricing = provider_pricing.get(model_lowercase, provider_pricing.get("default", {"input": 0.0, "output": 0.0}))
+        input_rate = model_pricing["input"]
+        output_rate = model_pricing["output"]
 
     total_tokens = input_tokens + output_tokens
 
@@ -79,7 +97,7 @@ def log_query_usage(query: str, namespace: str, input_tokens: int, output_tokens
     INSERT INTO query_logs (query, namespace, input_tokens, output_tokens, total_tokens, estimated_cost, model_name)
     VALUES (?, ?, ?, ?, ?, ?, ?)
     """,
-    (query, namespace, input_tokens, output_tokens, total_tokens, cost, model_name))
+    (query, namespace, input_tokens, output_tokens, total_tokens, cost, f"{provider}:{model_name}"))
 
     conn.commit()
     conn.close()
