@@ -237,6 +237,7 @@ class SECParser:
         # {Company} | {year} Form 10-K | {number}
         footer_pattern = r"(?m)^.*?\|\s+\d{4}\s+Form\s+10-K\s+\|\s+(\d+)$"
         cleaned_text = re.sub(footer_pattern, r"\n[[PAGE_\1]]\n", cleaned_text)
+        cleaned_text = re.sub(r"(?m)^\s*(\d{1,3})\s*$", r"\n[[PAGE_\1]]\n", cleaned_text)
 
         cleaned_text = self._remove_table_of_contents(cleaned_text)
         cleaned_text = self._remove_part3_and_part4(cleaned_text)
