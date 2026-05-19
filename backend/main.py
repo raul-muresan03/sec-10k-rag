@@ -3,6 +3,8 @@ from pydantic import BaseModel
 from typing import List, Optional
 from backend.rag_engine import RAGEngine
 from config import settings
+import os
+import httpx
 
 app = FastAPI(title="SEC RAG API")
 
@@ -23,6 +25,9 @@ class QueryResponse(BaseModel):
     sources: List[str]
     usage: Optional[TokenUsage] = None
 
+class IngestRequest(BaseModel):
+    ticker: str
+    year: str
 
 def check_pinecone_connection():
     """
@@ -71,3 +76,30 @@ async def health(response: Response):
             "google_ai": google_api
         }
     }
+
+@app.post("/ingest")
+async def ingest(request: IngestRequest):
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                "http://ingestion:8001/ingest",
+                json={"ticker": request.ticker, "year": request.year},
+                timeout = 120.0
+            )
+            if response.status_code == 200:
+                return response.json()
+            else:
+                raise HTTPException(status_code=response.status_code, detail=response.text)
+        except httpx.RequestError as exc:
+            raise HTTPException(status_code=503, detail=f"Ingestion service unavailable: {str(exc)}")
+
+@app.get("/companies")
+async def get_companies():
+    base_path = "data/raw/sec-edgar-filings"
+    default_companies = ["AAPL", "TSLA", "GOOGL", "NVDA"]
+    if not os.path.exists(base_path):
+        return default_companies
+
+    tickers = [d for d in os.listdir(base_path) if os.path.isdir(os.path.join(base_path, d))]
+    all_tickers = sorted(list(set(tickers + default_companies)))
+    return all_tickers
