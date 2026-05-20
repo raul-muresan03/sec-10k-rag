@@ -18,8 +18,9 @@ The project leverages **Retrieval-Augmented Generation (RAG)** to provide accura
 
 ## Tech Stack
 
--   **LLM & Embeddings**: Google Gemini (`gemini-2.0-flash`, `text-embedding-004`)
--   **Vector Database**: Pinecone (Serverless)
+-   **LLM Providers**: Google Gemini (`gemini-3.1-flash`), OpenAI, Anthropic, Ollama — selectable per query
+-   **Embeddings**: Ollama (`nomic-embed-text`, 768-dim) — local, zero cost
+-   **Vector Database**: Pinecone (Serverless, cosine similarity, HNSW index)
 -   **Orchestration**: LangChain
 -   **Backend**: FastAPI
 -   **Frontend**: Streamlit
@@ -44,7 +45,7 @@ The project leverages **Retrieval-Augmented Generation (RAG)** to provide accura
 
 *   Docker & Docker Compose
 *   API Keys:
-    *   **Google AI Studio** (for Gemini)
+    *   **Google AI Studio** (for Gemini) — optional, only if you use cloud provider
     *   **Pinecone** (for Vector DB)
 
 ### 1. Configuration
@@ -58,10 +59,19 @@ cp .env.example .env
 
 Open `.env` and populate your keys:
 ```ini
-GOOGLE_API_KEY=your_key
+# At minimum — Pinecone is required:
 PINECONE_API_KEY=your_key
-PINECONE_INDEX_NAME=sec-rag-index  # Default
+PINECONE_INDEX_NAME=sec-rag-tool
+
+# For cloud LLM providers (optional — Ollama local is default):
+GOOGLE_API_KEY=your_key
+OPENAI_API_KEY=your_key
+ANTHROPIC_API_KEY=your_key
+
+# SEC EDGAR download:
 SEC_API_EMAIL=your_email@example.com
+
+# Embeddings — Ollama runs inside Docker, no config needed
 ```
 
 ### 2. Run with Docker
