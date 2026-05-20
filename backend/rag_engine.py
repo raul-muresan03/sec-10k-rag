@@ -1,4 +1,4 @@
-from langchain_google_genai import ChatGoogleGenerativeAI
+from backend.llm_factory import LLMFactory
 from langchain_ollama import OllamaEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from langchain_classic.chains import create_retrieval_chain
@@ -36,13 +36,8 @@ class RAGEngine:
             embedding=self.embeddings
         )
 
-        self.llm = ChatGoogleGenerativeAI(
-            model=settings.llm_model,
-            temperature=0
-        )
-
-    def ask(self, query: str, namespace: str = "default"):
-        print(f"Thinking about: '{query}' with namespace='{namespace}'...")
+    def ask(self, query: str, namespace: str = "default", provider: str = "google", model_name: str = "gemini-3.1-flash"):
+        print(f"Thinking about: '{query}' with namespace='{namespace}', model='{provider}:{model_name}'...")
         try:
             search_kwargs = {"k": 5}
             filter_dict = {}
@@ -59,7 +54,8 @@ class RAGEngine:
                 ("human", "{input}"),
             ])
 
-            question_answer_chain = create_stuff_documents_chain(self.llm, prompt_template)
+            llm = LLMFactory.get_llm(provider, model_name)
+            question_answer_chain = create_stuff_documents_chain(llm, prompt_template)
             chain = create_retrieval_chain(retriever, question_answer_chain)
             cb = TokenTrackerCallback()
             response = chain.invoke({"input": query}, config={"callbacks": [cb]})
@@ -76,7 +72,7 @@ class RAGEngine:
                     if source_str not in sources:
                         sources.append(source_str)
 
-            usage = log_query_usage(query, namespace, cb.input_tokens, cb.output_tokens, settings.llm_model)
+            usage = log_query_usage(query, namespace, cb.input_tokens, cb.output_tokens, provider, model_name)
 
             return {
                 "answer": answer,
