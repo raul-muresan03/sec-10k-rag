@@ -13,6 +13,7 @@ engine = RAGEngine()
 class QueryRequest(BaseModel):
     question: str
     namespace: str = "default"
+    compare_year: Optional[str] = None
     provider: str = "google"
     model_name: str = "gemini-3.1-flash"
 
@@ -52,6 +53,7 @@ async def ask(request: QueryRequest):
         result = engine.ask(
             query=request.question,
             namespace=request.namespace,
+            compare_year=request.compare_year,
             provider=request.provider,
             model_name=request.model_name
         )

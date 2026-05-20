@@ -1,4 +1,4 @@
-from typing import List, Any
+from typing import List, Any, Optional
 from backend.llm_factory import LLMFactory
 from langchain_ollama import OllamaEmbeddings
 from langchain_pinecone import PineconeVectorStore
@@ -23,6 +23,21 @@ SYSTEM_PROMPT = (
     "5. If you cannot find the exact answer in the context, strictly state: 'Information not available in the provided context'. Do not hallucinate numbers.\n"
     "6. Use a professional, concise tone suitable for an investment memo.\n"
     "\n\n"
+    "Context: {context}"
+)
+
+COMPARISON_SYSTEM_PROMPT = (
+    "You are a Senior Financial Analyst expert in SEC filings (10-K, 10-Q). "
+    "You are given financial data from two different fiscal years for the same company. "
+    "Your task is to COMPARE the same metric across both years.\n\n"
+    "Rules:\n"
+    "1. Extract the requested metric from each year's data.\n"
+    "2. Calculate the year-over-year change (absolute difference and percentage).\n"
+    "3. Always mention the fiscal years and currency (e.g., 'in millions').\n"
+    "4. Format all financial figures in **bold** for readability.\n"
+    "5. Present the comparison clearly: Year1 → Year2 → Change.\n"
+    "6. If data for both years is not available, state: 'Comparative data not available for one or both years'.\n"
+    "7. Use a professional, concise tone suitable for an investment memo.\n\n"
     "Context: {context}"
 )
 
@@ -83,8 +98,8 @@ class RAGEngine:
 
         return round(min(max(confidence, 0.0), 1.0), 4)
 
-    def ask(self, query: str, namespace: str = "default", provider: str = "google", model_name: str = "gemini-3.1-flash"):
-        print(f"Thinking about: '{query}' with namespace='{namespace}', model='{provider}:{model_name}'...")
+    def ask(self, query: str, namespace: str = "default", compare_year: Optional[str] = None, provider: str = "google", model_name: str = "gemini-3.1-flash"):
+        print(f"Thinking about: '{query}' with namespace='{namespace}', model='{provider}:{model_name}'..." + (f", compare_year='{compare_year}'" if compare_year else ""))
         try:
             search_kwargs = {"k": self.k}
             filter_dict = {}
@@ -94,35 +109,58 @@ class RAGEngine:
             if filter_dict:
                 search_kwargs["filter"] = filter_dict
 
-            retriever = PineconeScoreRetriever(
-                vector_store=self.vector_store,
-                search_kwargs=search_kwargs
-            )
-
-            prompt_template = ChatPromptTemplate.from_messages([
-                ("system", SYSTEM_PROMPT),
-                ("human", "{input}"),
-            ])
-
             llm = LLMFactory.get_llm(provider, model_name)
-            question_answer_chain = create_stuff_documents_chain(llm, prompt_template)
-            chain = create_retrieval_chain(retriever, question_answer_chain)
-            cb = TokenTrackerCallback()
-            response = chain.invoke({"input": query}, config={"callbacks": [cb]})
-            answer = response["answer"]
+
+            if compare_year:
+                retriever1 = PineconeScoreRetriever(
+                    vector_store=self.vector_store,
+                    search_kwargs=search_kwargs
+                )
+                filter2 = dict(filter_dict)
+                filter2["year"] = compare_year
+                retriever2 = PineconeScoreRetriever(
+                    vector_store=self.vector_store,
+                    search_kwargs={"k": self.k, "filter": filter2}
+                )
+                prompt_template = ChatPromptTemplate.from_messages([
+                    ("system", COMPARISON_SYSTEM_PROMPT),
+                    ("human", "{input}"),
+                ])
+                question_answer_chain = create_stuff_documents_chain(llm, prompt_template)
+
+                cb = TokenTrackerCallback()
+                docs1 = retriever1._get_relevant_documents(query)
+                docs2 = retriever2._get_relevant_documents(query)
+                retrieved_docs = docs1 + docs2
+
+                answer = question_answer_chain.invoke(
+                    {"input": query, "context": retrieved_docs},
+                    config={"callbacks": [cb]}
+                )
+            else:
+                retriever = PineconeScoreRetriever(
+                    vector_store=self.vector_store,
+                    search_kwargs=search_kwargs
+                )
+                prompt_template = ChatPromptTemplate.from_messages([
+                    ("system", SYSTEM_PROMPT),
+                    ("human", "{input}"),
+                ])
+                question_answer_chain = create_stuff_documents_chain(llm, prompt_template)
+                chain = create_retrieval_chain(retriever, question_answer_chain)
+                cb = TokenTrackerCallback()
+                response = chain.invoke({"input": query}, config={"callbacks": [cb]})
+                answer = response["answer"]
+                retrieved_docs = response.get("context", [])
 
             sources = []
-            retrieved_docs = []
-            if "context" in response:
-                retrieved_docs = response["context"]
-                for doc in retrieved_docs:
-                    page = doc.metadata.get('page', 'N/A')
-                    section = doc.metadata.get('section', 'Unknown Section')
-                    ticker = doc.metadata.get('ticker', 'Unknown Ticker')
-                    source_str = f"{ticker} - Page {page} ({section})"
-
-                    if source_str not in sources:
-                        sources.append(source_str)
+            for doc in retrieved_docs:
+                page = doc.metadata.get('page', 'N/A')
+                section = doc.metadata.get('section', 'Unknown Section')
+                ticker = doc.metadata.get('ticker', 'Unknown Ticker')
+                source_str = f"{ticker} - Page {page} ({section})"
+                if source_str not in sources:
+                    sources.append(source_str)
 
             confidence_score = self._calculate_confidence(retrieved_docs)
             usage = log_query_usage(query, namespace, cb.input_tokens, cb.output_tokens, provider, model_name)

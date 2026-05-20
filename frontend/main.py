@@ -7,7 +7,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import settings
 
 def _is_na_answer(text):
-    return "information not available" in text.lower()
+    lowered = text.lower()
+    return "information not available" in lowered or "comparative data not available" in lowered
 
 def _render_confidence(cs):
     if cs >= 0.65:
@@ -121,6 +122,11 @@ with st.sidebar:
     selected_ticker = st.selectbox("Select Company:", available_tickers)
     st.info(f"Analyzing: **{selected_ticker}**")
 
+    compare_yoy = st.checkbox("Enable YoY Comparison", help="Compare metrics across two fiscal years")
+    compare_year = None
+    if compare_yoy:
+        compare_year = st.text_input("Compare Year (e.g., 2023):", placeholder="2024").strip()
+
     st.markdown("---")
     st.header("AI Model Selection")
 
@@ -192,6 +198,7 @@ if prompt := st.chat_input("Ex: What were the total sales in 2024?"):
                 payload = {
                     "question": prompt,
                     "namespace": selected_ticker,
+                    "compare_year": compare_year,
                     "provider": selected_provider,
                     "model_name": selected_model
                 }
