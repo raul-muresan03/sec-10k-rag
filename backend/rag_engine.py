@@ -36,6 +36,26 @@ class RAGEngine:
             embedding=self.embeddings
         )
 
+    def _calculate_confidence(self, retrieved_docs, query: str) -> float:
+        if not retrieved_docs:
+            return 0.0
+
+        scores = []
+        for doc in retrieved_docs:
+            score = doc.metadata.get('score', None)
+            if score is not None:
+                scores.append(score)
+
+        if not scores:
+            return 0.0
+
+        avg_score = sum(scores) / len(scores)
+        min_score = min(scores)
+        coverage_ratio = len(scores) / 5.0  # top-k = 5
+
+        confidence = avg_score * 0.6 + (1.0 - min_score) * 0.2 + min(coverage_ratio, 1.0) * 0.2
+        return round(min(max(confidence, 0.0), 1.0), 4)
+
     def ask(self, query: str, namespace: str = "default", provider: str = "google", model_name: str = "gemini-3.1-flash"):
         print(f"Thinking about: '{query}' with namespace='{namespace}', model='{provider}:{model_name}'...")
         try:
@@ -62,8 +82,10 @@ class RAGEngine:
             answer = response["answer"]
 
             sources = []
+            retrieved_docs = []
             if "context" in response:
-                for doc in response["context"]:
+                retrieved_docs = response["context"]
+                for doc in retrieved_docs:
                     page = doc.metadata.get('page', 'N/A')
                     section = doc.metadata.get('section', 'Unknown Section')
                     ticker = doc.metadata.get('ticker', 'Unknown Ticker')
@@ -72,19 +94,22 @@ class RAGEngine:
                     if source_str not in sources:
                         sources.append(source_str)
 
+            confidence_score = self._calculate_confidence(retrieved_docs, query)
             usage = log_query_usage(query, namespace, cb.input_tokens, cb.output_tokens, provider, model_name)
 
             return {
                 "answer": answer,
                 "sources": sources,
-                "usage": usage
+                "usage": usage,
+                "confidence_score": confidence_score
             }
 
         except Exception as e:
             return {
                 "answer": f"Error processing request: {str(e)}",
                 "sources": [],
-                "usage": None
+                "usage": None,
+                "confidence_score": 0.0
             }
 
 if __name__ == "__main__":
