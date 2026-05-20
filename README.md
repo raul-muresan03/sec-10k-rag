@@ -10,6 +10,8 @@ The project leverages **Retrieval-Augmented Generation (RAG)** to provide accura
 
 -   **Multi-Company Support**: Filter queries by company (e.g., AAPL, TSLA, GOOGL, NVDA).
 -   **Source Citations**: Every answer includes references to the specific page and section of the 10-K filing.
+-   **Confidence Score**: Each answer includes a 0–1 confidence score based on retrieval quality, source diversity, coverage, and consistency.
+-   **Year-over-Year Comparison**: Toggle YoY mode to compare the same metric across two fiscal years (delta + percentage).
 -   **Automated Ingestion**: A robust ETL pipeline downloads, parses, chunks, and indexes filings automatically.
 -   **Containerized Architecture**: Fully Dockerized (Backend, Frontend, Ingestion) for "write once, run anywhere" deployment.
 -   **Query Logging**: Built-in functionality to download chat logs for evaluating prototype performance.
@@ -30,8 +32,9 @@ The project leverages **Retrieval-Augmented Generation (RAG)** to provide accura
     *   **Transform**: Cleans HTML, removes noise, and chunks text into semantic segments.
     *   **Load**: Generates embeddings and upserts them to Pinecone with metadata (`ticker`, `section`, `page`).
 2.  **RAG Engine**:
-    *   Retrieves relevant chunks based on user query and selected company filter.
-    *   Generates answers using Gemini-2.0-Flash with a strict financial analyst persona.
+    *   Custom retriever (`PineconeScoreRetriever`) injects Pinecone similarity scores into doc metadata.
+    *   Confidence formula: `retrieval_quality * 0.35 + coverage * 0.25 + source_diversity * 0.20 + consistency * 0.20` (cosine scores normalized from [0.55, 0.95] → [0, 1]).
+    *   YoY comparison: dual Pinecone retrieval (base year + compare year), merged context, comparison prompt.
 3.  **User Interface**:
     *   Simple chat interface for interaction and configuration.
 
@@ -93,14 +96,15 @@ Try asking these questions to evaluate the prototype:
 *   *"What are the risk factors for Apple?"*
 *   *"Who is the CEO of Tesla?"*
 *   *"Compare revenue and profit for NVIDIA."*
+*   *(YoY mode)* *"What was the total revenue?"* — compares revenue across two fiscal years with delta and percentage.
 
 ## Future Improvements
 
 *   **Cost Analysis Dashboard**: Integrate token tracking to estimate runtime costs per query.
-*   **Expanded Metadata**: Add year-over-year comparison features.
+*   **LLM Self-Evaluation**: Ask the LLM to rate its own answer faithfulness (LLM-as-judge) for a more calibrated confidence score.
+*   **Cross-Company Comparison**: Compare metrics between two different companies in a single answer.
 *   **Feedback Loop**: Allow users to rate answers to improve retrieval quality.
-*   **Dynamic Ingestion**: Add a UI feature to download and index new companies on the fly.
-*   **Comparison Mode**: Compare metrics between two different companies in a single answer.
+*   **Dynamic Ingestion**: Add a UI feature to download and index new companies from the prompt.
 *   **Citations v2**: Highlight the exact text segment in the source PDF.
 *   **Chat History**: Save relevant conversations for access when needed
 *   **Financial Charting**: Auto-generate trend lines from extracted data.
