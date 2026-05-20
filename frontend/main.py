@@ -6,6 +6,28 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import settings
 
+def _is_na_answer(text):
+    return "information not available" in text.lower()
+
+def _render_confidence(cs):
+    if cs >= 0.65:
+        color = "green"
+        label = "High"
+    elif cs >= 0.35:
+        color = "orange"
+        label = "Medium"
+    else:
+        color = "red"
+        label = "Low"
+    st.markdown(
+        f"<div style='display:flex;align-items:center;gap:8px;margin-top:4px'>"
+        f"<span style='font-size:0.8rem'>Confidence:</span>"
+        f"<progress value='{cs}' max='1' style='height:8px;flex:1;accent-color:{color}'></progress>"
+        f"<span style='font-size:0.8rem;color:{color};font-weight:bold'>{cs:.2f} ({label})</span>"
+        f"</div>",
+        unsafe_allow_html=True
+    )
+
 def convert_chat_to_txt():
     log_content = ""
 
@@ -72,13 +94,18 @@ if "messages" not in st.session_state:
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
-        if "sources" in message and message["sources"]:
-            with st.expander("Sources (Click for details)"):
-                for s in message["sources"]:
-                    st.markdown(f"- {s}")
         if "usage" in message and message["usage"]:
             u = message["usage"]
             st.caption(f"Estimated cost: **${u['estimated_cost']:.6f}** | Total Tokens: **{u['total_tokens']}** (Input tokens: {u['input_tokens']}, Output tokens: {u['output_tokens']})")
+
+        if not _is_na_answer(message.get("content", "")):
+            if "sources" in message and message["sources"]:
+                with st.expander("Sources (Click for details)"):
+                    for s in message["sources"]:
+                        st.markdown(f"- {s}")
+
+            if "confidence_score" in message:
+                _render_confidence(message["confidence_score"])
 
 with st.sidebar:
     st.header("Configuration")
@@ -175,22 +202,27 @@ if prompt := st.chat_input("Ex: What were the total sales in 2024?"):
                     answer = data.get("answer", "No answer provided.")
                     sources = data.get("sources", [])
                     usage = data.get("usage")
+                    confidence_score = data.get("confidence_score", 0.0)
 
                     message_placeholder.markdown(answer)
 
-                    if sources:
-                        with st.expander("Sources (Click for details)"):
-                            for s in sources:
-                                st.markdown(f"- `{s}`")
-
                     if usage:
                         st.caption(f"Estimated cost: **${usage['estimated_cost']:.6f}** | Total Tokens: **{usage['total_tokens']}** (Input Tokens: {usage['input_tokens']}, Output Tokens: {usage['output_tokens']})")
+
+                    if not _is_na_answer(answer):
+                        if sources:
+                            with st.expander("Sources (Click for details)"):
+                                for s in sources:
+                                    st.markdown(f"- `{s}`")
+
+                        _render_confidence(confidence_score)
 
                     st.session_state.messages.append({
                         "role": "assistant",
                         "content": answer,
                         "sources": sources,
-                        "usage": usage
+                        "usage": usage,
+                        "confidence_score": confidence_score
                     })
 
                     st.rerun()

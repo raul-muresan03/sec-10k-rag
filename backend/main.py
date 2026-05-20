@@ -26,6 +26,7 @@ class QueryResponse(BaseModel):
     answer: str
     sources: List[str]
     usage: Optional[TokenUsage] = None
+    confidence_score: float = 0.0
 
 class IngestRequest(BaseModel):
     ticker: str
@@ -57,7 +58,8 @@ async def ask(request: QueryRequest):
         return {
             "answer": result["answer"],
             "sources": result["sources"],
-            "usage": result.get("usage")
+            "usage": result.get("usage"),
+            "confidence_score": result.get("confidence_score", 0.0)
         }
 
     except Exception as e:
