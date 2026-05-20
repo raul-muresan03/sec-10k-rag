@@ -7,6 +7,9 @@ from langchain_pinecone import PineconeVectorStore
 from langchain_core.documents import Document
 from pinecone import Pinecone, ServerlessSpec
 from config import settings
+from logger import get_logger
+
+logger = get_logger(__name__)
 
 def get_embedding_model():
     return OllamaEmbeddings(
@@ -19,7 +22,7 @@ def verify_and_create_index(index_name: str):
     existing_indexes = [index.name for index in pc.list_indexes()]
 
     if index_name not in existing_indexes:
-        print(f"Index '{index_name}' not found. Creating it...")
+        logger.info(f"Index '{index_name}' not found. Creating it...")
         try:
             pc.create_index(
                 name=index_name,
@@ -30,20 +33,20 @@ def verify_and_create_index(index_name: str):
                     region="us-east-1"
                 )
             )
-            print(f"Index '{index_name}' created successfully.")
+            logger.info(f"Index '{index_name}' created successfully.")
         except Exception as e:
-            print(f"Error creating index: {e}")
+            logger.error(f"Error creating index: {e}")
             return False
     else:
-        print(f"Index '{index_name}' exists.")
+        logger.info(f"Index '{index_name}' exists.")
 
     try:
         index = pc.Index(index_name)
         stats = index.describe_index_stats()
-        print(f"Status Pinecone ('{index_name}'): {stats['total_vector_count']} total vectors.")
+        logger.info(f"Pinecone status — {stats['total_vector_count']} vectors.")
         return True
     except Exception as e:
-        print(f"Error connecting to index: {e}")
+        logger.error(f"Error connecting to index: {e}")
         return False
 
 def delete_all_vectors(index_name=None):
@@ -51,27 +54,27 @@ def delete_all_vectors(index_name=None):
     pc = Pinecone(api_key=settings.pinecone_api_key)
 
     if index_name not in [index.name for index in pc.list_indexes()]:
-        print(f"Index '{index_name}' not found. Nothing to delete.")
+        logger.info(f"Index '{index_name}' not found. Nothing to delete.")
         return
 
     index = pc.Index(index_name)
-    print(f"Deleting all vectors from index '{index_name}'...")
+    logger.info(f"Deleting all vectors from index '{index_name}'...")
     try:
         index.delete(delete_all=True)
-        print("Successfully deleted all vectors.")
+        logger.info("Successfully deleted all vectors.")
     except Exception as e:
-        print(f"An error occurred while deleting vectors: {e}")
+        logger.error(f"Error deleting vectors: {e}")
 
 def upload_chunks_to_pinecone(chunks, index_name=None):
     index_name = index_name or settings.pinecone_index_name
     if not chunks:
-        print("No chunks to upload.")
+        logger.warning("No chunks to upload.")
         return None
 
     if not verify_and_create_index(index_name):
         return None
 
-    print(f"Upserting {len(chunks)} chunks to Pinecone index '{index_name}'...")
+    logger.info(f"Upserting {len(chunks)} chunks to Pinecone index '{index_name}'...")
 
     documents = []
     ids = []
@@ -85,7 +88,7 @@ def upload_chunks_to_pinecone(chunks, index_name=None):
             documents.append(doc)
 
     if not documents:
-        print("No valid documents with IDs were created from chunks.")
+        logger.warning("No valid documents with IDs were created from chunks.")
         return None
 
     embeddings = get_embedding_model()
@@ -96,11 +99,11 @@ def upload_chunks_to_pinecone(chunks, index_name=None):
         for i in range(0, len(documents), batch_size):
             batch_docs = documents[i : i + batch_size]
             batch_ids = ids[i : i + batch_size]
-            print(f"Uploading batch {i // batch_size + 1}...")
+            logger.info(f"Uploading batch {i // batch_size + 1}...")
             vector_store.add_documents(documents=batch_docs, ids=batch_ids)
 
-        print(f"Upsert completed.")
+        logger.info("Upsert completed.")
         return vector_store
     except Exception as e:
-        print(f"CRITICAL ERROR during upload: {e}")
+        logger.exception(f"CRITICAL ERROR during upload: {e}")
         return None

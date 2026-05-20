@@ -11,7 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copying from root to include config.py
 COPY etl_pipeline/ /app/etl_pipeline/
-COPY config.py /app/
+COPY config.py logger.py /app/
 
 ENV PYTHONPATH=/app
 

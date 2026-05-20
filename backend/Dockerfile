@@ -11,7 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copying from root to include config.py
 COPY backend/ /app/backend/
-COPY config.py /app/
+COPY config.py logger.py /app/
 
 ENV PYTHONPATH=/app
 

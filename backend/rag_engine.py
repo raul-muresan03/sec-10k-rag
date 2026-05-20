@@ -1,5 +1,6 @@
 from typing import List, Any, Optional
 from backend.llm_factory import LLMFactory
+from logger import get_logger
 from langchain_ollama import OllamaEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from langchain_classic.chains import create_retrieval_chain
@@ -10,6 +11,8 @@ from langchain_core.documents import Document
 from pydantic import Field
 from config import settings
 from backend.token_tracker import TokenTrackerCallback, log_query_usage
+
+logger = get_logger(__name__)
 
 SYSTEM_PROMPT = (
     "You are a Senior Financial Analyst expert in SEC filings (10-K, 10-Q). "
@@ -99,7 +102,7 @@ class RAGEngine:
         return round(min(max(confidence, 0.0), 1.0), 4)
 
     def ask(self, query: str, namespace: str = "default", compare_year: Optional[str] = None, provider: str = "google", model_name: str = "gemini-3.1-flash"):
-        print(f"Thinking about: '{query}' with namespace='{namespace}', model='{provider}:{model_name}'..." + (f", compare_year='{compare_year}'" if compare_year else ""))
+        logger.info(f"Query | ns={namespace} model={provider}:{model_name}" + (f" compare_year={compare_year}" if compare_year else ""))
         try:
             search_kwargs = {"k": self.k}
             filter_dict = {}
