@@ -6,6 +6,25 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import settings
 
+def _render_confidence(cs):
+    if cs >= 0.7:
+        color = "green"
+        label = "High"
+    elif cs >= 0.4:
+        color = "orange"
+        label = "Medium"
+    else:
+        color = "red"
+        label = "Low"
+    st.markdown(
+        f"<div style='display:flex;align-items:center;gap:8px;margin-top:4px'>"
+        f"<span style='font-size:0.8rem'>Confidence:</span>"
+        f"<progress value='{cs}' max='1' style='height:8px;flex:1;accent-color:{color}'></progress>"
+        f"<span style='font-size:0.8rem;color:{color};font-weight:bold'>{cs:.2f} ({label})</span>"
+        f"</div>",
+        unsafe_allow_html=True
+    )
+
 def convert_chat_to_txt():
     log_content = ""
 
@@ -81,24 +100,7 @@ for message in st.session_state.messages:
             st.caption(f"Estimated cost: **${u['estimated_cost']:.6f}** | Total Tokens: **{u['total_tokens']}** (Input tokens: {u['input_tokens']}, Output tokens: {u['output_tokens']})")
 
         if "confidence_score" in message:
-            cs = message["confidence_score"]
-            if cs >= 0.7:
-                color = "green"
-                label = "High"
-            elif cs >= 0.4:
-                color = "orange"
-                label = "Medium"
-            else:
-                color = "red"
-                label = "Low"
-            st.markdown(
-                f"<div style='display:flex;align-items:center;gap:8px;margin-top:4px'>"
-                f"<span style='font-size:0.8rem'>Confidence:</span>"
-                f"<progress value='{cs}' max='1' style='height:8px;flex:1;accent-color:{color}'></progress>"
-                f"<span style='font-size:0.8rem;color:{color};font-weight:bold'>{cs:.2f} ({label})</span>"
-                f"</div>",
-                unsafe_allow_html=True
-            )
+            _render_confidence(message["confidence_score"])
 
 with st.sidebar:
     st.header("Configuration")
@@ -207,24 +209,7 @@ if prompt := st.chat_input("Ex: What were the total sales in 2024?"):
                     if usage:
                         st.caption(f"Estimated cost: **${usage['estimated_cost']:.6f}** | Total Tokens: **{usage['total_tokens']}** (Input Tokens: {usage['input_tokens']}, Output Tokens: {usage['output_tokens']})")
 
-                    # Afișare confidence score live
-                    if confidence_score >= 0.7:
-                        cs_color = "green"
-                        cs_label = "High"
-                    elif confidence_score >= 0.4:
-                        cs_color = "orange"
-                        cs_label = "Medium"
-                    else:
-                        cs_color = "red"
-                        cs_label = "Low"
-                    st.markdown(
-                        f"<div style='display:flex;align-items:center;gap:8px;margin-top:4px'>"
-                        f"<span style='font-size:0.8rem'>Confidence:</span>"
-                        f"<progress value='{confidence_score}' max='1' style='height:8px;flex:1;accent-color:{cs_color}'></progress>"
-                        f"<span style='font-size:0.8rem;color:{cs_color};font-weight:bold'>{confidence_score:.2f} ({cs_label})</span>"
-                        f"</div>",
-                        unsafe_allow_html=True
-                    )
+                    _render_confidence(confidence_score)
 
                     st.session_state.messages.append({
                         "role": "assistant",

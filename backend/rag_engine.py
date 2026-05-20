@@ -1,9 +1,13 @@
+from typing import List, Any
 from backend.llm_factory import LLMFactory
 from langchain_ollama import OllamaEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from langchain_classic.chains import create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.retrievers import BaseRetriever
+from langchain_core.documents import Document
+from pydantic import Field
 from config import settings
 from backend.token_tracker import TokenTrackerCallback, log_query_usage
 
@@ -22,9 +26,22 @@ SYSTEM_PROMPT = (
     "Context: {context}"
 )
 
+class PineconeScoreRetriever(BaseRetriever):
+    vector_store: PineconeVectorStore = Field(...)
+    search_kwargs: dict = Field(default_factory=lambda: {"k": 5})
+
+    def _get_relevant_documents(self, query: str) -> List[Document]:
+        docs_with_scores = self.vector_store.similarity_search_with_score(
+            query, **self.search_kwargs
+        )
+        for doc, score in docs_with_scores:
+            doc.metadata["score"] = score
+        return [doc for doc, _ in docs_with_scores]
+
 class RAGEngine:
-    def __init__(self, index_name=None):
+    def __init__(self, index_name=None, k=5):
         self.index_name = index_name or settings.pinecone_index_name
+        self.k = k
 
         self.embeddings = OllamaEmbeddings(
             model=settings.embedding_model,
@@ -36,7 +53,7 @@ class RAGEngine:
             embedding=self.embeddings
         )
 
-    def _calculate_confidence(self, retrieved_docs, query: str) -> float:
+    def _calculate_confidence(self, retrieved_docs) -> float:
         if not retrieved_docs:
             return 0.0
 
@@ -51,7 +68,7 @@ class RAGEngine:
 
         avg_score = sum(scores) / len(scores)
         min_score = min(scores)
-        coverage_ratio = len(scores) / 5.0  # top-k = 5
+        coverage_ratio = len(scores) / self.k
 
         confidence = avg_score * 0.6 + (1.0 - min_score) * 0.2 + min(coverage_ratio, 1.0) * 0.2
         return round(min(max(confidence, 0.0), 1.0), 4)
@@ -59,7 +76,7 @@ class RAGEngine:
     def ask(self, query: str, namespace: str = "default", provider: str = "google", model_name: str = "gemini-3.1-flash"):
         print(f"Thinking about: '{query}' with namespace='{namespace}', model='{provider}:{model_name}'...")
         try:
-            search_kwargs = {"k": 5}
+            search_kwargs = {"k": self.k}
             filter_dict = {}
             if namespace and namespace != "default":
                 filter_dict["ticker"] = namespace
@@ -67,7 +84,10 @@ class RAGEngine:
             if filter_dict:
                 search_kwargs["filter"] = filter_dict
 
-            retriever = self.vector_store.as_retriever(search_kwargs=search_kwargs)
+            retriever = PineconeScoreRetriever(
+                vector_store=self.vector_store,
+                search_kwargs=search_kwargs
+            )
 
             prompt_template = ChatPromptTemplate.from_messages([
                 ("system", SYSTEM_PROMPT),
@@ -94,7 +114,7 @@ class RAGEngine:
                     if source_str not in sources:
                         sources.append(source_str)
 
-            confidence_score = self._calculate_confidence(retrieved_docs, query)
+            confidence_score = self._calculate_confidence(retrieved_docs)
             usage = log_query_usage(query, namespace, cb.input_tokens, cb.output_tokens, provider, model_name)
 
             return {
