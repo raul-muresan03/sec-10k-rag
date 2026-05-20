@@ -57,20 +57,30 @@ class RAGEngine:
         if not retrieved_docs:
             return 0.0
 
-        scores = []
-        for doc in retrieved_docs:
-            score = doc.metadata.get('score', None)
-            if score is not None:
-                scores.append(score)
-
+        scores = [d.metadata.get('score') for d in retrieved_docs if d.metadata.get('score') is not None]
         if not scores:
             return 0.0
 
-        avg_score = sum(scores) / len(scores)
-        min_score = min(scores)
-        coverage_ratio = len(scores) / self.k
+        avg = sum(scores) / len(scores)
+        spread = max(scores) - min(scores)
 
-        confidence = avg_score * 0.6 + (1.0 - min_score) * 0.2 + min(coverage_ratio, 1.0) * 0.2
+        SIM_MIN, SIM_MAX = 0.55, 0.95
+        retrieval = max(0.0, min(1.0, (avg - SIM_MIN) / (SIM_MAX - SIM_MIN)))
+
+        coverage = len(scores) / self.k
+
+        sections = set(d.metadata.get('section', '') for d in retrieved_docs if d.metadata.get('section'))
+        diversity = min(len(sections) / 3.0, 1.0)
+
+        consistency = max(0.0, 1.0 - spread * 1.5)
+
+        confidence = (
+            0.35 * retrieval +
+            0.25 * coverage +
+            0.20 * diversity +
+            0.20 * consistency
+        )
+
         return round(min(max(confidence, 0.0), 1.0), 4)
 
     def ask(self, query: str, namespace: str = "default", provider: str = "google", model_name: str = "gemini-3.1-flash"):
