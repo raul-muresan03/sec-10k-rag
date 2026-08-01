@@ -1,6 +1,5 @@
 import os
 import re
-from bs4 import BeautifulSoup
 
 class SECParser:
     """
@@ -34,7 +33,8 @@ class SECParser:
                 if text_match:
                     return text_match.group(1)
                 return item
-        return None
+
+        raise ValueError("No 10-K document found in file")
 
     def parse(self) -> str:
         content = self._read_file()
