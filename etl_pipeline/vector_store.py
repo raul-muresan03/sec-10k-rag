@@ -18,13 +18,13 @@ def get_embedding_model():
     )
 
 def verify_and_create_index(index_name: str):
-    pc = Pinecone(api_key=settings.pinecone_api_key)
-    existing_indexes = [index.name for index in pc.list_indexes()]
+    pinecone = Pinecone(api_key=settings.pinecone_api_key)
+    existing_indexes = [index.name for index in pinecone.list_indexes()]
 
     if index_name not in existing_indexes:
         logger.info(f"Index '{index_name}' not found. Creating it...")
         try:
-            pc.create_index(
+            pinecone.create_index(
                 name=index_name,
                 dimension=settings.embedding_dimension,
                 metric="cosine",
@@ -41,7 +41,7 @@ def verify_and_create_index(index_name: str):
         logger.info(f"Index '{index_name}' exists.")
 
     try:
-        index = pc.Index(index_name)
+        index = pinecone.Index(index_name)
         stats = index.describe_index_stats()
         logger.info(f"Pinecone status — {stats['total_vector_count']} vectors.")
         return True
@@ -51,13 +51,13 @@ def verify_and_create_index(index_name: str):
 
 def delete_all_vectors(index_name=None):
     index_name = index_name or settings.pinecone_index_name
-    pc = Pinecone(api_key=settings.pinecone_api_key)
+    pinecone = Pinecone(api_key=settings.pinecone_api_key)
 
-    if index_name not in [index.name for index in pc.list_indexes()]:
+    if index_name not in [index.name for index in pinecone.list_indexes()]:
         logger.info(f"Index '{index_name}' not found. Nothing to delete.")
         return
 
-    index = pc.Index(index_name)
+    index = pinecone.Index(index_name)
     logger.info(f"Deleting all vectors from index '{index_name}'...")
     try:
         index.delete(delete_all=True)

@@ -10,11 +10,11 @@ def _is_na_answer(text):
     lowered = text.lower()
     return "information not available" in lowered or "comparative data not available" in lowered
 
-def _render_confidence(cs):
-    if cs >= 0.65:
+def _render_confidence(confidence_score):
+    if confidence_score >= 0.65:
         color = "green"
         label = "High"
-    elif cs >= 0.35:
+    elif confidence_score >= 0.35:
         color = "orange"
         label = "Medium"
     else:
@@ -23,8 +23,8 @@ def _render_confidence(cs):
     st.markdown(
         f"<div style='display:flex;align-items:center;gap:8px;margin-top:4px'>"
         f"<span style='font-size:0.8rem'>Confidence:</span>"
-        f"<progress value='{cs}' max='1' style='height:8px;flex:1;accent-color:{color}'></progress>"
-        f"<span style='font-size:0.8rem;color:{color};font-weight:bold'>{cs:.2f} ({label})</span>"
+        f"<progress value='{confidence_score}' max='1' style='height:8px;flex:1;accent-color:{color}'></progress>"
+        f"<span style='font-size:0.8rem;color:{color};font-weight:bold'>{confidence_score:.2f} ({label})</span>"
         f"</div>",
         unsafe_allow_html=True
     )
@@ -96,8 +96,8 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
         if "usage" in message and message["usage"]:
-            u = message["usage"]
-            st.caption(f"Estimated cost: **${u['estimated_cost']:.6f}** | Total Tokens: **{u['total_tokens']}** (Input tokens: {u['input_tokens']}, Output tokens: {u['output_tokens']})")
+            usage = message["usage"]
+            st.caption(f"Estimated cost: **${usage['estimated_cost']:.6f}** | Total Tokens: **{u['total_tokens']}** (Input tokens: {usage['input_tokens']}, Output tokens: {usage['output_tokens']})")
 
         if not _is_na_answer(message.get("content", "")):
             if "sources" in message and message["sources"]:
