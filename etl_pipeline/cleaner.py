@@ -289,7 +289,7 @@ class SECCleaner:
     def clean(self) -> str:
         content = self.clean_html(self.file_content)
 
-        with open("../data/parsed/clean_10k.txt", "w", encoding="utf-8") as f:
+        with open("../data/cleaned/clean_10k.txt", "w", encoding="utf-8") as f:
             f.write(content)
 
         return content
