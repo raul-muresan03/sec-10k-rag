@@ -11,9 +11,6 @@ class Chunker:
     """
 
     def __init__(self, text: str, ticker: str, year: str):
-        """
-        Initializes the Chunker with the full text and global metadata.
-        """
         self.text = text
         self.ticker = ticker
         self.year = year
@@ -99,9 +96,6 @@ class Chunker:
 
 
     def run(self) -> List[Dict[str, Any]]:
-        """
-        Main execution method. Orchestrates logical segmentation followed by physical chunking.
-        """
         logical_segments = self._create_logical_segments()
         physical_chunks = self._split_physically(logical_segments)
         return physical_chunks

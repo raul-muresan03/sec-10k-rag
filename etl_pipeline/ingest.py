@@ -1,6 +1,3 @@
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sec_edgar_downloader import Downloader
 from config import settings
 from logger import get_logger
@@ -12,11 +9,11 @@ def download_10k(ticker: str):
     if not email:
         raise ValueError("Email is missing in settings")
 
-    dl = Downloader("SecRagTool", email, "../data/raw")
+    downloader = Downloader("SecRagTool", email, "../data/raw")
 
     logger.info(f"[{ticker}] 10-K is downloading...")
 
-    dl.get("10-K", ticker, limit=1, after="2023-01-01")
+    downloader.get("10-K", ticker, limit=1, after="2023-01-01")
 
     logger.info(f"[{ticker}] Download successful!")
 

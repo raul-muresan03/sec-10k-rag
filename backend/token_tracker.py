@@ -129,8 +129,8 @@ def get_aggregated_stats() -> Dict[str, Any]:
         """
     )
 
-    query1 = cursor.fetchone()
-    total_cost, total_queries, total_input_tokens, total_output_tokens, total_tokens, average_cost_per_query = query1
+    aggregated_stats = cursor.fetchone()
+    total_cost, total_queries, total_input_tokens, total_output_tokens, total_tokens, average_cost_per_query = aggregated_stats
 
     cursor.execute(
         """
@@ -144,18 +144,18 @@ def get_aggregated_stats() -> Dict[str, Any]:
         """
     )
 
-    query2 = cursor.fetchall()
+    namespace_stats = cursor.fetchall()
 
     conn.close()
 
     usage_by_namespace = [
         {
-            "namespace": i[0],
-            "query_count": i[1],
-            "total_tokens": i[2],
-            "total_cost": i[3]
+            "namespace": namespace[0],
+            "query_count": namespace[1],
+            "total_tokens": namespace[2],
+            "total_cost": namespace[3]
         }
-        for i in query2
+        for namespace in namespace_stats
     ]
 
     return {

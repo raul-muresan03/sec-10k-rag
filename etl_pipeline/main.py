@@ -1,6 +1,4 @@
-import sys
 import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import glob
 import argparse
 from ingest import download_10k
@@ -15,7 +13,6 @@ logger = get_logger(__name__)
 def run_pipeline(ticker: str, year: str):
     logger.info(f"Starting pipeline for {ticker} ({year})...")
 
-    # 1. DOWNLOAD
     logger.info("Step 1: Downloading 10-K")
     download_10k(ticker)
 
@@ -29,7 +26,6 @@ def run_pipeline(ticker: str, year: str):
     raw_file_path = files[0]
     logger.info(f"File found: {raw_file_path}")
 
-    # 2. PARSE
     logger.info("Step 2: Parsing HTML")
     os.makedirs("../data/parsed", exist_ok=True)
 
@@ -37,7 +33,6 @@ def run_pipeline(ticker: str, year: str):
     clean_text = parser.parse()
     logger.info(f"Parsing complete. Text length: {len(clean_text)} chars")
 
-    # 3. CHUNK
     logger.info("Step 3: Chunking")
     chunker = Chunker(clean_text, ticker=ticker, year=year)
     chunks = chunker.run()
@@ -45,7 +40,6 @@ def run_pipeline(ticker: str, year: str):
 
     logger.info(f"Chunking complete. Generated {len(chunks)} chunks. Avg: {avg:.0f} chars")
 
-    # 4. UPLOAD TO PINECONE
     if chunks:
         logger.info("Step 4: Storing Vectors in Pinecone")
         upload_chunks_to_pinecone(chunks)
