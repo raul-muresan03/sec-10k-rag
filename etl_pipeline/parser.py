@@ -17,10 +17,6 @@ class SECParser:
         self.year = year
 
     def _read_file(self) -> str:
-        """
-        Reads the file content from disk.
-        Try UTF-8 first, fallback to Latin-1 if it fails.
-        """
         try:
             with open(self.file_path, "r", encoding="utf-8") as f:
                 return f.read()
@@ -294,10 +290,6 @@ class SECParser:
         return re.sub(pattern, replace_invalid, text_content)
 
     def parse(self) -> str:
-        """
-        Main method (Public API).
-        Orchestrates the flow: Read -> Extract 10-K -> Clean HTML -> Return Text.
-        """
         content = self._read_file()
         content = self._extract_10k_document(content)
         content = self._clean_html(content)

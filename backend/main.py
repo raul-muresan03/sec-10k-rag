@@ -34,9 +34,6 @@ class IngestRequest(BaseModel):
     year: str
 
 def check_pinecone_connection():
-    """
-    Checks the connection to Pinecone.
-    """
     try:
         index_name = engine.index_name
         stats = engine.vector_store.get_pinecone_index(index_name).describe_index_stats()
