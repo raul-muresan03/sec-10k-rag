@@ -1,7 +1,3 @@
-import sys
-import os
-import time
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from langchain_ollama import OllamaEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from langchain_core.documents import Document

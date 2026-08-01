@@ -1,6 +1,3 @@
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sec_edgar_downloader import Downloader
 from config import settings
 from logger import get_logger

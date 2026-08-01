@@ -1,9 +1,6 @@
 import streamlit as st
 import requests
 import time
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import settings
 
 def _is_na_answer(text):
@@ -97,7 +94,7 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
         if "usage" in message and message["usage"]:
             usage = message["usage"]
-            st.caption(f"Estimated cost: **${usage['estimated_cost']:.6f}** | Total Tokens: **{u['total_tokens']}** (Input tokens: {usage['input_tokens']}, Output tokens: {usage['output_tokens']})")
+            st.caption(f"Estimated cost: **${usage['estimated_cost']:.6f}** | Total Tokens: **{usage['total_tokens']}** (Input tokens: {usage['input_tokens']}, Output tokens: {usage['output_tokens']})")
 
         if not _is_na_answer(message.get("content", "")):
             if "sources" in message and message["sources"]:
