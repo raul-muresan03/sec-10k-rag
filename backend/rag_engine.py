@@ -162,7 +162,7 @@ class RAGEngine:
             else:
                 answer, retrieved_docs, cb = self._single_year_query(search_kwargs, llm, query)
 
-            sources = self._iterate_sources(retrieved_docs)
+            sources = self._build_sources(retrieved_docs)
 
             confidence_score = self._calculate_confidence(retrieved_docs)
             usage = log_query_usage(query, namespace, cb.input_tokens, cb.output_tokens, provider, model_name)
@@ -181,6 +181,13 @@ class RAGEngine:
                 "usage": None,
                 "confidence_score": 0.0
             }
+
+    def check_connection(self) -> bool:
+        try:
+            self.vector_store.get_pinecone_index(self.index_name).describe_index_stats()
+            return True
+        except Exception:
+            return False
 
 if __name__ == "__main__":
     engine = RAGEngine()

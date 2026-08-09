@@ -33,14 +33,6 @@ class IngestRequest(BaseModel):
     ticker: str
     year: str
 
-def check_pinecone_connection():
-    try:
-        index_name = engine.index_name
-        stats = engine.vector_store.get_pinecone_index(index_name).describe_index_stats()
-        return "connected"
-    except Exception:
-        return "disconnected"
-
 @app.post("/ask", response_model=QueryResponse)
 async def ask(request: QueryRequest):
     if not request.question.strip():
@@ -66,7 +58,7 @@ async def ask(request: QueryRequest):
 
 @app.get("/health")
 async def health(response: Response):
-    pinecone_status = check_pinecone_connection()
+    pinecone_status = "connected" if engine.check_connection() else "disconnected"
     google_api = "configured" if settings.google_api_key else "missing"
 
     is_healthy = pinecone_status == "connected" and google_api == "configured"
@@ -92,7 +84,7 @@ async def ingest(request: IngestRequest):
             response = await client.post(
                 "http://ingestion:8001/ingest",
                 json={"ticker": request.ticker, "year": request.year},
-                timeout = 120.0
+                timeout=120.0
             )
             if response.status_code == 200:
                 return response.json()
