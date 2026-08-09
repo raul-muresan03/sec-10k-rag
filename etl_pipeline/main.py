@@ -31,8 +31,8 @@ def _parse_10k(raw_file_path: str, ticker: str, year: str) -> str:
 
 
 def _clean_html(html_content: str) -> str:
-    os.makedirs("../data/cleaned", exist_ok=True)
     """Step 3: Clean extracted HTML into LLM-friendly text."""
+    os.makedirs("../data/cleaned", exist_ok=True)
     cleaner = SECCleaner(html_content)
     return cleaner.clean()
 

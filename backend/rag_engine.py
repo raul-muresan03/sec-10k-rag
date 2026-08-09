@@ -1,6 +1,5 @@
 from typing import List, Any, Optional
 from backend.llm_factory import LLMFactory
-from logger import get_logger
 from langchain_ollama import OllamaEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from langchain_classic.chains import create_retrieval_chain
@@ -8,11 +7,10 @@ from langchain_classic.chains.combine_documents import create_stuff_documents_ch
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.documents import Document
+from langchain_core.language_models import BaseChatModel
 from pydantic import Field
 from config import settings
 from backend.token_tracker import TokenTrackerCallback, log_query_usage
-
-logger = get_logger(__name__)
 
 SYSTEM_PROMPT = (
     "You are a Senior Financial Analyst expert in SEC filings (10-K, 10-Q). "
@@ -71,7 +69,7 @@ class RAGEngine:
             embedding=self.embeddings
         )
 
-    def _calculate_confidence(self, retrieved_docs) -> float:
+    def _calculate_confidence(self, retrieved_docs: list[Document]) -> float:
         if not retrieved_docs:
             return 0.0
 
@@ -101,69 +99,70 @@ class RAGEngine:
 
         return round(min(max(confidence, 0.0), 1.0), 4)
 
+    def _comparison_query(self, search_kwargs: dict[str, Any], compare_year: Optional[str], llm: BaseChatModel, query: str):
+        retriever1 = PineconeScoreRetriever(vector_store=self.vector_store, search_kwargs=search_kwargs)
+        filter2 = dict(search_kwargs.get("filter", {}))
+        filter2["year"] = compare_year
+        retriever2 = PineconeScoreRetriever(vector_store=self.vector_store, search_kwargs={"k": self.k, "filter": filter2})
+        prompt_template = ChatPromptTemplate.from_messages([("system", COMPARISON_SYSTEM_PROMPT), ("human", "{input}"), ])
+        question_answer_chain = create_stuff_documents_chain(llm, prompt_template)
+
+        cb = TokenTrackerCallback()
+        docs1 = retriever1._get_relevant_documents(query)
+        docs2 = retriever2._get_relevant_documents(query)
+        retrieved_docs = docs1 + docs2
+
+        answer = question_answer_chain.invoke({"input": query, "context": retrieved_docs}, config={"callbacks": [cb]})
+
+        return answer, retrieved_docs, cb
+
+    def _single_year_query(self, search_kwargs: dict[str, Any], llm: BaseChatModel, query: str):
+        retriever = PineconeScoreRetriever(vector_store=self.vector_store, search_kwargs=search_kwargs)
+        prompt_template = ChatPromptTemplate.from_messages([("system", SYSTEM_PROMPT), ("human", "{input}"),])
+        question_answer_chain = create_stuff_documents_chain(llm, prompt_template)
+        chain = create_retrieval_chain(retriever, question_answer_chain)
+        cb = TokenTrackerCallback()
+        response = chain.invoke({"input": query}, config={"callbacks": [cb]})
+        answer = response["answer"]
+        retrieved_docs = response.get("context", [])
+
+        return answer, retrieved_docs, cb
+
+    @staticmethod
+    def _build_sources(retrieved_docs: list[Document]) -> list[str]:
+        sources = []
+        for doc in retrieved_docs:
+            page = doc.metadata.get('page', 'N/A')
+            section = doc.metadata.get('section', 'Unknown Section')
+            ticker = doc.metadata.get('ticker', 'Unknown Ticker')
+            source_str = f"{ticker} - Page {page} ({section})"
+            if source_str not in sources:
+                sources.append(source_str)
+
+        return sources
+
+    def _build_search_kwargs(self, namespace: str) -> dict[str, Any]:
+        search_kwargs = {"k": self.k}
+        filter_dict = {}
+        if namespace and namespace != "default":
+            filter_dict["ticker"] = namespace
+
+        if filter_dict:
+            search_kwargs["filter"] = filter_dict
+
+        return search_kwargs
+
     def ask(self, query: str, namespace: str = "default", compare_year: Optional[str] = None, provider: str = "google", model_name: str = "gemini-3.1-flash"):
-        logger.info(f"Query | ns={namespace} model={provider}:{model_name}" + (f" compare_year={compare_year}" if compare_year else ""))
         try:
-            search_kwargs = {"k": self.k}
-            filter_dict = {}
-            if namespace and namespace != "default":
-                filter_dict["ticker"] = namespace
-
-            if filter_dict:
-                search_kwargs["filter"] = filter_dict
-
+            search_kwargs = self._build_search_kwargs(namespace)
             llm = LLMFactory.get_llm(provider, model_name)
 
             if compare_year:
-                retriever1 = PineconeScoreRetriever(
-                    vector_store=self.vector_store,
-                    search_kwargs=search_kwargs
-                )
-                filter2 = dict(filter_dict)
-                filter2["year"] = compare_year
-                retriever2 = PineconeScoreRetriever(
-                    vector_store=self.vector_store,
-                    search_kwargs={"k": self.k, "filter": filter2}
-                )
-                prompt_template = ChatPromptTemplate.from_messages([
-                    ("system", COMPARISON_SYSTEM_PROMPT),
-                    ("human", "{input}"),
-                ])
-                question_answer_chain = create_stuff_documents_chain(llm, prompt_template)
-
-                cb = TokenTrackerCallback()
-                docs1 = retriever1._get_relevant_documents(query)
-                docs2 = retriever2._get_relevant_documents(query)
-                retrieved_docs = docs1 + docs2
-
-                answer = question_answer_chain.invoke(
-                    {"input": query, "context": retrieved_docs},
-                    config={"callbacks": [cb]}
-                )
+                answer, retrieved_docs, cb = self._comparison_query(search_kwargs, compare_year, llm, query)
             else:
-                retriever = PineconeScoreRetriever(
-                    vector_store=self.vector_store,
-                    search_kwargs=search_kwargs
-                )
-                prompt_template = ChatPromptTemplate.from_messages([
-                    ("system", SYSTEM_PROMPT),
-                    ("human", "{input}"),
-                ])
-                question_answer_chain = create_stuff_documents_chain(llm, prompt_template)
-                chain = create_retrieval_chain(retriever, question_answer_chain)
-                cb = TokenTrackerCallback()
-                response = chain.invoke({"input": query}, config={"callbacks": [cb]})
-                answer = response["answer"]
-                retrieved_docs = response.get("context", [])
+                answer, retrieved_docs, cb = self._single_year_query(search_kwargs, llm, query)
 
-            sources = []
-            for doc in retrieved_docs:
-                page = doc.metadata.get('page', 'N/A')
-                section = doc.metadata.get('section', 'Unknown Section')
-                ticker = doc.metadata.get('ticker', 'Unknown Ticker')
-                source_str = f"{ticker} - Page {page} ({section})"
-                if source_str not in sources:
-                    sources.append(source_str)
+            sources = self._build_sources(retrieved_docs)
 
             confidence_score = self._calculate_confidence(retrieved_docs)
             usage = log_query_usage(query, namespace, cb.input_tokens, cb.output_tokens, provider, model_name)
@@ -182,6 +181,13 @@ class RAGEngine:
                 "usage": None,
                 "confidence_score": 0.0
             }
+
+    def check_connection(self) -> bool:
+        try:
+            self.vector_store.get_pinecone_index(self.index_name).describe_index_stats()
+            return True
+        except Exception:
+            return False
 
 if __name__ == "__main__":
     engine = RAGEngine()
