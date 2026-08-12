@@ -1,11 +1,6 @@
 __pycache__/
-*.py[cod]
 .venv/
 venv/
 .env
 data/
-sec_edgar_filings/
-.vscode/
-.idea/
 resurse/
-AGENTS.md
