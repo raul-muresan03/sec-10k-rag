@@ -65,7 +65,7 @@ class SECCleaner:
         for tag_name in ["script", "style", "header", "img", "a", "ix:header", "ix:hidden"]:
             for tag in soup.find_all(tag_name):
                 tag.decompose()
-        
+
         for hidden in soup.find_all(['div', 'span'], style=True):
             if 'display:none' in hidden['style'].lower().replace(" ", ""):
                 hidden.decompose()

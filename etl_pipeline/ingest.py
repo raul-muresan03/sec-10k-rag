@@ -1,21 +1,17 @@
+from dotenv import load_dotenv
+import os
 from sec_edgar_downloader import Downloader
-from config import settings
-from logger import get_logger
 
-logger = get_logger(__name__)
+load_dotenv()
 
-def download_10k(ticker: str):
-    email = settings.sec_api_email
+def download_10k(company_code: str):
+    email = os.getenv("SEC_API_EMAIL")
     if not email:
-        raise ValueError("Email is missing in settings")
+        print("Email is missing from .env file")
+    os.makedirs("../data", exist_ok=True)
+    downloader = Downloader("SEC RAG TOOL", email, "data/")
 
-    downloader = Downloader("SecRagTool", email, "../data/raw")
-
-    logger.info(f"[{ticker}] 10-K is downloading...")
-
-    downloader.get("10-K", ticker, limit=1, after="2023-01-01")
-
-    logger.info(f"[{ticker}] Download successful!")
+    downloader.get("10-K", company_code, limit=1)
 
 if __name__ == "__main__":
     download_10k("NVDA")
