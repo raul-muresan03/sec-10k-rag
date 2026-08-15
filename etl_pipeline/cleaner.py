@@ -2,7 +2,6 @@ import re
 import os
 from bs4 import BeautifulSoup
 
-
 #TODO - add [PAGE_N] and [SECTION_N] markers
 
 #TODO
@@ -138,17 +137,24 @@ def clean_10K(file_path: str) -> None:
         for tag in soup.find_all(['ix:nonnumeric', 'ix:nonfraction']):
             tag.unwrap()
 
-        cleaned_doc = soup.get_text(separator=" ", strip=True)
+        parts = []
+        for div in soup.find_all("div"):
+            if div.find("div"):
+                continue
+            text = div.get_text(separator=" ", strip=True)
+            if text:
+                parts.append(text)
 
-        cleaned_doc = _remove_empty_sections(cleaned_doc)
-        cleaned_doc = _remove_table_of_contents(cleaned_doc)
+        cleaned_doc = "\n\n".join(parts)
 
+        # cleaned_doc = _remove_empty_sections(cleaned_doc)
+        # cleaned_doc = _remove_table_of_contents(cleaned_doc)
 
         for placeholder, md_table in table_placeholders.items():
             cleaned_doc = cleaned_doc.replace(placeholder, "\n\n" + md_table + "\n\n")
 
-    with open("output_clean.txt", "w") as f:
+    with open("../data/output_cleaner.txt", "w") as f:
         f.write(cleaned_doc)
 
 if __name__ == "__main__":
-    clean_10K("output.txt")
+    clean_10K("../data/output_parser.txt")
