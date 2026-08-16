@@ -1,9 +1,9 @@
 from typing import List
 import requests
-from pprint import pprint
-import math
+from math import sqrt
+import json
 
-def get_similarity_score(first: List[float], second: List[float]) -> float:
+def _get_similarity_score(first: List[float], second: List[float]) -> float:
     if first is None or second is None:
         return -2
 
@@ -21,8 +21,8 @@ def get_similarity_score(first: List[float], second: List[float]) -> float:
     if magnitude_first == 0 or magnitude_second == 0:
         return -2
 
-    magnitude_first = math.sqrt(magnitude_first)
-    magnitude_second = math.sqrt(magnitude_second)
+    magnitude_first = sqrt(magnitude_first)
+    magnitude_second = sqrt(magnitude_second)
 
     cosine_similarity = dot_product / (magnitude_first * magnitude_second)
     return cosine_similarity
@@ -42,14 +42,15 @@ def _text_2_vector_embedding(text: str) -> List[float]:
         print(f"Error: {response.status_code}")
         return []
 
-def get_all_vector_embeddings(document: str) -> List[List[float]]:
+def _get_all_sentences(document: str) -> List[str]:
     sentences = []
     for s in document.split("\n\n"):
         if s.strip():
             sentences.append(s)
 
-    print(len(sentences))
+    return sentences
 
+def _get_all_vector_embeddings(sentences: List[str]) -> List[List[float]]:
     all_embeddings = []
     index = 1
     for sentence in sentences:
@@ -60,26 +61,38 @@ def get_all_vector_embeddings(document: str) -> List[List[float]]:
 
     return all_embeddings
 
-
-def chunk_10K(file_path: str) -> List[float]:
+def chunk_10K(file_path: str) -> List[str]:
     with open(file_path, "r") as f:
         document = f.read()
-        all_embeddings = get_all_vector_embeddings(document)
+        sentences = _get_all_sentences(document)
+        all_embeddings = _get_all_vector_embeddings(sentences)
+        with open("../data/all_embeddings.json", "w") as f2:
+            json.dump(all_embeddings, f2)
+
         similarity_scores = []
         for i in range(len(all_embeddings)):
             if i + 1 < len(all_embeddings):
-                score = get_similarity_score(all_embeddings[i], all_embeddings[i + 1])
+                score = _get_similarity_score(all_embeddings[i], all_embeddings[i + 1])
                 similarity_scores.append(score)
 
-    return similarity_scores
+    all_chunks = []
+    current_chunk = sentences[0]
+    for i in range(len(similarity_scores)):
+        if similarity_scores[i] >= 0.6:
+            current_chunk += " " + sentences[i + 1]
+        else:
+            all_chunks.append(current_chunk)
+            current_chunk = sentences[i + 1]
 
-
+    all_chunks.append(current_chunk)
+    return all_chunks
 
 if __name__ == "__main__":
-    similarity_scores = chunk_10K("../data/output_cleaner.txt")
-    print(f"similarity scores: {similarity_scores}")
+    all_chunks = chunk_10K("../data/output_cleaner.txt")
 
-# sample_text = "A total solar eclipse occurred at the Moon's descending node of orbit on Wednesday, 12 August 2026 with a magnitude of 1.0386. A solar eclipse occurs when the Moon passes between the Earth and the Sun, and totally or partly obscures the view of the Sun for a viewer on Earth. A total solar eclipse occurs when the Moon's apparent diameter is larger than the Sun's, blocking all direct sunlight. Totality occurs in a narrow path across Earth's surface, with the partial solar eclipse visible over a surrounding region thousands of kilometres wide. Because the eclipse occurred about 2.3 days after perigee (on 10 August 2026, at 11:18 UTC), the Moon's apparent diameter was visually extra-large."
-
-# all_embeddings = get_all_vector_embeddings(sample_text)
-# pprint(all_embeddings)
+    with open("../data/all_chunks.txt", "w") as f:
+        for chunk in all_chunks:
+            f.write(chunk)
+            f.write("\n\n")
+            f.write("=============================================================")
+            f.write("\n\n")
