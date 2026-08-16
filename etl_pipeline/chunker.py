@@ -3,7 +3,7 @@ import requests
 from math import sqrt
 import json
 
-def _get_similarity_score(first: List[float], second: List[float]) -> float:
+def get_similarity_score(first: List[float], second: List[float]) -> float:
     if first is None or second is None:
         return -2
 
@@ -27,7 +27,7 @@ def _get_similarity_score(first: List[float], second: List[float]) -> float:
     cosine_similarity = dot_product / (magnitude_first * magnitude_second)
     return cosine_similarity
 
-def _text_2_vector_embedding(text: str) -> List[float]:
+def text_2_vector_embedding(text: str) -> List[float]:
     url = "http://localhost:11434/api/embed"
     data = {
         "model": "nomic-embed-text",
@@ -54,7 +54,7 @@ def _get_all_vector_embeddings(sentences: List[str]) -> List[List[float]]:
     all_embeddings = []
     index = 1
     for sentence in sentences:
-        embedding = _text_2_vector_embedding(sentence)
+        embedding = text_2_vector_embedding(sentence)
         all_embeddings.append(embedding)
         print(f"Embedding {index} is done!")
         index = index + 1
@@ -72,7 +72,7 @@ def chunk_10K(file_path: str) -> List[str]:
         similarity_scores = []
         for i in range(len(all_embeddings)):
             if i + 1 < len(all_embeddings):
-                score = _get_similarity_score(all_embeddings[i], all_embeddings[i + 1])
+                score = get_similarity_score(all_embeddings[i], all_embeddings[i + 1])
                 similarity_scores.append(score)
 
     all_chunks = []
@@ -85,6 +85,11 @@ def chunk_10K(file_path: str) -> List[str]:
             current_chunk = sentences[i + 1]
 
     all_chunks.append(current_chunk)
+
+    chunk_embeddings = _get_all_vector_embeddings(all_chunks)
+    with open("../data/all_chunks_embeddings.json", "w") as f:
+        json.dump({"chunks": all_chunks, "embeddings": chunk_embeddings}, f)
+
     return all_chunks
 
 if __name__ == "__main__":
