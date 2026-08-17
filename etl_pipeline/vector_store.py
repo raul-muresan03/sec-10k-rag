@@ -1,6 +1,8 @@
 from typing import List, Tuple
-from chunker import text_2_vector_embedding, get_similarity_score, chunk_10K
+from chunker import text_2_vector_embedding, get_similarity_score
 import json
+
+prompt_cache = {}
 
 def get_most_similar_chunks(prompt: str, top_n: int) -> List[Tuple[str, float]]:
     with open("../data/all_chunks_embeddings.json") as f:
@@ -8,7 +10,12 @@ def get_most_similar_chunks(prompt: str, top_n: int) -> List[Tuple[str, float]]:
 
     chunks = data["chunks"]
     embeddings = data["embeddings"]
-    prompt_embedding = text_2_vector_embedding(prompt)
+    cleaned_prompt= prompt.strip().lower()
+
+    if cleaned_prompt in prompt_cache:
+        prompt_embedding = prompt_cache[cleaned_prompt]
+    else:
+        prompt_embedding = text_2_vector_embedding(cleaned_prompt)
 
     scores = []
     for i in range(len(chunks)):
