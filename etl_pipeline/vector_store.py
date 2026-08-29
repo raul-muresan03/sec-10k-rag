@@ -1,6 +1,7 @@
 from typing import List, Tuple
 from chunker import text_2_vector_embedding, get_similarity_score
 import json
+import time
 
 prompt_cache = {}
 
@@ -28,8 +29,20 @@ def get_most_similar_chunks(prompt: str, top_n: int) -> List[Tuple[str, float]]:
 
 
 if __name__ == "__main__":
+    start1 = time.time()
     result = get_most_similar_chunks("Who is the CEO in Nvidia?", 5)
-    for score, chunk in result:
-        print("Score:", score)
-        print(chunk)
-        print("-----------------------------")
+    end1 = time.time()
+    time1 = end1 - start1
+
+    start2 = time.time()
+    result = get_most_similar_chunks("Who is the CEO in Nvidia?", 5)
+    end2 = time.time()
+    time2 = end2 - start2
+
+    # for score, chunk in result:
+        # print("Score:", score)
+        # # print(chunk)
+        # print("-----------------------------")
+
+    print(f"Before prompt caching: {time1}")        # 2.197699546813965 s
+    print(f"After prompt caching: {time2}")         # 0.16060185432434082 s
