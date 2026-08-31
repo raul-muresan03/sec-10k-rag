@@ -11,9 +11,7 @@ def get_similarity_score(first: List[float], second: List[float]) -> float:
     magnitude_first = 0
     magnitude_second = 0
 
-    vector_size = len(first)
-
-    for i in range(vector_size):
+    for i in range(len(first)):
         dot_product += first[i] * second[i]
         magnitude_first += first[i] * first[i]
         magnitude_second += second[i] * second[i]
@@ -27,7 +25,7 @@ def get_similarity_score(first: List[float], second: List[float]) -> float:
     cosine_similarity = dot_product / (magnitude_first * magnitude_second)
     return cosine_similarity
 
-def text_2_vector_embedding(text: str) -> List[float]:
+def text_to_embedding(text: str) -> List[float]:
     url = "http://localhost:11434/api/embed"
     data = {
         "model": "nomic-embed-text",
@@ -42,30 +40,38 @@ def text_2_vector_embedding(text: str) -> List[float]:
         print(f"Error: {response.status_code}")
         return []
 
-def _get_all_sentences(document: str) -> List[str]:
-    sentences = []
+def _get_all_paragraphs(document: str) -> List[str]:
+    paragraphs = []
     for s in document.split("\n\n"):
         if s.strip():
-            sentences.append(s)
+            paragraphs.append(s)
 
-    return sentences
+    return paragraphs
 
-def _get_all_vector_embeddings(sentences: List[str]) -> List[List[float]]:
+def _get_all_vector_embeddings(paragraphs: List[str]) -> List[List[float]]:
     all_embeddings = []
     index = 1
-    for sentence in sentences:
-        embedding = text_2_vector_embedding(sentence)
+    for paragraph in paragraphs:
+        embedding = text_to_embedding(paragraph)
         all_embeddings.append(embedding)
         print(f"Embedding {index} is done!")
         index = index + 1
 
     return all_embeddings
 
+def _get_all_paragraphs_lengths(paragraphs: List[str]) -> List[int]:
+    lengths = []
+    for paragraph in paragraphs:
+        lengths.append(len(paragraph))
+
+    return lengths
+
 def chunk_10K(file_path: str) -> List[str]:
     with open(file_path, "r") as f:
         document = f.read()
-        sentences = _get_all_sentences(document)
-        all_embeddings = _get_all_vector_embeddings(sentences)
+        paragraphs = _get_all_paragraphs(document)
+        paragraphs_lengths = _get_all_paragraphs_lengths(paragraphs)
+        all_embeddings = _get_all_vector_embeddings(paragraphs)
         with open("../data/all_embeddings.json", "w") as f2:
             json.dump(all_embeddings, f2)
 
@@ -76,13 +82,16 @@ def chunk_10K(file_path: str) -> List[str]:
                 similarity_scores.append(score)
 
     all_chunks = []
-    current_chunk = sentences[0]
+    current_chunk = paragraphs[0]
+    current_chunk_length = paragraphs_lengths[0]
     for i in range(len(similarity_scores)):
-        if similarity_scores[i] >= 0.6:
-            current_chunk += " " + sentences[i + 1]
+        if similarity_scores[i] >= 0.6 and current_chunk_length < 10000:
+            current_chunk += " " + paragraphs[i + 1]
+            current_chunk_length += paragraphs_lengths[i + 1]
         else:
             all_chunks.append(current_chunk)
-            current_chunk = sentences[i + 1]
+            current_chunk = paragraphs[i + 1]
+            current_chunk_length = paragraphs_lengths[i + 1]
 
     all_chunks.append(current_chunk)
 
