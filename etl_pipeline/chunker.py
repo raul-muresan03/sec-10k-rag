@@ -42,19 +42,19 @@ def text_2_vector_embedding(text: str) -> List[float]:
         print(f"Error: {response.status_code}")
         return []
 
-def _get_all_sentences(document: str) -> List[str]:
-    sentences = []
+def _get_all_paragraphs(document: str) -> List[str]:
+    paragraphs = []
     for s in document.split("\n\n"):
         if s.strip():
-            sentences.append(s)
+            paragraphs.append(s)
 
-    return sentences
+    return paragraphs
 
-def _get_all_vector_embeddings(sentences: List[str]) -> List[List[float]]:
+def _get_all_vector_embeddings(paragraphs: List[str]) -> List[List[float]]:
     all_embeddings = []
     index = 1
-    for sentence in sentences:
-        embedding = text_2_vector_embedding(sentence)
+    for paragraph in paragraphs:
+        embedding = text_2_vector_embedding(paragraph)
         all_embeddings.append(embedding)
         print(f"Embedding {index} is done!")
         index = index + 1
@@ -64,8 +64,8 @@ def _get_all_vector_embeddings(sentences: List[str]) -> List[List[float]]:
 def chunk_10K(file_path: str) -> List[str]:
     with open(file_path, "r") as f:
         document = f.read()
-        sentences = _get_all_sentences(document)
-        all_embeddings = _get_all_vector_embeddings(sentences)
+        paragraphs = _get_all_paragraphs(document)
+        all_embeddings = _get_all_vector_embeddings(paragraphs)
         with open("../data/all_embeddings.json", "w") as f2:
             json.dump(all_embeddings, f2)
 
@@ -76,13 +76,13 @@ def chunk_10K(file_path: str) -> List[str]:
                 similarity_scores.append(score)
 
     all_chunks = []
-    current_chunk = sentences[0]
+    current_chunk = paragraphs[0]
     for i in range(len(similarity_scores)):
         if similarity_scores[i] >= 0.6:
-            current_chunk += " " + sentences[i + 1]
+            current_chunk += " " + paragraphs[i + 1]
         else:
             all_chunks.append(current_chunk)
-            current_chunk = sentences[i + 1]
+            current_chunk = paragraphs[i + 1]
 
     all_chunks.append(current_chunk)
 
