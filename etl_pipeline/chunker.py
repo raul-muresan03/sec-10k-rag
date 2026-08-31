@@ -61,10 +61,18 @@ def _get_all_vector_embeddings(paragraphs: List[str]) -> List[List[float]]:
 
     return all_embeddings
 
+def _get_all_paragraphs_lengths(paragraphs: List[str]) -> List[int]:
+    lengths = []
+    for paragraph in paragraphs:
+        lengths.append(len(paragraph))
+
+    return lengths
+
 def chunk_10K(file_path: str) -> List[str]:
     with open(file_path, "r") as f:
         document = f.read()
         paragraphs = _get_all_paragraphs(document)
+        paragraphs_lengths = _get_all_paragraphs_lengths(paragraphs)
         all_embeddings = _get_all_vector_embeddings(paragraphs)
         with open("../data/all_embeddings.json", "w") as f2:
             json.dump(all_embeddings, f2)
@@ -77,12 +85,15 @@ def chunk_10K(file_path: str) -> List[str]:
 
     all_chunks = []
     current_chunk = paragraphs[0]
+    current_chunk_length = paragraphs_lengths[0]
     for i in range(len(similarity_scores)):
-        if similarity_scores[i] >= 0.6:
+        if similarity_scores[i] >= 0.6 and current_chunk_length < 10000:
             current_chunk += " " + paragraphs[i + 1]
+            current_chunk_length += paragraphs_lengths[i + 1]
         else:
             all_chunks.append(current_chunk)
             current_chunk = paragraphs[i + 1]
+            current_chunk_length = paragraphs_lengths[i + 1]
 
     all_chunks.append(current_chunk)
 
