@@ -11,9 +11,7 @@ def get_similarity_score(first: List[float], second: List[float]) -> float:
     magnitude_first = 0
     magnitude_second = 0
 
-    vector_size = len(first)
-
-    for i in range(vector_size):
+    for i in range(len(first)):
         dot_product += first[i] * second[i]
         magnitude_first += first[i] * first[i]
         magnitude_second += second[i] * second[i]
@@ -27,7 +25,7 @@ def get_similarity_score(first: List[float], second: List[float]) -> float:
     cosine_similarity = dot_product / (magnitude_first * magnitude_second)
     return cosine_similarity
 
-def text_2_vector_embedding(text: str) -> List[float]:
+def text_to_embedding(text: str) -> List[float]:
     url = "http://localhost:11434/api/embed"
     data = {
         "model": "nomic-embed-text",
@@ -54,7 +52,7 @@ def _get_all_vector_embeddings(paragraphs: List[str]) -> List[List[float]]:
     all_embeddings = []
     index = 1
     for paragraph in paragraphs:
-        embedding = text_2_vector_embedding(paragraph)
+        embedding = text_to_embedding(paragraph)
         all_embeddings.append(embedding)
         print(f"Embedding {index} is done!")
         index = index + 1
