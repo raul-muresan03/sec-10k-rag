@@ -1,7 +1,10 @@
 from typing import List
+import os
 import requests
 from math import sqrt
 import json
+
+EMBEDDING_BATCH_SIZE = int(os.getenv("EMBEDDING_BATCH_SIZE", "512"))
 
 def get_similarity_score(first: List[float], second: List[float]) -> float:
     if first is None or second is None:
@@ -25,20 +28,26 @@ def get_similarity_score(first: List[float], second: List[float]) -> float:
     cosine_similarity = dot_product / (magnitude_first * magnitude_second)
     return cosine_similarity
 
-def text_to_embedding(text: str) -> List[float]:
+def paragraphs_to_embeddings(paragraphs: List[str]) -> List[List[float]]:
     url = "http://localhost:11434/api/embed"
     data = {
         "model": "nomic-embed-text",
-        "input": text
+        "input": paragraphs,
     }
 
     response = requests.post(url=url, json=data)
-    if response.status_code == 200:
-        data = response.json()
-        return data["embeddings"][0]
-    else:
-        print(f"Error: {response.status_code}")
-        return []
+    if response.status_code != 200:
+        raise RuntimeError(f"Embedding request failed with status {response.status_code}")
+
+    embeddings = response.json()["embeddings"]
+    if len(embeddings) != len(paragraphs):
+        raise RuntimeError("Embedding count does not match batch size")
+
+    return embeddings
+
+
+def text_to_embedding(paragraph: str) -> List[float]:
+    return paragraphs_to_embeddings([paragraph])[0]
 
 def _get_all_paragraphs(document: str) -> List[str]:
     paragraphs = []
@@ -50,12 +59,13 @@ def _get_all_paragraphs(document: str) -> List[str]:
 
 def _get_all_vector_embeddings(paragraphs: List[str]) -> List[List[float]]:
     all_embeddings = []
-    index = 1
-    for paragraph in paragraphs:
-        embedding = text_to_embedding(paragraph)
-        all_embeddings.append(embedding)
-        print(f"Embedding {index} is done!")
-        index = index + 1
+    batch: List[str] = []
+    for start in range(0, len(paragraphs), EMBEDDING_BATCH_SIZE):
+        batch = paragraphs[start : start + EMBEDDING_BATCH_SIZE]
+        batch_embeddings = paragraphs_to_embeddings(batch)
+        all_embeddings.extend(batch_embeddings)
+        end = start + len(batch)
+        print(f"Embeddings {start + 1}-{end} are done!")
 
     return all_embeddings
 
