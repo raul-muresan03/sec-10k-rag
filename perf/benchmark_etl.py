@@ -45,10 +45,10 @@ def benchmark_etl():
     total_chunk = end_time_chunk - start_time_chunk
     total_etl = end_time_etl - start_time_etl
 
-    print(f"Total parsing time: {total_parse}")
-    print(f"Total cleaning time: {total_clean}")
-    print(f"Total chunking time: {total_chunk}")
-    print(f"Total ETL time: {total_etl}")
+    print(f"Total parsing time: {total_parse:.2f}")
+    print(f"Total cleaning time: {total_clean:.2f}")
+    print(f"Total chunking time: {total_chunk:.2f}")
+    print(f"Total ETL time: {total_etl:.2f}")
 
 
 if __name__ == "__main__":
