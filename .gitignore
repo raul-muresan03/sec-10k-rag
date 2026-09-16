@@ -5,3 +5,4 @@ venv/
 data/
 resurse/
 *.txt
+!requirements-dev.txt
