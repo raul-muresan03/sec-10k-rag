@@ -16,6 +16,7 @@ def get_most_similar_chunks(prompt: str, top_n: int) -> List[Tuple[str, float]]:
         prompt_embedding = prompt_cache[cleaned_prompt]
     else:
         prompt_embedding = text_to_embedding(cleaned_prompt)
+        prompt_cache[cleaned_prompt] = prompt_embedding
 
     scores = []
     for i in range(len(chunks)):

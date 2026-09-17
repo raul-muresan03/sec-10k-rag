@@ -45,7 +45,7 @@ def test_clean_10k_requires_a_text_block(data_directory):
     source = data_directory / "parsed-without-text.txt"
     source.write_text("<html><body>No TEXT wrapper</body></html>")
 
-    with pytest.raises(AttributeError):
+    with pytest.raises(ValueError, match="No TEXT block found"):
         clean_10K(str(source))
 
     assert not (data_directory / "output_cleaner.txt").exists()

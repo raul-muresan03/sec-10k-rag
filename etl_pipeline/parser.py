@@ -6,6 +6,8 @@ def parse_10K(file_path: str) -> None:
     with open(file_path, 'r') as f:
         file = f.read()
         match = re.search(regex_10K_document, file)
+        if match is None:
+            raise ValueError("No document block found in submission")
         document_10K = match.group()
 
     with open("../data/output_parser.txt", "w") as f:
