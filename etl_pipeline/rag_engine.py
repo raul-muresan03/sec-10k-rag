@@ -1,4 +1,4 @@
-from vector_store import get_most_similar_chunks
+from etl_pipeline.vector_store import get_most_similar_chunks
 from typing import List, Tuple
 import requests
 

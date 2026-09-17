@@ -1,5 +1,5 @@
 from typing import List, Tuple
-from chunker import text_to_embedding, get_similarity_score
+from etl_pipeline.chunker import text_to_embedding, get_similarity_score
 import json
 
 prompt_cache = {}
