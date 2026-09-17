@@ -1,11 +1,13 @@
 from typing import List, Tuple
-from chunker import text_to_embedding, get_similarity_score
+from etl_pipeline.chunker import text_to_embedding, get_similarity_score
 import json
+
+import etl_pipeline
 
 prompt_cache = {}
 
-def get_most_similar_chunks(prompt: str, top_n: int) -> List[Tuple[str, float]]:
-    with open("../data/all_chunks_embeddings.json") as f:
+def get_most_similar_chunks(prompt: str, top_n: int) -> List[Tuple[float, str]]:
+    with open(etl_pipeline.DATA_DIR / "all_chunks_embeddings.json") as f:
         data = json.load(f)
 
     chunks = data["chunks"]

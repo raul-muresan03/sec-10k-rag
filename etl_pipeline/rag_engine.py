@@ -1,4 +1,4 @@
-from vector_store import get_most_similar_chunks
+from etl_pipeline.vector_store import get_most_similar_chunks
 from typing import List, Tuple
 import requests
 
@@ -13,7 +13,7 @@ SYSTEM_PROMPT = (
 )
 
 
-def get_llm_response(user_prompt: str, chunks: List[Tuple[str, float]], ollama_llm_model_name: str) -> str:
+def get_llm_response(user_prompt: str, chunks: List[Tuple[float, str]], ollama_llm_model_name: str) -> str:
     chunks_text: List[str] = []
     for _, text in chunks:
         chunks_text.append(text)
