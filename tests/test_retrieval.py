@@ -42,7 +42,6 @@ def test_retrieval_normalizes_prompt_before_embedding(data_directory, monkeypatc
     mock_embed.assert_called_once_with("nvidia revenue")
 
 
-@pytest.mark.xfail(strict=True, reason="Current retrieval does not save new prompt embeddings in prompt_cache")
 def test_retrieval_reuses_cached_prompt_embedding(data_directory):
     write_vector_store(data_directory)
 
