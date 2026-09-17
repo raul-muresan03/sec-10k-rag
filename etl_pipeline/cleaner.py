@@ -22,6 +22,8 @@ def clean_10K(file_path: str) -> None:
         cleaned_doc = f.read()
         pattern_text = r"<TEXT>[\s\S]*?</TEXT>"
         cleaned_doc = re.search(pattern_text, cleaned_doc)
+        if cleaned_doc is None:
+            raise ValueError("No TEXT block found in document")
         cleaned_doc = cleaned_doc.group()
 
         pattern_ix_header = r"<ix\:header>[\s\S]*?</ix\:header>"
