@@ -6,10 +6,10 @@ import etl_pipeline
 
 load_dotenv()
 
-def download_10k(company_code: str):
+def download_10k(company_code: str) -> None:
     email = os.getenv("SEC_API_EMAIL")
     if not email:
-        print("Email is missing from .env file")
+        raise RuntimeError("SEC_API_EMAIL is missing from .env file")
     etl_pipeline.DATA_DIR.mkdir(parents=True, exist_ok=True)
     downloader = Downloader("SEC RAG TOOL", email, str(etl_pipeline.DATA_DIR))
 

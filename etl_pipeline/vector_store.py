@@ -6,7 +6,7 @@ import etl_pipeline
 
 prompt_cache = {}
 
-def get_most_similar_chunks(prompt: str, top_n: int) -> List[Tuple[str, float]]:
+def get_most_similar_chunks(prompt: str, top_n: int) -> List[Tuple[float, str]]:
     with open(etl_pipeline.DATA_DIR / "all_chunks_embeddings.json") as f:
         data = json.load(f)
 
