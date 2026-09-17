@@ -5,6 +5,8 @@ from math import sqrt
 import json
 
 EMBEDDING_BATCH_SIZE = int(os.getenv("EMBEDDING_BATCH_SIZE", "512"))
+MAX_CHUNK_LENGTH = 10000
+CHUNK_SEPARATOR = " "
 
 def get_similarity_score(first: List[float], second: List[float]) -> float:
     if first is None or second is None:
@@ -79,7 +81,10 @@ def _get_all_paragraphs_lengths(paragraphs: List[str]) -> List[int]:
 def chunk_10K(file_path: str) -> List[str]:
     with open(file_path, "r") as f:
         document = f.read()
-        paragraphs = _get_all_paragraphs(document)
+        paragraphs = []
+        for paragraph in _get_all_paragraphs(document):
+            for start in range(0, len(paragraph), MAX_CHUNK_LENGTH):
+                paragraphs.append(paragraph[start:start + MAX_CHUNK_LENGTH])
         paragraphs_lengths = _get_all_paragraphs_lengths(paragraphs)
         all_embeddings = _get_all_vector_embeddings(paragraphs)
         with open("../data/all_embeddings.json", "w") as f2:
@@ -100,13 +105,11 @@ def chunk_10K(file_path: str) -> List[str]:
     current_chunk = paragraphs[0]
     current_chunk_length = paragraphs_lengths[0]
     for i in range(len(similarity_scores)):
-        next_paragraph_length = paragraphs_lengths[i + 1]
-        fits_chunk_limit = False
-        if current_chunk_length + next_paragraph_length <= 10000:
-            fits_chunk_limit = True
+        separator_length = len(CHUNK_SEPARATOR)
+        fits_chunk_limit = current_chunk_length + separator_length + paragraphs_lengths[i + 1] <= MAX_CHUNK_LENGTH
         if similarity_scores[i] >= 0.6 and fits_chunk_limit:
-            current_chunk += " " + paragraphs[i + 1]
-            current_chunk_length += next_paragraph_length
+            current_chunk += CHUNK_SEPARATOR + paragraphs[i + 1]
+            current_chunk_length += separator_length + paragraphs_lengths[i + 1]
         else:
             all_chunks.append(current_chunk)
             current_chunk = paragraphs[i + 1]
