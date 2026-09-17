@@ -4,6 +4,8 @@ import requests
 from math import sqrt
 import json
 
+import etl_pipeline
+
 EMBEDDING_BATCH_SIZE = int(os.getenv("EMBEDDING_BATCH_SIZE", "512"))
 MAX_CHUNK_LENGTH = 10000
 CHUNK_SEPARATOR = " "
@@ -87,7 +89,7 @@ def chunk_10K(file_path: str) -> List[str]:
                 paragraphs.append(paragraph[start:start + MAX_CHUNK_LENGTH])
         paragraphs_lengths = _get_all_paragraphs_lengths(paragraphs)
         all_embeddings = _get_all_vector_embeddings(paragraphs)
-        with open("../data/all_embeddings.json", "w") as f2:
+        with open(etl_pipeline.DATA_DIR / "all_embeddings.json", "w") as f2:
             json.dump(all_embeddings, f2)
 
         similarity_scores = []
@@ -98,7 +100,7 @@ def chunk_10K(file_path: str) -> List[str]:
 
     all_chunks = []
     if not paragraphs:
-        with open("../data/all_chunks_embeddings.json", "w") as f:
+        with open(etl_pipeline.DATA_DIR / "all_chunks_embeddings.json", "w") as f:
             json.dump({"chunks": [], "embeddings": []}, f)
         return all_chunks
 
@@ -118,15 +120,15 @@ def chunk_10K(file_path: str) -> List[str]:
     all_chunks.append(current_chunk)
 
     chunk_embeddings = _get_all_vector_embeddings(all_chunks)
-    with open("../data/all_chunks_embeddings.json", "w") as f:
+    with open(etl_pipeline.DATA_DIR / "all_chunks_embeddings.json", "w") as f:
         json.dump({"chunks": all_chunks, "embeddings": chunk_embeddings}, f)
 
     return all_chunks
 
 if __name__ == "__main__":
-    all_chunks = chunk_10K("../data/output_cleaner.txt")
+    all_chunks = chunk_10K(str(etl_pipeline.DATA_DIR / "output_cleaner.txt"))
 
-    with open("../data/all_chunks.txt", "w") as f:
+    with open(etl_pipeline.DATA_DIR / "all_chunks.txt", "w") as f:
         for chunk in all_chunks:
             f.write(chunk)
             f.write("\n\n")

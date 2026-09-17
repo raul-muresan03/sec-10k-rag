@@ -2,6 +2,8 @@ import re
 import os
 from bs4 import BeautifulSoup
 
+import etl_pipeline
+
 #TODO - add [PAGE_N] and [SECTION_N] markers
 
 #TODO
@@ -155,8 +157,8 @@ def clean_10K(file_path: str) -> None:
         for placeholder, md_table in table_placeholders.items():
             cleaned_doc = cleaned_doc.replace(placeholder, "\n\n" + md_table + "\n\n")
 
-    with open("../data/output_cleaner.txt", "w") as f:
+    with open(etl_pipeline.DATA_DIR / "output_cleaner.txt", "w") as f:
         f.write(cleaned_doc)
 
 if __name__ == "__main__":
-    clean_10K("../data/output_parser.txt")
+    clean_10K(str(etl_pipeline.DATA_DIR / "output_parser.txt"))
