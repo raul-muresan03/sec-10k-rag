@@ -78,7 +78,6 @@ def test_chunk_10k_groups_similar_adjacent_paragraphs(data_directory, monkeypatc
     assert chunk_data["embeddings"] == [[1.0, 0.0], [0.0, 1.0]]
 
 
-@pytest.mark.xfail(strict=True, reason="Current chunker can exceed the 10,000 character limit")
 def test_chunk_10k_does_not_exceed_character_limit(data_directory, monkeypatch):
     first = "a" * 6_000
     second = "b" * 6_000
@@ -95,7 +94,6 @@ def test_chunk_10k_does_not_exceed_character_limit(data_directory, monkeypatch):
     assert all(len(chunk) <= 10_000 for chunk in chunks)
 
 
-@pytest.mark.xfail(strict=True, reason="Current chunker raises IndexError for empty documents")
 def test_chunk_10k_returns_empty_list_for_empty_document(data_directory, monkeypatch):
     source = data_directory / "empty.txt"
     source.write_text("")

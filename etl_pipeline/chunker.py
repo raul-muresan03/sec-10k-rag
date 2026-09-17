@@ -92,12 +92,21 @@ def chunk_10K(file_path: str) -> List[str]:
                 similarity_scores.append(score)
 
     all_chunks = []
+    if not paragraphs:
+        with open("../data/all_chunks_embeddings.json", "w") as f:
+            json.dump({"chunks": [], "embeddings": []}, f)
+        return all_chunks
+
     current_chunk = paragraphs[0]
     current_chunk_length = paragraphs_lengths[0]
     for i in range(len(similarity_scores)):
-        if similarity_scores[i] >= 0.6 and current_chunk_length < 10000:
+        next_paragraph_length = paragraphs_lengths[i + 1]
+        fits_chunk_limit = False
+        if current_chunk_length + next_paragraph_length <= 10000:
+            fits_chunk_limit = True
+        if similarity_scores[i] >= 0.6 and fits_chunk_limit:
             current_chunk += " " + paragraphs[i + 1]
-            current_chunk_length += paragraphs_lengths[i + 1]
+            current_chunk_length += next_paragraph_length
         else:
             all_chunks.append(current_chunk)
             current_chunk = paragraphs[i + 1]
