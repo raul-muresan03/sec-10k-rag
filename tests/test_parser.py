@@ -46,7 +46,7 @@ def test_parse_10k_requires_a_document_block(data_directory):
     source = data_directory / "invalid-submission.txt"
     source.write_text("submission without a DOCUMENT block")
 
-    with pytest.raises(AttributeError):
+    with pytest.raises(ValueError, match="No document block found"):
         parse_10K(str(source))
 
     assert not (data_directory / "output_parser.txt").exists()
