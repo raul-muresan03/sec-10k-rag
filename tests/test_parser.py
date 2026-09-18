@@ -5,15 +5,15 @@ from tests.support import NVIDIA_PARSED_10K
 from etl_pipeline.parser import parse_10K
 
 
-def test_parse_10k_extracts_first_document_body(data_directory):
+def test_parse_10k_selects_10k_when_exhibit_comes_first(data_directory):
     submission = """submission header
-<DOCUMENT>
-<TYPE>10-K
-<TEXT>annual report</TEXT>
-</DOCUMENT>
 <DOCUMENT>
 <TYPE>EX-99
 <TEXT>exhibit</TEXT>
+</DOCUMENT>
+<DOCUMENT>
+<TYPE>10-K
+<TEXT>annual report</TEXT>
 </DOCUMENT>
 """
     source = data_directory / "submission.txt"
@@ -47,6 +47,21 @@ def test_parse_10k_requires_a_document_block(data_directory):
     source.write_text("submission without a DOCUMENT block")
 
     with pytest.raises(ValueError, match="No document block found"):
+        parse_10K(str(source))
+
+    assert not (data_directory / "output_parser.txt").exists()
+
+
+def test_parse_10k_requires_a_10k_document(data_directory):
+    submission = """<DOCUMENT>
+<TYPE>EX-99
+<TEXT>exhibit</TEXT>
+</DOCUMENT>
+"""
+    source = data_directory / "submission-without-10k.txt"
+    source.write_text(submission)
+
+    with pytest.raises(ValueError, match="No 10-K document found"):
         parse_10K(str(source))
 
     assert not (data_directory / "output_parser.txt").exists()
