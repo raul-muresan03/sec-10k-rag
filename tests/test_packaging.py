@@ -10,7 +10,8 @@ def test_package_imports_from_project_root():
             sys.executable,
             "-c",
             "import etl_pipeline.parser, etl_pipeline.cleaner, etl_pipeline.chunker, "
-            "etl_pipeline.vector_store, etl_pipeline.rag_engine, etl_pipeline.ingest",
+            "etl_pipeline.vector_store, etl_pipeline.rag_engine, etl_pipeline.ingest, "
+            "etl_pipeline.pipeline",
         ],
         cwd=PROJECT_ROOT,
         capture_output=True,
