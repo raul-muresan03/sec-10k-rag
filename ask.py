@@ -1,5 +1,6 @@
 import argparse
-from datetime import date
+from datetime import date, datetime, timezone
+import json
 import time
 
 import etl_pipeline
@@ -10,6 +11,17 @@ from etl_pipeline.vector_store import get_most_similar_chunks
 
 DEFAULT_MODEL = "gemma3:1b"
 DEFAULT_TOP_N = 5
+QUERY_LOG_FILENAME = "query_log.jsonl"
+
+
+def _append_query_log(record: dict) -> None:
+    log_path = etl_pipeline.DATA_DIR / QUERY_LOG_FILENAME
+    try:
+        with log_path.open("a") as log:
+            log.write(json.dumps(record) + "\n")
+    except OSError as error:
+        print(f"Warning: query could not be logged: {error}")
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Ask a question about the indexed SEC filing.")
@@ -45,10 +57,28 @@ def main() -> None:
 
     print(f"Generating an answer with {args.model}...", flush=True)
     generation_start = time.perf_counter()
-    answer = get_llm_response(args.question, chunks, args.model)
+    answer, ollama_metrics = get_llm_response(args.question, chunks, args.model)
     generation_end = time.perf_counter()
     generation_seconds = generation_end - generation_start
     print(f"Generation completed in {generation_seconds:.2f}s.")
+
+    _append_query_log(
+        {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "ticker": ticker,
+            "filing_year": args.year,
+            "question": args.question,
+            "answer": answer,
+            "model": args.model,
+            "chunks": [{"score": score, "text": text} for score, text in chunks],
+            "latency_seconds": {
+                "retrieval": retrieval_seconds,
+                "generation": generation_seconds,
+                "total": retrieval_seconds + generation_seconds,
+            },
+            "ollama": ollama_metrics,
+        }
+    )
 
     print("\nAnswer:")
     print(answer)

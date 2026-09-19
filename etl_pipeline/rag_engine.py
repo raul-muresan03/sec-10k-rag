@@ -12,8 +12,21 @@ SYSTEM_PROMPT = (
     "\n\n"
 )
 
+OLLAMA_METRIC_FIELDS = (
+    "total_duration",
+    "load_duration",
+    "prompt_eval_count",
+    "prompt_eval_duration",
+    "eval_count",
+    "eval_duration",
+)
 
-def get_llm_response(user_prompt: str, chunks: List[Tuple[float, str]], ollama_llm_model_name: str) -> str:
+
+def get_llm_response(
+    user_prompt: str,
+    chunks: List[Tuple[float, str]],
+    ollama_llm_model_name: str,
+) -> Tuple[str, dict]:
     chunks_text: List[str] = []
     for _, text in chunks:
         chunks_text.append(text)
@@ -30,13 +43,18 @@ def get_llm_response(user_prompt: str, chunks: List[Tuple[float, str]], ollama_l
     response = requests.post(url=url, json=data)
     if response.status_code == 200:
         llm_response = response.json()
-        return llm_response.get("response")
+        metrics = {
+            field: llm_response[field]
+            for field in OLLAMA_METRIC_FIELDS
+            if field in llm_response
+        }
+        return llm_response.get("response", ""), metrics
     else:
         print(f"Error: {response.status_code}")
-        return "Error"
+        return "Error", {}
 
 if __name__ == "__main__":
     user_prompt = "Who is the CEO of NVIDIA?"
     relevant_chunks = get_most_similar_chunks(user_prompt, 5)
-    response = get_llm_response(user_prompt, relevant_chunks, "qwen3.5:4b")
+    response, _ = get_llm_response(user_prompt, relevant_chunks, "gemma3:1b")
     print(response)
