@@ -8,7 +8,7 @@ This repository is intentionally small and dependency-light. It does not use a v
 
 Implemented:
 
-- Download the latest 10-K for a ticker with `sec-edgar-downloader`
+- Download the newest 10-K filed in a requested year with `sec-edgar-downloader`
 - Extract a document block from an SEC submission
 - Remove hidden and noisy HTML and convert tables to Markdown-like text
 - Build semantic chunks from adjacent paragraphs
@@ -17,6 +17,7 @@ Implemented:
 - Retrieve chunks with brute-force cosine similarity
 - Generate an answer with a local Ollama model
 - Run download, indexing, retrieval, and generation from `ask.py`
+- Log questions, answers, retrieved chunks, latency, and Ollama metrics as JSONL
 
 Not implemented:
 
@@ -125,6 +126,10 @@ python3 ask.py --ticker NVDA --year 2026 --top-n 3 --model gemma3:1b "What risks
 The CLI prints ETL progress when rebuilding, the vector-store path, retrieval time, generation time, and final
 answer. The default values are `--top-n 5` and `--model gemma3:1b`.
 
+Each completed query appends one record to `data/query_log.jsonl`. Records include the ticker, filing year,
+question, answer, model, retrieved chunk text and scores, retrieval and generation latency, and the token counts and
+durations returned by Ollama. Ollama duration fields are stored unchanged in nanoseconds.
+
 ## Generated Data
 
 | File | Purpose |
@@ -135,6 +140,7 @@ answer. The default values are `--top-n 5` and `--model gemma3:1b`.
 | `data/all_embeddings.json` | Intermediate paragraph embeddings |
 | `data/all_chunks_embeddings.json` | Final chunk text and embeddings used for retrieval |
 | `data/active_accession.txt` | SEC accession identifying the active index |
+| `data/query_log.jsonl` | Append-only query, answer, retrieval, latency, and Ollama metrics |
 | `data/all_chunks.txt` | Human-readable chunk dump produced by the chunker module command |
 
 The parser, cleaner, and chunker outputs are overwritten by later runs. Downloaded SEC submissions remain in their

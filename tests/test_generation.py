@@ -6,17 +6,33 @@ from etl_pipeline import rag_engine
 
 def test_generation_sends_question_context_and_model_to_ollama():
     response = Mock(status_code=200)
-    response.json.return_value = {"response": "NVIDIA evidence-based answer"}
+    response.json.return_value = {
+        "response": "NVIDIA evidence-based answer",
+        "total_duration": 2_000_000_000,
+        "load_duration": 100_000_000,
+        "prompt_eval_count": 100,
+        "prompt_eval_duration": 500_000_000,
+        "eval_count": 20,
+        "eval_duration": 1_400_000_000,
+    }
     chunks: Any = [(0.95, "First evidence"), (0.80, "Second evidence")]
 
     with patch.object(rag_engine.requests, "post", return_value=response) as post:
-        result = rag_engine.get_llm_response("What happened?", chunks, "qwen3.5:4b")
+        answer, metrics = rag_engine.get_llm_response("What happened?", chunks, "gemma3:1b")
 
-    assert result == "NVIDIA evidence-based answer"
+    assert answer == "NVIDIA evidence-based answer"
+    assert metrics == {
+        "total_duration": 2_000_000_000,
+        "load_duration": 100_000_000,
+        "prompt_eval_count": 100,
+        "prompt_eval_duration": 500_000_000,
+        "eval_count": 20,
+        "eval_duration": 1_400_000_000,
+    }
     post.assert_called_once()
     payload = post.call_args.kwargs["json"]
     assert post.call_args.kwargs["url"] == "http://localhost:11434/api/generate"
-    assert payload["model"] == "qwen3.5:4b"
+    assert payload["model"] == "gemma3:1b"
     assert payload["stream"] is False
     assert "First evidence\nSecond evidence" in payload["prompt"]
     assert "What happened?" in payload["prompt"]
@@ -42,7 +58,7 @@ def test_generation_returns_error_for_failed_ollama_request():
     with patch.object(rag_engine.requests, "post", return_value=response):
         result = rag_engine.get_llm_response("question", chunks, "model")
 
-    assert result == "Error"
+    assert result == ("Error", {})
 
 
 def test_system_prompt_requires_abstention_and_concise_answers():

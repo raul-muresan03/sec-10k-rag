@@ -1,3 +1,4 @@
+import json
 import sys
 from unittest.mock import Mock
 
@@ -21,9 +22,10 @@ def test_main_retrieves_chunks_and_generates_answer(data_directory, monkeypatch,
     create_vector_store(data_directory)
     chunks = [(0.95, "relevant evidence")]
     retrieve = Mock(return_value=chunks)
-    generate = Mock(return_value="Grounded answer")
+    generate = Mock(return_value=("Grounded answer", {"eval_count": 12}))
     monkeypatch.setattr(ask, "get_most_similar_chunks", retrieve)
     monkeypatch.setattr(ask, "get_llm_response", generate)
+    monkeypatch.setattr(ask.time, "perf_counter", Mock(side_effect=[1.0, 2.0, 3.0, 5.0]))
     monkeypatch.setattr(
         sys,
         "argv",
@@ -38,12 +40,41 @@ def test_main_retrieves_chunks_and_generates_answer(data_directory, monkeypatch,
     output = capsys.readouterr().out
     assert "Retrieved 1 chunks" in output
     assert "Grounded answer" in output
+    record = json.loads((data_directory / ask.QUERY_LOG_FILENAME).read_text())
+    assert record["timestamp"].endswith("+00:00")
+    assert record["ticker"] == "NVDA"
+    assert record["filing_year"] == 2026
+    assert record["question"] == "What happened?"
+    assert record["answer"] == "Grounded answer"
+    assert record["model"] == ask.DEFAULT_MODEL
+    assert record["chunks"] == [{"score": 0.95, "text": "relevant evidence"}]
+    assert record["latency_seconds"] == {"retrieval": 1.0, "generation": 2.0, "total": 3.0}
+    assert record["ollama"] == {"eval_count": 12}
+
+
+def test_query_log_appends_one_json_object_per_line(data_directory):
+    ask._append_query_log({"question": "first"})
+    ask._append_query_log({"question": "second"})
+
+    lines = (data_directory / ask.QUERY_LOG_FILENAME).read_text().splitlines()
+    assert [json.loads(line) for line in lines] == [
+        {"question": "first"},
+        {"question": "second"},
+    ]
+
+
+def test_query_log_failure_warns_without_raising(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(ask.etl_pipeline, "DATA_DIR", tmp_path / "missing")
+
+    ask._append_query_log({"question": "still answered"})
+
+    assert "Warning: query could not be logged" in capsys.readouterr().out
 
 
 def test_main_accepts_retrieval_and_model_options(data_directory, monkeypatch, ensure_index):
     create_vector_store(data_directory)
     retrieve = Mock(return_value=[])
-    generate = Mock(return_value="answer")
+    generate = Mock(return_value=("answer", {}))
     monkeypatch.setattr(ask, "get_most_similar_chunks", retrieve)
     monkeypatch.setattr(ask, "get_llm_response", generate)
     monkeypatch.setattr(
