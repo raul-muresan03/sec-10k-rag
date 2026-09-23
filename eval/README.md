@@ -97,3 +97,25 @@ final check rather than tuning against it.
 Each selected ticker/year was downloaded through the current ingestion code,
 and its SEC submission header confirms form `10-K` and the filing year.
 See [the inspection notes](inspection.md) for parser and cleaner findings.
+
+## Running the evaluator
+
+Run a four-question dev pilot (the first four dev questions are NVIDIA):
+
+```sh
+venv/bin/python -m eval.run_eval --split dev --limit 4
+```
+
+After inspecting the pilot output, run the full dev split:
+
+```sh
+venv/bin/python -m eval.run_eval --split dev
+```
+
+The runner indexes each ticker/year once per run, then records retrieved chunks,
+generated answers, evidence matches, retrieval/generation latency, and Ollama
+timing counters. It writes a JSONL record per question and a JSON summary under
+`data/eval-runs/`. The summary reports indexing time separately from per-query
+retrieval and generation time. Override the defaults with `--top-n`, `--model`,
+`--questions`, and `--limit`. Use `--split test` only for a final check after
+dev-based tuning.
