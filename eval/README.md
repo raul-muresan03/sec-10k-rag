@@ -61,9 +61,9 @@ audit will record the actual structure and any parser data loss.
 - Filing: `JPM`, filing year 2023; industry: financial services; layout: modern.
 - Rationale: adds a regulated financial company with dense tables and linked disclosures.
 
-### EXXON MOBIL CORP (XOM)
+### CHEVRON CORP (CVX)
 
-- Filing: `XOM`, filing year 2019; industry: energy; layout: transitional.
+- Filing: `CVX`, filing year 2019; industry: energy; layout: transitional.
 - Rationale: adds an asset-heavy company with commodity, reserves, and segment disclosures.
 
 ### Walmart Inc. (WMT)
@@ -89,6 +89,6 @@ full-document search during manual verification.
 
 ## Verification
 
-SEC submissions data confirms a `10-K` in each selected filing year. The
-next task will download and inspect the filings selected by the current
-year-based ingestion code. Local files and their contents are not yet verified.
+Each selected ticker/year was downloaded through the current ingestion code,
+and its SEC submission header confirms form `10-K` and the filing year.
+See [the inspection notes](inspection.md) for parser and cleaner findings.
