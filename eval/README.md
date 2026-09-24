@@ -3,6 +3,8 @@
 This directory defines the source material for the first evaluation set.
 Each filing is selected by ticker and SEC filing year, not fiscal year. The
 current ingestion downloads the newest non-amended `10-K` filed in that year.
+The [v1 corpus manifest](corpus_manifest.v1.json) records the exact submissions
+used to create the evaluation set.
 
 ## Selection Rules
 
@@ -73,7 +75,7 @@ audit will record the actual structure and any parser data loss.
 
 ## Evaluation Target
 
-The [draft evaluation questions](questions.jsonl) contain 40 records,
+The [evaluation questions](questions.jsonl) contain 40 records,
 four per filing (24 dev, 16 test):
 
 | Question type | Target |
@@ -84,19 +86,29 @@ four per filing (24 dev, 16 test):
 | No-answer | 10 |
 | **Total** | **40** |
 
-Each filing will have one question of each type. No-answer cases require a
-full-document search during manual verification. These questions and answers
-were drafted with AI assistance. Their quoted evidence was matched to both
-the selected SEC document and cleaned text, but they are **not yet a verified
-gold set**: a human must confirm each answer, especially no-answer cases and
-numeric values. Use dev to improve the application; reserve test for the
-final check rather than tuning against it.
+Each filing has one question of each type. The questions and answers were
+drafted with AI assistance; their quoted evidence was matched to both the
+selected SEC document and cleaned text. The project owner has reviewed the
+answers, including numeric values and no-answer labels. Use dev to improve
+the application; reserve test for the final check rather than tuning against it.
 
 ## Verification
 
 Each selected ticker/year was downloaded through the current ingestion code,
 and its SEC submission header confirms form `10-K` and the filing year.
 See [the inspection notes](inspection.md) for parser and cleaner findings.
+
+## Corpus manifest
+
+`corpus_manifest.v1.json` identifies the ten submissions behind `questions.jsonl`.
+Each entry records the ticker, SEC filing year, split, accession, repository-relative
+file path, SEC URL, and SHA-256 of the downloaded `full-submission.txt` bytes.
+The files under `data/` are local and are not committed. To verify one after
+downloading it, run `sha256sum` on its `path` and compare with its `sha256`.
+
+The manifest has version `1`. The runner still selects by ticker and year; it
+does not check the accession or hash automatically. Verify them before comparing
+runs made from separately downloaded filings.
 
 ## Running the evaluator
 
