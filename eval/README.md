@@ -131,3 +131,23 @@ timing counters. It writes a JSONL record per question and a JSON summary under
 retrieval and generation time. Override the defaults with `--top-n`, `--model`,
 `--questions`, and `--limit`. Use `--split test` only for a final check after
 dev-based tuning.
+
+Evidence hits require the quoted passage to appear in a retrieved chunk after
+case and whitespace normalization; this is a strict text-match proxy, not a
+semantic relevance or answer-correctness score. For example, the Starbucks
+2019 numeric dev result retrieves a table with 2019 Americas operating income
+of $3,782.8 million, but its quoted evidence does not match exactly. The model
+answered $3,485.2 (the 2018 column value), so that answer is still incorrect.
+Review such table and multi-hop cases manually before interpreting hit rates.
+
+Automatic abstention scoring recognizes the complete response "Information not
+available in the provided context" or "Information not found in the provided
+context" (ignoring case, whitespace, and trailing periods/exclamation marks).
+Other refusal wording requires manual review. The saved results and summary
+reflect the scoring rules at the time of that run; changing the evaluator does
+not update earlier JSONL files or summaries.
+
+Rescoring the saved dev baseline `20260923T125212753976Z-dev.jsonl` recognizes
+6/6 no-answer abstentions instead of the original 5/6, with 0/18 false
+abstentions. Strict evidence hit@5 remains 15/18. The ignored baseline files
+have not been rewritten.
