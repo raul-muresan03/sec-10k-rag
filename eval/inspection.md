@@ -48,19 +48,18 @@ nested or empty tables can account for differences.
   occurs five times. Table-of-contents links lose their text; check the
   financial row and its footnote directly before using a numeric answer.
 
-### MSFT 2018 — blocked for free-text questions
+### ADBE 2018 — usable, check repeated headers
 
-- **Headings:** Item 1 and Item 7 are present in the source, but are not
-  preserved as standalone headings in the cleaned text; note references
-  survive inside tables.
-- **Tables / footnotes:** 246 HTML tables and 244 rendered tables; `<sup>`
-  markup is flattened. These tables do not compensate for missing narrative.
-- **Repetition / loss:** Many source paragraphs use `<p>` outside terminal
-  `<div>` elements. The source paragraph beginning "This report includes
-  estimates, projections, statements relating to our business plans" and the
-  phrase "Microsoft is a technology company" are absent from cleaned text.
-  This follows from the cleaner extracting text only from terminal `<div>`s.
-  Do not write gold narrative questions from the missing text yet.
+- **Headings:** Item 7 and numbered notes are visible in the cleaned text;
+  subscription, Creative Cloud and Digital Experience passages remain.
+- **Tables / footnotes:** 201 HTML tables and 95 rendered tables; five cells
+  use `rowspan` and 68 `<sup>` elements lose their original markup. Confirm
+  the meaning of numeric rows before using them as evidence.
+- **Repetition / loss:** "ADOBE SYSTEMS INCORPORATED" repeats about 42 times
+  and the continued financial-notes header about 34 times. Links lose their
+  visible text. This filing replaces MSFT 2018: its cleaned output retained
+  no substantive standalone paragraphs, because the cleaner skips `<p>` text
+  outside terminal `<div>` elements.
 
 ### PFE 2015 — conditional: financial annex excluded
 
@@ -137,8 +136,8 @@ nested or empty tables can account for differences.
 
 - Check the answer and supporting passage against **both** the raw SEC source
   and cleaned output. A source-only answer tests extraction failure, not RAG.
-- Avoid MSFT narrative passages lost from cleaned text and financial details
-  present only in the PFE/WMT `EX-13` annexes. Replace a filing if four
+- Avoid financial details present only in the PFE/WMT `EX-13` annexes.
+  Replace a filing if four
   verifiable questions cannot be written from text available to retrieval.
 - For numeric and multi-hop cases, confirm table values, units, periods and
   footnote references in the raw source; flattened tables may shift context.

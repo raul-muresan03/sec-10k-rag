@@ -34,10 +34,10 @@ audit will record the actual structure and any parser data loss.
 - Filing: `SBUX`, filing year 2019; industry: restaurants; layout: transitional.
 - Rationale: adds an off-calendar fiscal year and store and segment disclosures.
 
-### MICROSOFT CORP (MSFT)
+### ADOBE SYSTEMS INCORPORATED (ADBE)
 
-- Filing: `MSFT`, filing year 2018; industry: software; layout: transitional.
-- Rationale: adds a transition-era filing with software and cloud segment reporting.
+- Filing: `ADBE`, filing year 2018; industry: software; layout: transitional.
+- Rationale: adds a transition-era filing with subscription and digital-media reporting.
 
 ### PFIZER INC (PFE)
 
@@ -73,7 +73,7 @@ audit will record the actual structure and any parser data loss.
 
 ## Evaluation Target
 
-The later evaluation dataset will contain 40 manually verified questions,
+The [draft evaluation questions](questions.jsonl) contain 40 records,
 four per filing (24 dev, 16 test):
 
 | Question type | Target |
@@ -85,7 +85,12 @@ four per filing (24 dev, 16 test):
 | **Total** | **40** |
 
 Each filing will have one question of each type. No-answer cases require a
-full-document search during manual verification.
+full-document search during manual verification. These questions and answers
+were drafted with AI assistance. Their quoted evidence was matched to both
+the selected SEC document and cleaned text, but they are **not yet a verified
+gold set**: a human must confirm each answer, especially no-answer cases and
+numeric values. Use dev to improve the application; reserve test for the
+final check rather than tuning against it.
 
 ## Verification
 
