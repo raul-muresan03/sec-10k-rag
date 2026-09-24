@@ -13,7 +13,10 @@ from etl_pipeline.vector_store import get_most_similar_chunks
 
 DEFAULT_MODEL = "gemma3:1b"
 DEFAULT_TOP_N = 5
-ABSTENTION_TEXT = "Information not available in the provided context"
+ABSTENTION_TEXTS = {
+    "information not available in the provided context",
+    "information not found in the provided context",
+}
 QUESTION_TYPES = {"narrative", "numeric", "multi_hop", "no_answer"}
 SPLITS = {"dev", "test"}
 QUESTIONS_PATH = Path(__file__).with_name("questions.jsonl")
@@ -21,6 +24,10 @@ QUESTIONS_PATH = Path(__file__).with_name("questions.jsonl")
 
 def normalize_text(text: str) -> str:
     return " ".join(text.casefold().split())
+
+
+def is_abstention(answer: str) -> bool:
+    return normalize_text(answer).rstrip(".! ") in ABSTENTION_TEXTS
 
 
 def load_questions(
@@ -217,8 +224,7 @@ def run_evaluation(
                         {"score": score, "text": text} for score, text in chunks
                     ],
                     "evidence_found": passage_matches,
-                    "abstained": normalize_text(ABSTENTION_TEXT)
-                    in normalize_text(answer),
+                    "abstained": is_abstention(answer),
                     "latency_seconds": {
                         "retrieval": retrieval_seconds,
                         "generation": generation_seconds,

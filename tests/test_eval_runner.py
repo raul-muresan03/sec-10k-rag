@@ -61,6 +61,20 @@ def test_evidence_matches_case_insensitive_whitespace_normalized_chunks():
     assert not run_eval.evidence_found("Different passage", chunks)
 
 
+@pytest.mark.parametrize(
+    ("answer", "expected"),
+    [
+        ("Information not available in the provided context.", True),
+        ("  INFORMATION NOT FOUND in the provided context!  ", True),
+        ("Information not found in the provided context. Revenue was $10 billion.", False),
+        ("The filing says information is not available in the provided context.", False),
+        ("Revenue was $10 billion.", False),
+    ],
+)
+def test_is_abstention_only_accepts_supported_full_responses(answer, expected):
+    assert run_eval.is_abstention(answer) is expected
+
+
 def test_summarize_results_separates_retrieval_and_abstention():
     records = [
         {
@@ -156,3 +170,31 @@ def test_run_evaluation_indexes_once_per_filing_and_saves_results(tmp_path, monk
     assert saved[0]["retrieved_chunks"] == [
         {"score": 0.9, "text": "Expected evidence for nvda-1"}
     ]
+
+
+def test_run_evaluation_scores_alternate_abstention_in_saved_results(tmp_path, monkeypatch):
+    questions_path = tmp_path / "questions.jsonl"
+    write_questions(
+        questions_path,
+        [make_question("pfe-2015-no-answer", "no_answer", [], None, "PFE", 2015)],
+    )
+    monkeypatch.setattr(run_eval, "ensure_index", lambda ticker, year: None)
+    monkeypatch.setattr(run_eval, "get_most_similar_chunks", lambda question, top_n: [])
+    monkeypatch.setattr(
+        run_eval,
+        "get_llm_response",
+        lambda question, chunks, model: ("Information not found in the provided context.", {}),
+    )
+
+    summary, results_path, _ = run_eval.run_evaluation(
+        split="dev",
+        limit=None,
+        top_n=5,
+        model="test-model",
+        questions_path=questions_path,
+        output_directory=tmp_path / "results",
+    )
+
+    result = json.loads(results_path.read_text().splitlines()[0])
+    assert result["abstained"] is True
+    assert summary["metrics"]["abstention"]["no_answer_correct"]["abstained"] == 1
