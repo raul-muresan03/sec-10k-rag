@@ -1,0 +1,293 @@
+import argparse
+from datetime import datetime, timezone
+import json
+from pathlib import Path
+import time
+from typing import Any
+
+import etl_pipeline
+from etl_pipeline.pipeline import ensure_index
+from etl_pipeline.rag_engine import get_llm_response
+from etl_pipeline.vector_store import get_most_similar_chunks
+
+
+DEFAULT_MODEL = "gemma3:1b"
+DEFAULT_TOP_N = 5
+ABSTENTION_TEXT = "Information not available in the provided context"
+QUESTION_TYPES = {"narrative", "numeric", "multi_hop", "no_answer"}
+SPLITS = {"dev", "test"}
+QUESTIONS_PATH = Path(__file__).with_name("questions.jsonl")
+
+
+def normalize_text(text: str) -> str:
+    return " ".join(text.casefold().split())
+
+
+def load_questions(
+    path: Path,
+    split: str,
+    limit: int | None,
+) -> list[dict[str, Any]]:
+    if split not in SPLITS:
+        raise ValueError(f"split must be one of: {', '.join(sorted(SPLITS))}")
+    if limit is not None and limit < 1:
+        raise ValueError("limit must be greater than zero")
+
+    questions = []
+    identifiers = set()
+    with path.open(encoding="utf-8") as questions_file:
+        for line_number, line in enumerate(questions_file, start=1):
+            if not line.strip():
+                continue
+            try:
+                question = json.loads(line)
+            except json.JSONDecodeError as error:
+                raise ValueError(f"Invalid JSON on line {line_number}: {error}") from error
+            _validate_question(question, line_number)
+            if question["id"] in identifiers:
+                raise ValueError(f"Duplicate question id on line {line_number}: {question['id']}")
+            identifiers.add(question["id"])
+            if question["split"] == split:
+                questions.append(question)
+
+    if limit is not None:
+        questions = questions[:limit]
+    if not questions:
+        raise ValueError(f"No questions found for split '{split}'")
+    return questions
+
+
+def _validate_question(question: Any, line_number: int) -> None:
+    required_fields = {
+        "id",
+        "split",
+        "ticker",
+        "year",
+        "type",
+        "question",
+        "answer",
+        "evidence",
+    }
+    if not isinstance(question, dict) or not required_fields.issubset(question):
+        raise ValueError(f"Question on line {line_number} is missing required fields")
+    if not isinstance(question["id"], str) or not question["id"].strip():
+        raise ValueError(f"Question on line {line_number} has an invalid id")
+    if question["split"] not in SPLITS:
+        raise ValueError(f"Question on line {line_number} has an invalid split")
+    if question["type"] not in QUESTION_TYPES:
+        raise ValueError(f"Question on line {line_number} has an invalid type")
+    if not isinstance(question["ticker"], str) or not question["ticker"].strip():
+        raise ValueError(f"Question on line {line_number} has an invalid ticker")
+    if not isinstance(question["year"], int) or isinstance(question["year"], bool):
+        raise ValueError(f"Question on line {line_number} has an invalid year")
+    if not isinstance(question["question"], str) or not question["question"].strip():
+        raise ValueError(f"Question on line {line_number} has an invalid question")
+    if not isinstance(question["evidence"], list) or any(
+        not isinstance(passage, str) or not passage.strip()
+        for passage in question["evidence"]
+    ):
+        raise ValueError(f"Question on line {line_number} has invalid evidence")
+
+    if question["type"] == "no_answer":
+        if question["answer"] is not None or question["evidence"]:
+            raise ValueError(f"No-answer question on line {line_number} must have null answer and no evidence")
+    elif not isinstance(question["answer"], str) or not question["answer"].strip():
+        raise ValueError(f"Answerable question on line {line_number} must have an answer")
+    elif question["type"] == "multi_hop" and len(question["evidence"]) < 2:
+        raise ValueError(f"Multi-hop question on line {line_number} needs at least two evidence passages")
+    elif not question["evidence"]:
+        raise ValueError(f"Answerable question on line {line_number} needs evidence")
+
+
+def evidence_found(passage: str, chunks: list[tuple[float, str]]) -> bool:
+    normalized_passage = normalize_text(passage)
+    return any(normalized_passage in normalize_text(text) for _, text in chunks)
+
+
+def _rate(numerator: int, denominator: int) -> float | None:
+    return numerator / denominator if denominator else None
+
+
+def summarize_results(
+    results: list[dict[str, Any]],
+    indexing_seconds: list[float],
+    top_n: int,
+) -> dict[str, Any]:
+    answerable = [result for result in results if result["reference_answer"] is not None]
+    multi_hop = [result for result in answerable if result["question_type"] == "multi_hop"]
+    no_answer = [result for result in results if result["question_type"] == "no_answer"]
+    all_latency = [result["latency_seconds"] for result in results]
+    retrieval_hits = sum(any(result["evidence_found"]) for result in answerable)
+    complete_multi_hop = sum(
+        bool(result["evidence_found"]) and all(result["evidence_found"])
+        for result in multi_hop
+    )
+    correct_abstentions = sum(result["abstained"] for result in no_answer)
+    false_abstentions = sum(result["abstained"] for result in answerable)
+
+    return {
+        "questions": len(results),
+        "filings": len(indexing_seconds),
+        "retrieval": {
+            f"hit_at_{top_n}": {
+                "hits": retrieval_hits,
+                "questions": len(answerable),
+                "rate": _rate(retrieval_hits, len(answerable)),
+            },
+            f"multi_hop_all_evidence_at_{top_n}": {
+                "complete": complete_multi_hop,
+                "questions": len(multi_hop),
+                "rate": _rate(complete_multi_hop, len(multi_hop)),
+            },
+        },
+        "abstention": {
+            "no_answer_correct": {
+                "abstained": correct_abstentions,
+                "questions": len(no_answer),
+                "rate": _rate(correct_abstentions, len(no_answer)),
+            },
+            "answerable_false_abstentions": {
+                "abstained": false_abstentions,
+                "questions": len(answerable),
+                "rate": _rate(false_abstentions, len(answerable)),
+            },
+        },
+        "latency_seconds": {
+            "indexing_mean": _rate(sum(indexing_seconds), len(indexing_seconds)),
+            "retrieval_mean": _rate(
+                sum(item["retrieval"] for item in all_latency), len(all_latency)
+            ),
+            "generation_mean": _rate(
+                sum(item["generation"] for item in all_latency), len(all_latency)
+            ),
+        },
+    }
+
+
+def run_evaluation(
+    split: str,
+    limit: int | None,
+    top_n: int,
+    model: str,
+    questions_path: Path = QUESTIONS_PATH,
+    output_directory: Path | None = None,
+) -> tuple[dict[str, Any], Path, Path]:
+    if top_n < 1:
+        raise ValueError("top-n must be greater than zero")
+    questions = load_questions(questions_path, split, limit)
+    grouped_questions: dict[tuple[str, int], list[dict[str, Any]]] = {}
+    for question in questions:
+        key = (question["ticker"].strip().upper(), question["year"])
+        grouped_questions.setdefault(key, []).append(question)
+
+    results = []
+    indexing_seconds = []
+    for (ticker, year), filing_questions in grouped_questions.items():
+        indexing_start = time.perf_counter()
+        ensure_index(ticker, year)
+        indexing_seconds.append(time.perf_counter() - indexing_start)
+
+        for question in filing_questions:
+            retrieval_start = time.perf_counter()
+            chunks = get_most_similar_chunks(question["question"], top_n)
+            retrieval_seconds = time.perf_counter() - retrieval_start
+
+            generation_start = time.perf_counter()
+            answer, ollama_metrics = get_llm_response(
+                question["question"], chunks, model
+            )
+            generation_seconds = time.perf_counter() - generation_start
+
+            passage_matches = [
+                evidence_found(passage, chunks) for passage in question["evidence"]
+            ]
+            results.append(
+                {
+                    "id": question["id"],
+                    "split": question["split"],
+                    "ticker": ticker,
+                    "year": year,
+                    "question_type": question["type"],
+                    "question": question["question"],
+                    "reference_answer": question["answer"],
+                    "section": question.get("section"),
+                    "expected_evidence": question["evidence"],
+                    "generated_answer": answer,
+                    "retrieved_chunks": [
+                        {"score": score, "text": text} for score, text in chunks
+                    ],
+                    "evidence_found": passage_matches,
+                    "abstained": normalize_text(ABSTENTION_TEXT)
+                    in normalize_text(answer),
+                    "latency_seconds": {
+                        "retrieval": retrieval_seconds,
+                        "generation": generation_seconds,
+                    },
+                    "ollama": ollama_metrics,
+                }
+            )
+
+    summary = summarize_results(results, indexing_seconds, top_n)
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    run_name = f"{timestamp}-{split}"
+    if output_directory is None:
+        output_directory = etl_pipeline.DATA_DIR / "eval-runs"
+    output_directory.mkdir(parents=True, exist_ok=True)
+    results_path = output_directory / f"{run_name}.jsonl"
+    summary_path = output_directory / f"{run_name}.summary.json"
+
+    with results_path.open("w", encoding="utf-8") as results_file:
+        for result in results:
+            results_file.write(json.dumps(result, ensure_ascii=False) + "\n")
+    summary_payload = {
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "split": split,
+        "model": model,
+        "top_n": top_n,
+        "limit": limit,
+        "metrics": summary,
+    }
+    summary_path.write_text(
+        json.dumps(summary_payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return summary_payload, results_path, summary_path
+
+
+def _positive_integer(value: str) -> int:
+    try:
+        number = int(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("must be an integer") from error
+    if number < 1:
+        raise argparse.ArgumentTypeError("must be greater than zero")
+    return number
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Evaluate the SEC RAG pipeline.")
+    parser.add_argument("--split", choices=sorted(SPLITS), default="dev")
+    parser.add_argument("--limit", type=_positive_integer)
+    parser.add_argument("--top-n", type=_positive_integer, default=DEFAULT_TOP_N)
+    parser.add_argument("--model", default=DEFAULT_MODEL)
+    parser.add_argument("--questions", type=Path, default=QUESTIONS_PATH)
+    args = parser.parse_args()
+
+    try:
+        summary, results_path, summary_path = run_evaluation(
+            split=args.split,
+            limit=args.limit,
+            top_n=args.top_n,
+            model=args.model,
+            questions_path=args.questions,
+        )
+    except (OSError, ValueError, RuntimeError) as error:
+        parser.error(str(error))
+
+    print(json.dumps(summary["metrics"], indent=2))
+    print(f"Results: {results_path}")
+    print(f"Summary: {summary_path}")
+
+
+if __name__ == "__main__":
+    main()
