@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "filings": [
+    {
+      "ticker": "NVDA",
+      "filing_year": 2026,
+      "split": "dev",
+      "accession": "0001045810-26-000021",
+      "path": "data/sec-edgar-filings/NVDA/10-K/0001045810-26-000021/full-submission.txt",
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/0001045810-26-000021.txt",
+      "sha256": "c4b1420f24a0157f17c5af448e14b07b62cd5eb7bc22237da5f759faf75ae5a1"
+    },
+    {
+      "ticker": "AMZN",
+      "filing_year": 2021,
+      "split": "dev",
+      "accession": "0001018724-21-000004",
+      "path": "data/sec-edgar-filings/AMZN/10-K/0001018724-21-000004/full-submission.txt",
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872421000004/0001018724-21-000004.txt",
+      "sha256": "1a3c8b3e364b8c2f19795b9eaadef9c444594fefecbb30f730bf0997a44e8c97"
+    },
+    {
+      "ticker": "SBUX",
+      "filing_year": 2019,
+      "split": "dev",
+      "accession": "0000829224-19-000051",
+      "path": "data/sec-edgar-filings/SBUX/10-K/0000829224-19-000051/full-submission.txt",
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/829224/000082922419000051/0000829224-19-000051.txt",
+      "sha256": "952ab5715861359ce69e70418e31568328786fe135e08a3971416cd737bcbb57"
+    },
+    {
+      "ticker": "ADBE",
+      "filing_year": 2018,
+      "split": "dev",
+      "accession": "0000796343-18-000015",
+      "path": "data/sec-edgar-filings/ADBE/10-K/0000796343-18-000015/full-submission.txt",
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/796343/000079634318000015/0000796343-18-000015.txt",
+      "sha256": "c2af9a66dba86c91702e01d920ac833daaef7ecc783ebbdd609ac938129d892f"
+    },
+    {
+      "ticker": "PFE",
+      "filing_year": 2015,
+      "split": "dev",
+      "accession": "0000078003-15-000014",
+      "path": "data/sec-edgar-filings/PFE/10-K/0000078003-15-000014/full-submission.txt",
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/78003/000007800315000014/0000078003-15-000014.txt",
+      "sha256": "0346663a6933dfd978ebaaf0f306cb701e59cec885cebe11cb4d6a2503b7a139"
+    },
+    {
+      "ticker": "F",
+      "filing_year": 2014,
+      "split": "dev",
+      "accession": "0000037996-14-000010",
+      "path": "data/sec-edgar-filings/F/10-K/0000037996-14-000010/full-submission.txt",
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/37996/000003799614000010/0000037996-14-000010.txt",
+      "sha256": "5b46a98bf0b03c97fb3c56ac9ca8efdc6f8ba44cdd14bda899b12e3cab31a6c2"
+    },
+    {
+      "ticker": "AAPL",
+      "filing_year": 2024,
+      "split": "test",
+      "accession": "0000320193-24-000123",
+      "path": "data/sec-edgar-filings/AAPL/10-K/0000320193-24-000123/full-submission.txt",
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019324000123/0000320193-24-000123.txt",
+      "sha256": "347c28e05fd61467c0ce9f4c0b8a264670011b9afb07930e2233a46dbb73914b"
+    },
+    {
+      "ticker": "JPM",
+      "filing_year": 2023,
+      "split": "test",
+      "accession": "0000019617-23-000231",
+      "path": "data/sec-edgar-filings/JPM/10-K/0000019617-23-000231/full-submission.txt",
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/19617/000001961723000231/0000019617-23-000231.txt",
+      "sha256": "fea9a4eae3e339c79badecea9746fe44ea113dcb69d13dbc31c68a403c2e1a83"
+    },
+    {
+      "ticker": "CVX",
+      "filing_year": 2019,
+      "split": "test",
+      "accession": "0000093410-19-000008",
+      "path": "data/sec-edgar-filings/CVX/10-K/0000093410-19-000008/full-submission.txt",
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/93410/000009341019000008/0000093410-19-000008.txt",
+      "sha256": "f30800cb96279deb7c7ffc652e113f6d6751edcf438cb02494733c160321de01"
+    },
+    {
+      "ticker": "WMT",
+      "filing_year": 2014,
+      "split": "test",
+      "accession": "0000104169-14-000019",
+      "path": "data/sec-edgar-filings/WMT/10-K/0000104169-14-000019/full-submission.txt",
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/104169/000010416914000019/0000104169-14-000019.txt",
+      "sha256": "985ba7b189f895ba5897209034e867de36591c8f5d5e3d88db67eb1bbaef072e"
+    }
+  ]
+}
