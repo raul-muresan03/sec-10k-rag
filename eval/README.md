@@ -192,3 +192,5 @@ See [the dev baseline failure analysis](failure_analysis.md) for causes and rank
 and [review workflow](reviews/README.md) for versioned answer judgments.
 Record experimental decisions in the [experiment log](experiment_log.md),
 which also defines wall-clock and Ollama timing units.
+The [workflow guide](workflows.md) shows how to run both modes and compare
+two run IDs without mixing automatic metrics with answer reviews.
