@@ -200,8 +200,11 @@ def test_run_evaluation_indexes_once_per_filing_and_saves_results(tmp_path, monk
     assert summary["provenance"]["generation_model"]["digest"] is None
     assert len(summary["provenance"]["generation_model"]["prompt_source_sha256"]) == 64
     assert summary["provenance"]["retrieval"]["top_n"] == 5
+    assert summary["runtime_environment"]["platform"]
+    assert summary["runtime_environment"]["python"]
     assert len(summary["provenance"]["filings"]) == 2
     assert all(f["index"]["sha256"] == "abc" for f in summary["provenance"]["filings"])
+    assert all(f["indexing_seconds"] >= 0 for f in summary["provenance"]["filings"])
     assert {path.name for path in output_directory.iterdir()} == {results_path.name, summary_path.name}
     assert results_path.is_file()
     assert summary_path.is_file()
@@ -209,6 +212,12 @@ def test_run_evaluation_indexes_once_per_filing_and_saves_results(tmp_path, monk
     assert len(saved) == 3
     assert saved[0]["generated_answer"] == "Generated answer"
     assert saved[0]["run_id"] == summary["run_id"]
+    assert summary["metrics"]["latency_seconds"]["indexing"]["total"] == pytest.approx(
+        sum(f["indexing_seconds"] for f in summary["provenance"]["filings"])
+    )
+    assert summary["metrics"]["ollama_reported"]["eval_count"]["total"] == 9
+    assert summary["metrics"]["ollama_reported"]["prompt_eval_count"]["total"] is None
+    assert "cost_usd" not in summary["metrics"]
     assert saved[0]["retrieved_chunks"] == [
         {"score": 0.9, "text": "Expected evidence for nvda-1"}
     ]
@@ -391,6 +400,9 @@ def test_retrieval_only_retrieves_once_at_ten_without_generation(tmp_path, monke
     assert summary["metrics"]["retrieval"]["mrr_at_10"]["rate"] == pytest.approx(1 / 6)
     assert summary["metrics"]["retrieval"]["multi_hop_all_evidence_at_10"]["complete"] == 1
     assert "abstention" not in summary["metrics"]
+    assert "ollama_reported" not in summary["metrics"]
+    assert "generation" not in summary["metrics"]["latency_seconds"]
+    assert summary["metrics"]["latency_seconds"]["retrieval"]["count"] == 2
     records = [json.loads(line) for line in records_path.read_text().splitlines()]
     assert [row["id"] for row in records] == ["q1", "q2"]
     assert records[0]["retrieval_score"]["evidence_ranks"] == [6, 6]

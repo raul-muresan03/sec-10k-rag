@@ -173,13 +173,8 @@ notes that Starbucks' 2019 table was useful despite failing the strict passage
 match; that judgment belongs to the saved top-5 baseline, not automatically
 to a new top-10 run. The old top-5 run has no retrospective hit@10 score.
 
-Evidence hits require the quoted passage to appear in a retrieved chunk after
-case and whitespace normalization; this is a strict text-match proxy, not a
-semantic relevance or answer-correctness score. For example, the Starbucks
-2019 numeric dev result retrieves a table with 2019 Americas operating income
-of $3,782.8 million, but its quoted evidence does not match exactly. The model
-answered $3,485.2 (the 2018 column value), so that answer is still incorrect.
-Review such table and multi-hop cases manually before interpreting hit rates.
+The saved Starbucks baseline answer was $3,485.2 million (the 2018 value),
+not the requested 2019 value of $3,782.8 million in the retrieved table.
 
 Automatic abstention scoring recognizes the complete response "Information not
 available in the provided context" or "Information not found in the provided
@@ -195,3 +190,5 @@ have not been rewritten.
 
 See [the dev baseline failure analysis](failure_analysis.md) for causes and ranks,
 and [review workflow](reviews/README.md) for versioned answer judgments.
+Record experimental decisions in the [experiment log](experiment_log.md),
+which also defines wall-clock and Ollama timing units.

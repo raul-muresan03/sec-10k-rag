@@ -13,6 +13,7 @@ from eval.provenance import (
     use_index_directory, verify_filings,
 )
 from eval.retrieval_metrics import evidence_found, normalize_text, score_retrieval, summarize_retrieval
+from eval.runtime_metrics import runtime_environment, summarize_ollama, summarize_stage_timings
 from etl_pipeline.rag_engine import get_llm_response
 from etl_pipeline.vector_store import get_most_similar_chunks
 
@@ -122,7 +123,6 @@ def summarize_results(
     answerable = [result for result in results if result["reference_answer"] is not None]
     multi_hop = [result for result in answerable if result["question_type"] == "multi_hop"]
     no_answer = [result for result in results if result["question_type"] == "no_answer"]
-    all_latency = [result["latency_seconds"] for result in results]
     retrieval_hits = sum(any(result["evidence_found"]) for result in answerable)
     complete_multi_hop = sum(
         bool(result["evidence_found"]) and all(result["evidence_found"])
@@ -158,15 +158,8 @@ def summarize_results(
                 "rate": _rate(false_abstentions, len(answerable)),
             },
         },
-        "latency_seconds": {
-            "indexing_mean": _rate(sum(indexing_seconds), len(indexing_seconds)),
-            "retrieval_mean": _rate(
-                sum(item["retrieval"] for item in all_latency), len(all_latency)
-            ),
-            "generation_mean": _rate(
-                sum(item["generation"] for item in all_latency), len(all_latency)
-            ),
-        },
+        "latency_seconds": summarize_stage_timings(indexing_seconds, results, include_generation=True),
+        "ollama_reported": summarize_ollama(results),
     }
 
 
@@ -212,10 +205,12 @@ def run_evaluation(
             with use_index_directory(Path(temporary)):
                 indexing_start = time.perf_counter()
                 index = build_index(filing, Path(temporary))
-                indexing_seconds.append(time.perf_counter() - indexing_start)
+                indexing_duration = time.perf_counter() - indexing_start
+                indexing_seconds.append(indexing_duration)
                 filing_records.append({
                     "ticker": ticker, "filing_year": year, "accession": filing.accession,
                     "source_path": str(filing.path), "source_sha256": filing.sha256, "index": index,
+                    "indexing_seconds": indexing_duration,
                 })
 
                 for question in filing_questions:
@@ -267,12 +262,7 @@ def run_evaluation(
             "questions": len(results),
             "filings": len(indexing_seconds),
             "retrieval": summarize_retrieval(scored),
-            "latency_seconds": {
-                "indexing_mean": _rate(sum(indexing_seconds), len(indexing_seconds)),
-                "retrieval_mean": _rate(
-                    sum(result["latency_seconds"]["retrieval"] for result in results), len(results)
-                ),
-            },
+            "latency_seconds": summarize_stage_timings(indexing_seconds, results, include_generation=False),
         }
     else:
         summary = summarize_results(results, indexing_seconds, top_n)
@@ -290,6 +280,7 @@ def run_evaluation(
         "model": model if mode == "full" else None,
         "top_n": top_n,
         "limit": limit,
+        "runtime_environment": runtime_environment(),
         "provenance": {
             "questions": {"sha256": questions_hash, "path": str(questions_path.resolve())},
             "corpus_manifest": {
