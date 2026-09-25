@@ -135,7 +135,8 @@ retrieval and generation time. Override the defaults with `--top-n`, `--model`,
 `--questions`, `--manifest`, and `--limit`. The JSONL records and summary share
 the run ID. The summary records question/manifest hashes, each filing's accession
 and source/index hashes, the chunking configuration, code hashes, retrieval
-parameters, and a provisional rubric identifier (no answer review is applied yet).
+parameters, and the version of the external [answer rubric](answer_rubric.v1.md)
+(no answer review is applied by the runner itself).
 Ollama models are recorded by mutable tag; no immutable model digest is claimed.
 The temporary index files are removed after each filing, so keep the summary's
 index hashes for comparison.
@@ -192,5 +193,5 @@ Rescoring the saved dev baseline `20260923T125212753976Z-dev.jsonl` recognizes
 abstentions. Strict evidence hit@5 remains 15/18. The ignored baseline files
 have not been rewritten.
 
-See [the dev baseline failure analysis](failure_analysis.md) for per-question
-verdicts, failure causes, supporting retrieval ranks, and the next changes to test.
+See [the dev baseline failure analysis](failure_analysis.md) for causes and ranks,
+and [review workflow](reviews/README.md) for versioned answer judgments.

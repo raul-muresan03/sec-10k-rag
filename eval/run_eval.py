@@ -7,8 +7,9 @@ import time
 from typing import Any
 
 import etl_pipeline
+from eval.answer_reviews import RUBRIC_VERSION
 from eval.provenance import (
-    MANIFEST_PATH, RUBRIC_VERSION, build_index, hash_file, index_configuration,
+    MANIFEST_PATH, build_index, hash_file, index_configuration,
     use_index_directory, verify_filings,
 )
 from eval.retrieval_metrics import evidence_found, normalize_text, score_retrieval, summarize_retrieval

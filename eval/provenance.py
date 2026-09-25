@@ -18,7 +18,6 @@ from etl_pipeline.parser import parse_10K
 
 
 MANIFEST_PATH = Path(__file__).with_name("corpus_manifest.v1.json")
-RUBRIC_VERSION = "dev-failure-analysis-v1-provisional"
 INDEX_SOURCE_FILES = ("parser.py", "cleaner.py", "chunker.py", "vector_store.py")
 
 
