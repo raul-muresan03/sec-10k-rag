@@ -151,3 +151,6 @@ Rescoring the saved dev baseline `20260923T125212753976Z-dev.jsonl` recognizes
 6/6 no-answer abstentions instead of the original 5/6, with 0/18 false
 abstentions. Strict evidence hit@5 remains 15/18. The ignored baseline files
 have not been rewritten.
+
+See [the dev baseline failure analysis](failure_analysis.md) for per-question
+verdicts, failure causes, supporting retrieval ranks, and the next changes to test.
