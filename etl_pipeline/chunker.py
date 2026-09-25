@@ -7,8 +7,10 @@ import json
 import etl_pipeline
 
 EMBEDDING_BATCH_SIZE = int(os.getenv("EMBEDDING_BATCH_SIZE", "512"))
+EMBEDDING_MODEL = "nomic-embed-text"
 MAX_CHUNK_LENGTH = 10000
 CHUNK_SEPARATOR = " "
+MERGE_SIMILARITY_THRESHOLD = 0.6
 
 def get_similarity_score(first: List[float], second: List[float]) -> float:
     if first is None or second is None:
@@ -35,7 +37,7 @@ def get_similarity_score(first: List[float], second: List[float]) -> float:
 def paragraphs_to_embeddings(paragraphs: List[str]) -> List[List[float]]:
     url = "http://localhost:11434/api/embed"
     data = {
-        "model": "nomic-embed-text",
+        "model": EMBEDDING_MODEL,
         "input": paragraphs,
     }
 
@@ -109,7 +111,7 @@ def chunk_10K(file_path: str) -> List[str]:
     for i in range(len(similarity_scores)):
         separator_length = len(CHUNK_SEPARATOR)
         fits_chunk_limit = current_chunk_length + separator_length + paragraphs_lengths[i + 1] <= MAX_CHUNK_LENGTH
-        if similarity_scores[i] >= 0.6 and fits_chunk_limit:
+        if similarity_scores[i] >= MERGE_SIMILARITY_THRESHOLD and fits_chunk_limit:
             current_chunk += CHUNK_SEPARATOR + paragraphs[i + 1]
             current_chunk_length += separator_length + paragraphs_lengths[i + 1]
         else:

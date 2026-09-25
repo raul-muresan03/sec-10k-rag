@@ -1,0 +1,180 @@
+{
+  "rubric_version": "answer-review-v1",
+  "run_id": "20260923T125212753976Z-dev",
+  "run_sha256": "69db1f90d8e1bc7125c3eda20246f6cc56a448d8d040a73be336a8cc68eac60d",
+  "assessment_source": "AI-assisted failure analysis; medium-confidence cases need owner confirmation",
+  "reviews": [
+    {
+      "question_id": "nvda-2026-narrative", "status": "ai_reviewed", "confidence": "high", "verdict": "incorrect",
+      "dimensions": {"completeness": "partial", "faithfulness": "fail", "numeric_precision": "not_applicable",
+        "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Places the headquarters rule before the change and omits the location distinction.",
+      "evidence_consulted": ["gold:questions.jsonl", "retrieved:R1"]
+    },
+    {
+      "question_id": "nvda-2026-numeric", "status": "ai_reviewed", "confidence": "high", "verdict": "partial",
+      "dimensions": {"completeness": "partial", "faithfulness": "partial", "numeric_precision": "partial",
+        "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Recognizable magnitude, but $215.93 lacks the requested one-decimal billion format.",
+      "evidence_consulted": ["gold:questions.jsonl", "retrieved:R4"]
+    },
+    {
+      "question_id": "nvda-2026-multi-hop", "status": "ai_reviewed", "confidence": "high", "verdict": "incorrect",
+      "dimensions": {"completeness": "fail", "faithfulness": "fail", "numeric_precision": "fail",
+        "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "The 68%/41% comparison is absent from this top five; the answer invents a different comparison.",
+      "evidence_consulted": ["gold:questions.jsonl", "retrieved:R1-R5", "nvda-2026-numeric:R4"]
+    },
+    {
+      "question_id": "nvda-2026-no-answer", "status": "ai_reviewed", "confidence": "high", "verdict": "pass",
+      "dimensions": {"completeness": "not_applicable", "faithfulness": "not_assessed",
+        "numeric_precision": "not_applicable", "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Full context-limited refusal; no healthcare GPU count supplied.",
+      "evidence_consulted": ["gold:no_answer_label", "run:generated_answer"]
+    },
+    {
+      "question_id": "amzn-2021-narrative", "status": "ai_reviewed", "confidence": "high", "verdict": "pass",
+      "dimensions": {"completeness": "pass", "faithfulness": "pass", "numeric_precision": "not_applicable",
+        "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Describes AWS revenue recognition as services are delivered and used.",
+      "evidence_consulted": ["gold:questions.jsonl", "retrieved:R2"]
+    },
+    {
+      "question_id": "amzn-2021-numeric", "status": "ai_reviewed", "confidence": "high", "verdict": "incorrect",
+      "dimensions": {"completeness": "fail", "faithfulness": "fail", "numeric_precision": "fail",
+        "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Gives $168.0 instead of the 2020 operating income of $22.9 billion in R1.",
+      "evidence_consulted": ["gold:questions.jsonl", "retrieved:R1"]
+    },
+    {
+      "question_id": "amzn-2021-multi-hop", "status": "ai_reviewed", "confidence": "high", "verdict": "partial",
+      "dimensions": {"completeness": "partial", "faithfulness": "pass", "numeric_precision": "partial",
+        "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Reports International's 40% growth but omits North America's 38% and the two-point comparison.",
+      "evidence_consulted": ["gold:questions.jsonl", "retrieved:R1"]
+    },
+    {
+      "question_id": "amzn-2021-no-answer", "status": "ai_reviewed", "confidence": "high", "verdict": "pass",
+      "dimensions": {"completeness": "not_applicable", "faithfulness": "not_assessed",
+        "numeric_precision": "not_applicable", "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Full context-limited refusal; no member count supplied.",
+      "evidence_consulted": ["gold:no_answer_label", "run:generated_answer"]
+    },
+    {
+      "question_id": "sbux-2019-narrative", "status": "ai_reviewed", "confidence": "high", "verdict": "pass",
+      "dimensions": {"completeness": "pass", "faithfulness": "pass", "numeric_precision": "not_applicable",
+        "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Explains the Nestlé licensing arrangement and the single-serve product offset.",
+      "evidence_consulted": ["gold:questions.jsonl", "retrieved:R1"]
+    },
+    {
+      "question_id": "sbux-2019-numeric", "status": "ai_reviewed", "confidence": "high", "verdict": "incorrect",
+      "dimensions": {"completeness": "fail", "faithfulness": "fail", "numeric_precision": "fail",
+        "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Uses the 2018 column ($3,485.2m) instead of the 2019 value ($3,782.8m) in R3.",
+      "evidence_consulted": ["gold:questions.jsonl", "retrieved:R3", "retrieved:R5"]
+    },
+    {
+      "question_id": "sbux-2019-multi-hop", "status": "ai_reviewed", "confidence": "high", "verdict": "incorrect",
+      "dimensions": {"completeness": "fail", "faithfulness": "fail", "numeric_precision": "fail",
+        "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Treats 20.7% operating margin as revenue growth; International grew faster by three points.",
+      "evidence_consulted": ["gold:questions.jsonl", "retrieved:R1", "retrieved:R5"]
+    },
+    {
+      "question_id": "sbux-2019-no-answer", "status": "ai_reviewed", "confidence": "high", "verdict": "pass",
+      "dimensions": {"completeness": "not_applicable", "faithfulness": "not_assessed",
+        "numeric_precision": "not_applicable", "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Full context-limited refusal; no cup count supplied.",
+      "evidence_consulted": ["gold:no_answer_label", "run:generated_answer"]
+    },
+    {
+      "question_id": "adbe-2018-narrative", "status": "needs_owner_confirmation", "confidence": "medium",
+      "verdict": "partial",
+      "dimensions": {"completeness": "partial", "faithfulness": "pass", "numeric_precision": "not_applicable",
+        "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Supported Creative Cloud description, but omits device coverage under this rubric.",
+      "evidence_consulted": ["gold:questions.jsonl", "retrieved:R2"]
+    },
+    {
+      "question_id": "adbe-2018-numeric", "status": "ai_reviewed", "confidence": "high", "verdict": "pass",
+      "dimensions": {"completeness": "pass", "faithfulness": "pass", "numeric_precision": "pass",
+        "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Correctly gives 186 trillion data transactions for fiscal 2017.",
+      "evidence_consulted": ["gold:questions.jsonl", "retrieved:R1"]
+    },
+    {
+      "question_id": "adbe-2018-multi-hop", "status": "needs_owner_confirmation", "confidence": "medium",
+      "verdict": "incorrect",
+      "dimensions": {"completeness": "fail", "faithfulness": "fail", "numeric_precision": "not_applicable",
+        "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Names products, not segment-role mappings; missing top-five evidence needs diagnosis.",
+      "evidence_consulted": ["gold:questions.jsonl", "retrieved:R1-R5", "cleaned:ADBE-2018"]
+    },
+    {
+      "question_id": "adbe-2018-no-answer", "status": "ai_reviewed", "confidence": "high", "verdict": "pass",
+      "dimensions": {"completeness": "not_applicable", "faithfulness": "not_assessed",
+        "numeric_precision": "not_applicable", "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Full context-limited refusal; no subscriber count supplied.",
+      "evidence_consulted": ["gold:no_answer_label", "run:generated_answer"]
+    },
+    {
+      "question_id": "pfe-2015-narrative", "status": "needs_owner_confirmation", "confidence": "medium",
+      "verdict": "partial",
+      "dimensions": {"completeness": "partial", "faithfulness": "pass", "numeric_precision": "not_applicable",
+        "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Covers most regulatory areas but omits the research facet in R1 under this rubric.",
+      "evidence_consulted": ["gold:questions.jsonl", "retrieved:R1", "retrieved:R2"]
+    },
+    {
+      "question_id": "pfe-2015-numeric", "status": "ai_reviewed", "confidence": "high", "verdict": "pass",
+      "dimensions": {"completeness": "pass", "faithfulness": "pass", "numeric_precision": "pass",
+        "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Approximately 92% matches the 2014 biopharmaceutical revenue share in R3.",
+      "evidence_consulted": ["gold:questions.jsonl", "retrieved:R3"]
+    },
+    {
+      "question_id": "pfe-2015-multi-hop", "status": "needs_owner_confirmation", "confidence": "medium",
+      "verdict": "partial",
+      "dimensions": {"completeness": "pass", "faithfulness": "partial", "numeric_precision": "pass",
+        "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Businesses and years match, but 'sale' is more specific than R1's 'full disposition'.",
+      "evidence_consulted": ["gold:questions.jsonl", "retrieved:R1"]
+    },
+    {
+      "question_id": "pfe-2015-no-answer", "status": "ai_reviewed", "confidence": "high", "verdict": "pass",
+      "dimensions": {"completeness": "not_applicable", "faithfulness": "not_assessed",
+        "numeric_precision": "not_applicable", "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Valid alternate refusal; the stored abstained flag was a false negative.",
+      "evidence_consulted": ["gold:no_answer_label", "run:generated_answer"]
+    },
+    {
+      "question_id": "f-2014-narrative", "status": "ai_reviewed", "confidence": "high", "verdict": "pass",
+      "dimensions": {"completeness": "pass", "faithfulness": "pass", "numeric_precision": "not_applicable",
+        "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Correctly identifies Ford and Lincoln.",
+      "evidence_consulted": ["gold:questions.jsonl", "retrieved:R2"]
+    },
+    {
+      "question_id": "f-2014-numeric", "status": "ai_reviewed", "confidence": "high", "verdict": "incorrect",
+      "dimensions": {"completeness": "fail", "faithfulness": "fail", "numeric_precision": "fail",
+        "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Gives a European brand rank instead of the requested 2013 U.S. market share of 15.7% in R1.",
+      "evidence_consulted": ["gold:questions.jsonl", "retrieved:R1", "retrieved:R2"]
+    },
+    {
+      "question_id": "f-2014-multi-hop", "status": "ai_reviewed", "confidence": "high", "verdict": "partial",
+      "dimensions": {"completeness": "partial", "faithfulness": "pass", "numeric_precision": "not_applicable",
+        "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Gives Financial Services subsegments but omits the Automotive sector's revenue source.",
+      "evidence_consulted": ["gold:questions.jsonl", "retrieved:R1", "retrieved:R3"]
+    },
+    {
+      "question_id": "f-2014-no-answer", "status": "ai_reviewed", "confidence": "high", "verdict": "pass",
+      "dimensions": {"completeness": "not_applicable", "faithfulness": "not_assessed",
+        "numeric_precision": "not_applicable", "abstention": "pass", "citations": "not_applicable"},
+      "explanation": "Full context-limited refusal; no city sales count supplied.",
+      "evidence_consulted": ["gold:no_answer_label", "run:generated_answer"]
+    }
+  ]
+}

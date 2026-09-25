@@ -106,9 +106,12 @@ file path, SEC URL, and SHA-256 of the downloaded `full-submission.txt` bytes.
 The files under `data/` are local and are not committed. To verify one after
 downloading it, run `sha256sum` on its `path` and compare with its `sha256`.
 
-The manifest has version `1`. The runner still selects by ticker and year; it
-does not check the accession or hash automatically. Verify them before comparing
-runs made from separately downloaded filings.
+The manifest has version `1`. Before indexing, the runner validates all selected
+filings against its accession, form, filing year, split, path, and SHA-256. It
+requires the files at the recorded paths; it does not download missing filings.
+Use `--manifest` to select a different manifest (with paths relative to the
+project root, which is the manifest directory's parent). Indexes are rebuilt
+per filing in temporary directories, leaving the active application index untouched.
 
 ## Running the evaluator
 
@@ -129,16 +132,49 @@ generated answers, evidence matches, retrieval/generation latency, and Ollama
 timing counters. It writes a JSONL record per question and a JSON summary under
 `data/eval-runs/`. The summary reports indexing time separately from per-query
 retrieval and generation time. Override the defaults with `--top-n`, `--model`,
-`--questions`, and `--limit`. Use `--split test` only for a final check after
-dev-based tuning.
+`--questions`, `--manifest`, and `--limit`. The JSONL records and summary share
+the run ID. The summary records question/manifest hashes, each filing's accession
+and source/index hashes, the chunking configuration, code hashes, retrieval
+parameters, and the version of the external [answer rubric](answer_rubric.v1.md)
+(no answer review is applied by the runner itself).
+Ollama models are recorded by mutable tag; no immutable model digest is claimed.
+The temporary index files are removed after each filing, so keep the summary's
+index hashes for comparison.
+Use `--split test` only for a final check after dev-based tuning.
 
-Evidence hits require the quoted passage to appear in a retrieved chunk after
-case and whitespace normalization; this is a strict text-match proxy, not a
-semantic relevance or answer-correctness score. For example, the Starbucks
-2019 numeric dev result retrieves a table with 2019 Americas operating income
-of $3,782.8 million, but its quoted evidence does not match exactly. The model
-answered $3,485.2 (the 2018 column value), so that answer is still incorrect.
-Review such table and multi-hop cases manually before interpreting hit rates.
+## Retrieval-only evaluation
+
+Run all 24 dev questions without calling the generation model:
+
+```sh
+venv/bin/python -m eval.run_eval --split dev --mode retrieval-only
+```
+
+For each question, retrieval is called **once with top 10**. The same ordered
+chunks are scored at ranks 5 and 10; `--top-n` can only be 10 in this mode.
+The JSONL records the retrieved chunks and the first rank of each quoted gold
+passage (`null` if missing). It has no generated answer or abstention score.
+The summary includes:
+
+- **hit@5 / hit@10:** fraction of answerable questions with at least one gold
+  passage found in the first 5 / 10 chunks.
+- **MRR@10:** mean of `1 / first matching rank` per answerable question, or
+  `0` if no gold passage matches within ten chunks.
+- **multi-hop all-evidence@5 / @10:** fraction of multi-hop questions for which
+  *every* quoted passage is found within the first 5 / 10 chunks (possibly in
+  the same chunk).
+
+No-answer questions have no gold evidence, so they are excluded from these
+denominators. The automatic relevance proxy requires the quoted text within
+one chunk after case and whitespace normalization; it is **not** answer
+correctness or semantic relevance. Manual evidence adjudications stay separate
+from these strict metrics. For example, the [baseline analysis](failure_analysis.md)
+notes that Starbucks' 2019 table was useful despite failing the strict passage
+match; that judgment belongs to the saved top-5 baseline, not automatically
+to a new top-10 run. The old top-5 run has no retrospective hit@10 score.
+
+The saved Starbucks baseline answer was $3,485.2 million (the 2018 value),
+not the requested 2019 value of $3,782.8 million in the retrieved table.
 
 Automatic abstention scoring recognizes the complete response "Information not
 available in the provided context" or "Information not found in the provided
@@ -151,3 +187,10 @@ Rescoring the saved dev baseline `20260923T125212753976Z-dev.jsonl` recognizes
 6/6 no-answer abstentions instead of the original 5/6, with 0/18 false
 abstentions. Strict evidence hit@5 remains 15/18. The ignored baseline files
 have not been rewritten.
+
+See [the dev baseline failure analysis](failure_analysis.md) for causes and ranks,
+and [review workflow](reviews/README.md) for versioned answer judgments.
+Record experimental decisions in the [experiment log](experiment_log.md),
+which also defines wall-clock and Ollama timing units.
+The [workflow guide](workflows.md) shows how to run both modes and compare
+two run IDs without mixing automatic metrics with answer reviews.
