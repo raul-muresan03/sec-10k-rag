@@ -2,11 +2,15 @@ import argparse
 from datetime import datetime, timezone
 import json
 from pathlib import Path
+from tempfile import TemporaryDirectory
 import time
 from typing import Any
 
 import etl_pipeline
-from etl_pipeline.pipeline import ensure_index
+from eval.provenance import (
+    MANIFEST_PATH, RUBRIC_VERSION, build_index, hash_file, index_configuration,
+    use_index_directory, verify_filings,
+)
 from etl_pipeline.rag_engine import get_llm_response
 from etl_pipeline.vector_store import get_most_similar_chunks
 
@@ -178,67 +182,82 @@ def run_evaluation(
     model: str,
     questions_path: Path = QUESTIONS_PATH,
     output_directory: Path | None = None,
+    manifest_path: Path = MANIFEST_PATH,
 ) -> tuple[dict[str, Any], Path, Path]:
     if top_n < 1:
         raise ValueError("top-n must be greater than zero")
+    questions_hash = hash_file(questions_path)
     questions = load_questions(questions_path, split, limit)
+    if questions_hash != hash_file(questions_path):
+        raise ValueError(f"Questions file changed while loading: {questions_path}")
     grouped_questions: dict[tuple[str, int], list[dict[str, Any]]] = {}
     for question in questions:
         key = (question["ticker"].strip().upper(), question["year"])
         grouped_questions.setdefault(key, []).append(question)
 
-    results = []
-    indexing_seconds = []
-    for (ticker, year), filing_questions in grouped_questions.items():
-        indexing_start = time.perf_counter()
-        ensure_index(ticker, year)
-        indexing_seconds.append(time.perf_counter() - indexing_start)
-
-        for question in filing_questions:
-            retrieval_start = time.perf_counter()
-            chunks = get_most_similar_chunks(question["question"], top_n)
-            retrieval_seconds = time.perf_counter() - retrieval_start
-
-            generation_start = time.perf_counter()
-            answer, ollama_metrics = get_llm_response(
-                question["question"], chunks, model
-            )
-            generation_seconds = time.perf_counter() - generation_start
-
-            passage_matches = [
-                evidence_found(passage, chunks) for passage in question["evidence"]
-            ]
-            results.append(
-                {
-                    "id": question["id"],
-                    "split": question["split"],
-                    "ticker": ticker,
-                    "year": year,
-                    "question_type": question["type"],
-                    "question": question["question"],
-                    "reference_answer": question["answer"],
-                    "section": question.get("section"),
-                    "expected_evidence": question["evidence"],
-                    "generated_answer": answer,
-                    "retrieved_chunks": [
-                        {"score": score, "text": text} for score, text in chunks
-                    ],
-                    "evidence_found": passage_matches,
-                    "abstained": is_abstention(answer),
-                    "latency_seconds": {
-                        "retrieval": retrieval_seconds,
-                        "generation": generation_seconds,
-                    },
-                    "ollama": ollama_metrics,
-                }
-            )
-
-    summary = summarize_results(results, indexing_seconds, top_n)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-    run_name = f"{timestamp}-{split}"
+    manifest_version, manifest_hash, filings = verify_filings(manifest_path, set(grouped_questions), split)
+    configuration = index_configuration()
     if output_directory is None:
         output_directory = etl_pipeline.DATA_DIR / "eval-runs"
     output_directory.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    run_name = f"{timestamp}-{split}"
+    results = []
+    indexing_seconds = []
+    filing_records = []
+    for (ticker, year), filing_questions in grouped_questions.items():
+        filing = filings[(ticker, year)]
+        with TemporaryDirectory(prefix=f"{run_name}-{ticker}-", dir=output_directory) as temporary:
+            with use_index_directory(Path(temporary)):
+                indexing_start = time.perf_counter()
+                index = build_index(filing, Path(temporary))
+                indexing_seconds.append(time.perf_counter() - indexing_start)
+                filing_records.append({
+                    "ticker": ticker, "filing_year": year, "accession": filing.accession,
+                    "source_path": str(filing.path), "source_sha256": filing.sha256, "index": index,
+                })
+
+                for question in filing_questions:
+                    retrieval_start = time.perf_counter()
+                    chunks = get_most_similar_chunks(question["question"], top_n)
+                    retrieval_seconds = time.perf_counter() - retrieval_start
+
+                    generation_start = time.perf_counter()
+                    answer, ollama_metrics = get_llm_response(
+                        question["question"], chunks, model
+                    )
+                    generation_seconds = time.perf_counter() - generation_start
+
+                    passage_matches = [
+                        evidence_found(passage, chunks) for passage in question["evidence"]
+                    ]
+                    results.append(
+                        {
+                            "run_id": run_name,
+                            "id": question["id"],
+                            "split": question["split"],
+                            "ticker": ticker,
+                            "year": year,
+                            "question_type": question["type"],
+                            "question": question["question"],
+                            "reference_answer": question["answer"],
+                            "section": question.get("section"),
+                            "expected_evidence": question["evidence"],
+                            "generated_answer": answer,
+                            "retrieved_chunks": [
+                                {"score": score, "text": text} for score, text in chunks
+                            ],
+                            "evidence_found": passage_matches,
+                            "abstained": is_abstention(answer),
+                            "latency_seconds": {
+                                "retrieval": retrieval_seconds,
+                                "generation": generation_seconds,
+                            },
+                            "ollama": ollama_metrics,
+                        }
+                    )
+
+    summary = summarize_results(results, indexing_seconds, top_n)
     results_path = output_directory / f"{run_name}.jsonl"
     summary_path = output_directory / f"{run_name}.summary.json"
 
@@ -246,11 +265,29 @@ def run_evaluation(
         for result in results:
             results_file.write(json.dumps(result, ensure_ascii=False) + "\n")
     summary_payload = {
+        "run_id": run_name,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "split": split,
         "model": model,
         "top_n": top_n,
         "limit": limit,
+        "provenance": {
+            "questions": {"sha256": questions_hash, "path": str(questions_path.resolve())},
+            "corpus_manifest": {
+                "version": manifest_version, "sha256": manifest_hash,
+                "path": str(manifest_path.resolve()),
+            },
+            "filings": filing_records,
+            "index_configuration": configuration,
+            "generation_model": {
+                "tag": model, "digest": None,
+                "prompt_source_sha256": hash_file(Path(__file__).parent.parent / "etl_pipeline" / "rag_engine.py"),
+            },
+            "retrieval": {"strategy": "dense_cosine", "top_n": top_n},
+            "rubric_version": RUBRIC_VERSION,
+            "answer_review_status": "not_applied",
+            "model_identity_note": "Ollama model tags are mutable; digests were not captured.",
+        },
         "metrics": summary,
     }
     summary_path.write_text(
@@ -277,6 +314,7 @@ def main() -> None:
     parser.add_argument("--top-n", type=_positive_integer, default=DEFAULT_TOP_N)
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--questions", type=Path, default=QUESTIONS_PATH)
+    parser.add_argument("--manifest", type=Path, default=MANIFEST_PATH)
     args = parser.parse_args()
 
     try:
@@ -286,6 +324,7 @@ def main() -> None:
             top_n=args.top_n,
             model=args.model,
             questions_path=args.questions,
+            manifest_path=args.manifest,
         )
     except (OSError, ValueError, RuntimeError) as error:
         parser.error(str(error))

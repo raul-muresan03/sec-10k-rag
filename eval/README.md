@@ -106,9 +106,12 @@ file path, SEC URL, and SHA-256 of the downloaded `full-submission.txt` bytes.
 The files under `data/` are local and are not committed. To verify one after
 downloading it, run `sha256sum` on its `path` and compare with its `sha256`.
 
-The manifest has version `1`. The runner still selects by ticker and year; it
-does not check the accession or hash automatically. Verify them before comparing
-runs made from separately downloaded filings.
+The manifest has version `1`. Before indexing, the runner validates all selected
+filings against its accession, form, filing year, split, path, and SHA-256. It
+requires the files at the recorded paths; it does not download missing filings.
+Use `--manifest` to select a different manifest (with paths relative to the
+project root, which is the manifest directory's parent). Indexes are rebuilt
+per filing in temporary directories, leaving the active application index untouched.
 
 ## Running the evaluator
 
@@ -129,8 +132,14 @@ generated answers, evidence matches, retrieval/generation latency, and Ollama
 timing counters. It writes a JSONL record per question and a JSON summary under
 `data/eval-runs/`. The summary reports indexing time separately from per-query
 retrieval and generation time. Override the defaults with `--top-n`, `--model`,
-`--questions`, and `--limit`. Use `--split test` only for a final check after
-dev-based tuning.
+`--questions`, `--manifest`, and `--limit`. The JSONL records and summary share
+the run ID. The summary records question/manifest hashes, each filing's accession
+and source/index hashes, the chunking configuration, code hashes, retrieval
+parameters, and a provisional rubric identifier (no answer review is applied yet).
+Ollama models are recorded by mutable tag; no immutable model digest is claimed.
+The temporary index files are removed after each filing, so keep the summary's
+index hashes for comparison.
+Use `--split test` only for a final check after dev-based tuning.
 
 Evidence hits require the quoted passage to appear in a retrieved chunk after
 case and whitespace normalization; this is a strict text-match proxy, not a

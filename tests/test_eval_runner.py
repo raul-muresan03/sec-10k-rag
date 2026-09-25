@@ -1,9 +1,14 @@
 import json
 from collections import Counter
+from hashlib import sha256
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pytest
 
 from eval import run_eval
+from eval import provenance
+import etl_pipeline
 
 
 def make_question(
@@ -30,6 +35,28 @@ def make_question(
 
 def write_questions(path, questions):
     path.write_text("".join(json.dumps(question) + "\n" for question in questions))
+
+
+def write_manifest(tmp_path, questions):
+    entries = []
+    for ticker, year, split in {(q["ticker"], q["year"], q["split"]) for q in questions}:
+        accession = f"0000000000-{str(year)[-2:]}-000001"
+        relative = f"data/sec-edgar-filings/{ticker}/10-K/{accession}/full-submission.txt"
+        source = tmp_path / relative
+        source.parent.mkdir(parents=True, exist_ok=True)
+        source.write_text(
+            f"ACCESSION NUMBER: {accession}\nCONFORMED SUBMISSION TYPE: 10-K\n"
+            f"FILED AS OF DATE: {year}0101\n<DOCUMENT>10-K</DOCUMENT>\n"
+        )
+        entries.append({
+            "ticker": ticker, "filing_year": year, "split": split,
+            "accession": accession, "path": relative,
+            "sha256": sha256(source.read_bytes()).hexdigest(),
+        })
+    manifest_path = tmp_path / "eval" / "corpus_manifest.v1.json"
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_text(json.dumps({"version": 1, "filings": entries}))
+    return manifest_path
 
 
 def test_load_questions_filters_split_and_limit(tmp_path):
@@ -131,18 +158,21 @@ def test_run_evaluation_indexes_once_per_filing_and_saves_results(tmp_path, monk
         make_question("amzn-1", ticker="AMZN", year=2021, evidence=["Other evidence"]),
     ]
     write_questions(questions_path, questions)
+    manifest_path = write_manifest(tmp_path, questions)
     indexed = []
     retrieved = []
 
-    def ensure_index(ticker, year):
-        indexed.append((ticker, year))
+    def build_index(filing, directory):
+        indexed.append((filing.ticker, filing.year))
+        assert etl_pipeline.DATA_DIR == directory
+        return {"strategy": "test", "sha256": "abc", "chunk_count": 1}
 
     def get_chunks(question, top_n):
         retrieved.append((question, top_n))
         evidence = question.replace("Question ", "").rstrip("?")
         return [(0.9, f"Expected evidence for {evidence}")]
 
-    monkeypatch.setattr(run_eval, "ensure_index", ensure_index)
+    monkeypatch.setattr(run_eval, "build_index", build_index)
     monkeypatch.setattr(run_eval, "get_most_similar_chunks", get_chunks)
     monkeypatch.setattr(
         run_eval,
@@ -157,16 +187,28 @@ def test_run_evaluation_indexes_once_per_filing_and_saves_results(tmp_path, monk
         model="test-model",
         questions_path=questions_path,
         output_directory=output_directory,
+        manifest_path=manifest_path,
     )
 
     assert Counter(indexed) == Counter({("NVDA", 2026): 1, ("AMZN", 2021): 1})
     assert len(retrieved) == 3
     assert summary["metrics"]["questions"] == 3
+    assert summary["provenance"]["questions"]["sha256"] == sha256(questions_path.read_bytes()).hexdigest()
+    assert summary["provenance"]["corpus_manifest"]["sha256"] == sha256(manifest_path.read_bytes()).hexdigest()
+    assert summary["provenance"]["index_configuration"]["embedding_model"]["tag"] == "nomic-embed-text"
+    assert summary["provenance"]["generation_model"]["tag"] == "test-model"
+    assert summary["provenance"]["generation_model"]["digest"] is None
+    assert len(summary["provenance"]["generation_model"]["prompt_source_sha256"]) == 64
+    assert summary["provenance"]["retrieval"]["top_n"] == 5
+    assert len(summary["provenance"]["filings"]) == 2
+    assert all(f["index"]["sha256"] == "abc" for f in summary["provenance"]["filings"])
+    assert {path.name for path in output_directory.iterdir()} == {results_path.name, summary_path.name}
     assert results_path.is_file()
     assert summary_path.is_file()
     saved = [json.loads(line) for line in results_path.read_text().splitlines()]
     assert len(saved) == 3
     assert saved[0]["generated_answer"] == "Generated answer"
+    assert saved[0]["run_id"] == summary["run_id"]
     assert saved[0]["retrieved_chunks"] == [
         {"score": 0.9, "text": "Expected evidence for nvda-1"}
     ]
@@ -178,7 +220,8 @@ def test_run_evaluation_scores_alternate_abstention_in_saved_results(tmp_path, m
         questions_path,
         [make_question("pfe-2015-no-answer", "no_answer", [], None, "PFE", 2015)],
     )
-    monkeypatch.setattr(run_eval, "ensure_index", lambda ticker, year: None)
+    manifest_path = write_manifest(tmp_path, [make_question("pfe-2015-no-answer", "no_answer", [], None, "PFE", 2015)])
+    monkeypatch.setattr(run_eval, "build_index", lambda filing, directory: {"sha256": "abc"})
     monkeypatch.setattr(run_eval, "get_most_similar_chunks", lambda question, top_n: [])
     monkeypatch.setattr(
         run_eval,
@@ -193,8 +236,114 @@ def test_run_evaluation_scores_alternate_abstention_in_saved_results(tmp_path, m
         model="test-model",
         questions_path=questions_path,
         output_directory=tmp_path / "results",
+        manifest_path=manifest_path,
     )
 
     result = json.loads(results_path.read_text().splitlines()[0])
     assert result["abstained"] is True
     assert summary["metrics"]["abstention"]["no_answer_correct"]["abstained"] == 1
+
+
+def test_verify_filings_rejects_tampered_source_and_header(tmp_path):
+    question = make_question()
+    manifest_path = write_manifest(tmp_path, [question])
+    key = ("NVDA", 2026)
+    version, digest, selected = provenance.verify_filings(manifest_path, {key}, "dev")
+    assert version == 1
+    assert digest == sha256(manifest_path.read_bytes()).hexdigest()
+    assert selected[key].accession == "0000000000-26-000001"
+
+    source = selected[key].path
+    source.write_text(source.read_text() + "tampered")
+    with pytest.raises(ValueError, match="SHA-256 mismatch"):
+        provenance.verify_filings(manifest_path, {key}, "dev")
+
+    source.write_text(source.read_text().replace("ACCESSION NUMBER: 0000000000-26-000001", "ACCESSION NUMBER: wrong"))
+    manifest = json.loads(manifest_path.read_text())
+    manifest["filings"][0]["sha256"] = sha256(source.read_bytes()).hexdigest()
+    manifest_path.write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match="header accession"):
+        provenance.verify_filings(manifest_path, {key}, "dev")
+
+
+def test_verify_filings_rejects_wrong_manifest_accession_or_split(tmp_path):
+    manifest_path = write_manifest(tmp_path, [make_question()])
+    manifest = json.loads(manifest_path.read_text())
+    manifest["filings"][0]["accession"] = "other"
+    manifest_path.write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match="accession/path/hash"):
+        provenance.verify_filings(manifest_path, {("NVDA", 2026)}, "dev")
+    manifest["filings"][0]["accession"] = "0000000000-26-000001"
+    manifest["filings"][0]["split"] = "test"
+    manifest_path.write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match="Split mismatch"):
+        provenance.verify_filings(manifest_path, {("NVDA", 2026)}, "dev")
+
+
+def test_preflight_rejects_missing_second_filing_before_indexing(tmp_path, monkeypatch):
+    questions = [make_question(), make_question("q2", ticker="AMZN", year=2021)]
+    path = tmp_path / "questions.jsonl"
+    write_questions(path, questions)
+    manifest_path = write_manifest(tmp_path, questions)
+    manifest = json.loads(manifest_path.read_text())
+    for entry in manifest["filings"]:
+        if entry["ticker"] == "AMZN":
+            (tmp_path / entry["path"]).unlink()
+    monkeypatch.setattr(run_eval, "build_index", lambda *args: pytest.fail("indexing before preflight"))
+    with pytest.raises(ValueError, match="Filing missing"):
+        run_eval.run_evaluation("dev", None, 5, "test-model", path, tmp_path / "results", manifest_path)
+    assert not (tmp_path / "results").exists()
+
+
+def test_build_index_ignores_existing_active_index(tmp_path, monkeypatch):
+    manifest_path = write_manifest(tmp_path, [make_question()])
+    filing = provenance.verify_filings(manifest_path, {("NVDA", 2026)}, "dev")[2][("NVDA", 2026)]
+    active_dir = tmp_path / "active"
+    active_dir.mkdir()
+    (active_dir / "active_accession.txt").write_text(filing.accession)
+    (active_dir / "all_chunks_embeddings.json").write_text('old index')
+    monkeypatch.setattr(etl_pipeline, "DATA_DIR", active_dir)
+    calls = []
+
+    def parse(path):
+        calls.append(path)
+        (etl_pipeline.DATA_DIR / "output_parser.txt").write_text("parsed")
+
+    def clean(path):
+        (etl_pipeline.DATA_DIR / "output_cleaner.txt").write_text("cleaned")
+
+    def chunk(path):
+        (etl_pipeline.DATA_DIR / "all_chunks_embeddings.json").write_text(
+            json.dumps({"chunks": ["fresh"], "embeddings": [[0.1]]})
+        )
+
+    monkeypatch.setattr(provenance, "parse_10K", parse)
+    monkeypatch.setattr(provenance, "clean_10K", clean)
+    monkeypatch.setattr(provenance, "chunk_10K", chunk)
+    with TemporaryDirectory(dir=tmp_path) as temporary:
+        directory = Path(temporary)
+        with provenance.use_index_directory(directory):
+            metadata = provenance.build_index(filing, directory)
+    assert calls == [str(filing.path)]
+    assert metadata["chunk_count"] == 1
+    assert metadata["sha256"] == sha256(b'{"chunks": ["fresh"], "embeddings": [[0.1]]}').hexdigest()
+    assert etl_pipeline.DATA_DIR == active_dir
+    assert (active_dir / "all_chunks_embeddings.json").read_text() == "old index"
+
+
+def test_failed_index_restores_active_directory_and_removes_workspace(tmp_path, monkeypatch):
+    questions_path = tmp_path / "questions.jsonl"
+    questions = [make_question()]
+    write_questions(questions_path, questions)
+    manifest_path = write_manifest(tmp_path, questions)
+    active_dir = etl_pipeline.DATA_DIR
+
+    def fail_index(filing, directory):
+        assert etl_pipeline.DATA_DIR == directory
+        raise RuntimeError("index failed")
+
+    monkeypatch.setattr(run_eval, "build_index", fail_index)
+    with pytest.raises(RuntimeError, match="index failed"):
+        run_eval.run_evaluation("dev", None, 5, "model", questions_path, tmp_path / "results", manifest_path)
+    assert etl_pipeline.DATA_DIR == active_dir
+    assert not list((tmp_path / "results").iterdir())
