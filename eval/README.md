@@ -141,6 +141,37 @@ The temporary index files are removed after each filing, so keep the summary's
 index hashes for comparison.
 Use `--split test` only for a final check after dev-based tuning.
 
+## Retrieval-only evaluation
+
+Run all 24 dev questions without calling the generation model:
+
+```sh
+venv/bin/python -m eval.run_eval --split dev --mode retrieval-only
+```
+
+For each question, retrieval is called **once with top 10**. The same ordered
+chunks are scored at ranks 5 and 10; `--top-n` can only be 10 in this mode.
+The JSONL records the retrieved chunks and the first rank of each quoted gold
+passage (`null` if missing). It has no generated answer or abstention score.
+The summary includes:
+
+- **hit@5 / hit@10:** fraction of answerable questions with at least one gold
+  passage found in the first 5 / 10 chunks.
+- **MRR@10:** mean of `1 / first matching rank` per answerable question, or
+  `0` if no gold passage matches within ten chunks.
+- **multi-hop all-evidence@5 / @10:** fraction of multi-hop questions for which
+  *every* quoted passage is found within the first 5 / 10 chunks (possibly in
+  the same chunk).
+
+No-answer questions have no gold evidence, so they are excluded from these
+denominators. The automatic relevance proxy requires the quoted text within
+one chunk after case and whitespace normalization; it is **not** answer
+correctness or semantic relevance. Manual evidence adjudications stay separate
+from these strict metrics. For example, the [baseline analysis](failure_analysis.md)
+notes that Starbucks' 2019 table was useful despite failing the strict passage
+match; that judgment belongs to the saved top-5 baseline, not automatically
+to a new top-10 run. The old top-5 run has no retrospective hit@10 score.
+
 Evidence hits require the quoted passage to appear in a retrieved chunk after
 case and whitespace normalization; this is a strict text-match proxy, not a
 semantic relevance or answer-correctness score. For example, the Starbucks

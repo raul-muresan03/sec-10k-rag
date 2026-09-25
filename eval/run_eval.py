@@ -11,12 +11,15 @@ from eval.provenance import (
     MANIFEST_PATH, RUBRIC_VERSION, build_index, hash_file, index_configuration,
     use_index_directory, verify_filings,
 )
+from eval.retrieval_metrics import evidence_found, normalize_text, score_retrieval, summarize_retrieval
 from etl_pipeline.rag_engine import get_llm_response
 from etl_pipeline.vector_store import get_most_similar_chunks
 
 
 DEFAULT_MODEL = "gemma3:1b"
 DEFAULT_TOP_N = 5
+RETRIEVAL_TOP_N = 10
+MODES = {"full", "retrieval-only"}
 ABSTENTION_TEXTS = {
     "information not available in the provided context",
     "information not found in the provided context",
@@ -24,10 +27,6 @@ ABSTENTION_TEXTS = {
 QUESTION_TYPES = {"narrative", "numeric", "multi_hop", "no_answer"}
 SPLITS = {"dev", "test"}
 QUESTIONS_PATH = Path(__file__).with_name("questions.jsonl")
-
-
-def normalize_text(text: str) -> str:
-    return " ".join(text.casefold().split())
 
 
 def is_abstention(answer: str) -> bool:
@@ -110,11 +109,6 @@ def _validate_question(question: Any, line_number: int) -> None:
         raise ValueError(f"Answerable question on line {line_number} needs evidence")
 
 
-def evidence_found(passage: str, chunks: list[tuple[float, str]]) -> bool:
-    normalized_passage = normalize_text(passage)
-    return any(normalized_passage in normalize_text(text) for _, text in chunks)
-
-
 def _rate(numerator: int, denominator: int) -> float | None:
     return numerator / denominator if denominator else None
 
@@ -183,9 +177,14 @@ def run_evaluation(
     questions_path: Path = QUESTIONS_PATH,
     output_directory: Path | None = None,
     manifest_path: Path = MANIFEST_PATH,
+    mode: str = "full",
 ) -> tuple[dict[str, Any], Path, Path]:
+    if mode not in MODES:
+        raise ValueError(f"mode must be one of: {', '.join(sorted(MODES))}")
     if top_n < 1:
         raise ValueError("top-n must be greater than zero")
+    if mode == "retrieval-only" and top_n != RETRIEVAL_TOP_N:
+        raise ValueError("retrieval-only requires exactly 10 results (top-n=10)")
     questions_hash = hash_file(questions_path)
     questions = load_questions(questions_path, split, limit)
     if questions_hash != hash_file(questions_path):
@@ -201,8 +200,9 @@ def run_evaluation(
         output_directory = etl_pipeline.DATA_DIR / "eval-runs"
     output_directory.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-    run_name = f"{timestamp}-{split}"
+    run_name = f"{timestamp}-{split}" if mode == "full" else f"{timestamp}-{split}-retrieval"
     results = []
+    scored = []
     indexing_seconds = []
     filing_records = []
     for (ticker, year), filing_questions in grouped_questions.items():
@@ -222,42 +222,59 @@ def run_evaluation(
                     chunks = get_most_similar_chunks(question["question"], top_n)
                     retrieval_seconds = time.perf_counter() - retrieval_start
 
+                    result = {
+                        "run_id": run_name,
+                        "id": question["id"],
+                        "split": question["split"],
+                        "ticker": ticker,
+                        "year": year,
+                        "question_type": question["type"],
+                        "question": question["question"],
+                        "reference_answer": question["answer"],
+                        "section": question.get("section"),
+                        "expected_evidence": question["evidence"],
+                        "retrieved_chunks": [
+                            {"score": score, "text": text} for score, text in chunks
+                        ],
+                        "latency_seconds": {"retrieval": retrieval_seconds},
+                    }
+                    if mode == "retrieval-only":
+                        score = score_retrieval(question, chunks)
+                        scored.append((question, score))
+                        result["retrieval_score"] = score
+                        result["evidence_found"] = [rank is not None for rank in score["evidence_ranks"]]
+                        results.append(result)
+                        continue
+
                     generation_start = time.perf_counter()
                     answer, ollama_metrics = get_llm_response(
                         question["question"], chunks, model
                     )
                     generation_seconds = time.perf_counter() - generation_start
 
-                    passage_matches = [
-                        evidence_found(passage, chunks) for passage in question["evidence"]
-                    ]
-                    results.append(
-                        {
-                            "run_id": run_name,
-                            "id": question["id"],
-                            "split": question["split"],
-                            "ticker": ticker,
-                            "year": year,
-                            "question_type": question["type"],
-                            "question": question["question"],
-                            "reference_answer": question["answer"],
-                            "section": question.get("section"),
-                            "expected_evidence": question["evidence"],
-                            "generated_answer": answer,
-                            "retrieved_chunks": [
-                                {"score": score, "text": text} for score, text in chunks
-                            ],
-                            "evidence_found": passage_matches,
-                            "abstained": is_abstention(answer),
-                            "latency_seconds": {
-                                "retrieval": retrieval_seconds,
-                                "generation": generation_seconds,
-                            },
-                            "ollama": ollama_metrics,
-                        }
-                    )
+                    result.update({
+                        "generated_answer": answer,
+                        "evidence_found": [evidence_found(passage, chunks) for passage in question["evidence"]],
+                        "abstained": is_abstention(answer),
+                        "ollama": ollama_metrics,
+                    })
+                    result["latency_seconds"]["generation"] = generation_seconds
+                    results.append(result)
 
-    summary = summarize_results(results, indexing_seconds, top_n)
+    if mode == "retrieval-only":
+        summary = {
+            "questions": len(results),
+            "filings": len(indexing_seconds),
+            "retrieval": summarize_retrieval(scored),
+            "latency_seconds": {
+                "indexing_mean": _rate(sum(indexing_seconds), len(indexing_seconds)),
+                "retrieval_mean": _rate(
+                    sum(result["latency_seconds"]["retrieval"] for result in results), len(results)
+                ),
+            },
+        }
+    else:
+        summary = summarize_results(results, indexing_seconds, top_n)
     results_path = output_directory / f"{run_name}.jsonl"
     summary_path = output_directory / f"{run_name}.summary.json"
 
@@ -267,8 +284,9 @@ def run_evaluation(
     summary_payload = {
         "run_id": run_name,
         "created_at": datetime.now(timezone.utc).isoformat(),
+        "mode": mode,
         "split": split,
-        "model": model,
+        "model": model if mode == "full" else None,
         "top_n": top_n,
         "limit": limit,
         "provenance": {
@@ -279,11 +297,17 @@ def run_evaluation(
             },
             "filings": filing_records,
             "index_configuration": configuration,
-            "generation_model": {
-                "tag": model, "digest": None,
-                "prompt_source_sha256": hash_file(Path(__file__).parent.parent / "etl_pipeline" / "rag_engine.py"),
+            "generation_model": (
+                {
+                    "tag": model, "digest": None,
+                    "prompt_source_sha256": hash_file(Path(__file__).parent.parent / "etl_pipeline" / "rag_engine.py"),
+                }
+                if mode == "full" else None
+            ),
+            "retrieval": {
+                "strategy": "dense_cosine", "top_n": top_n,
+                "relevance_proxy": "casefold_whitespace_substring",
             },
-            "retrieval": {"strategy": "dense_cosine", "top_n": top_n},
             "rubric_version": RUBRIC_VERSION,
             "answer_review_status": "not_applied",
             "model_identity_note": "Ollama model tags are mutable; digests were not captured.",
@@ -310,21 +334,27 @@ def _positive_integer(value: str) -> int:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Evaluate the SEC RAG pipeline.")
     parser.add_argument("--split", choices=sorted(SPLITS), default="dev")
+    parser.add_argument("--mode", choices=sorted(MODES), default="full")
     parser.add_argument("--limit", type=_positive_integer)
-    parser.add_argument("--top-n", type=_positive_integer, default=DEFAULT_TOP_N)
-    parser.add_argument("--model", default=DEFAULT_MODEL)
+    parser.add_argument("--top-n", type=_positive_integer)
+    parser.add_argument("--model")
     parser.add_argument("--questions", type=Path, default=QUESTIONS_PATH)
     parser.add_argument("--manifest", type=Path, default=MANIFEST_PATH)
     args = parser.parse_args()
 
     try:
+        if args.mode == "retrieval-only" and args.top_n not in (None, RETRIEVAL_TOP_N):
+            parser.error("retrieval-only requires top-n=10")
+        if args.mode == "retrieval-only" and args.model is not None:
+            parser.error("--model is only applicable in full mode")
         summary, results_path, summary_path = run_evaluation(
             split=args.split,
             limit=args.limit,
-            top_n=args.top_n,
-            model=args.model,
+            top_n=RETRIEVAL_TOP_N if args.mode == "retrieval-only" else args.top_n or DEFAULT_TOP_N,
+            model=args.model or DEFAULT_MODEL,
             questions_path=args.questions,
             manifest_path=args.manifest,
+            mode=args.mode,
         )
     except (OSError, ValueError, RuntimeError) as error:
         parser.error(str(error))

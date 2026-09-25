@@ -347,3 +347,58 @@ def test_failed_index_restores_active_directory_and_removes_workspace(tmp_path, 
         run_eval.run_evaluation("dev", None, 5, "model", questions_path, tmp_path / "results", manifest_path)
     assert etl_pipeline.DATA_DIR == active_dir
     assert not list((tmp_path / "results").iterdir())
+
+
+def test_retrieval_only_retrieves_once_at_ten_without_generation(tmp_path, monkeypatch):
+    questions = [
+        make_question("q1", "multi_hop", ["first", "second"]),
+        make_question("q2", "no_answer", [], None),
+    ]
+    questions_path = tmp_path / "questions.jsonl"
+    write_questions(questions_path, questions)
+    manifest_path = write_manifest(tmp_path, questions)
+    indexed = []
+    retrieved = []
+
+    def build_index(filing, directory):
+        indexed.append((filing.ticker, filing.year))
+        return {"sha256": "fake-index"}
+
+    def get_chunks(question, top_n):
+        retrieved.append((question, top_n))
+        if question == "Question q1?":
+            return [(1.0, "not relevant")] * 5 + [(0.5, "first and second")]
+        return [(1.0, "context without gold evidence")]
+
+    monkeypatch.setattr(run_eval, "build_index", build_index)
+    monkeypatch.setattr(run_eval, "get_most_similar_chunks", get_chunks)
+    monkeypatch.setattr(
+        run_eval, "get_llm_response", lambda *args: pytest.fail("retrieval-only invoked generation")
+    )
+    summary, records_path, summary_path = run_eval.run_evaluation(
+        split="dev", limit=None, top_n=10, model="ignored", mode="retrieval-only",
+        questions_path=questions_path, output_directory=tmp_path / "results", manifest_path=manifest_path,
+    )
+
+    assert indexed == [("NVDA", 2026)]
+    assert retrieved == [("Question q1?", 10), ("Question q2?", 10)]
+    assert summary_path.is_file()
+    assert summary["mode"] == "retrieval-only"
+    assert summary["model"] is None
+    assert summary["provenance"]["generation_model"] is None
+    assert summary["metrics"]["retrieval"]["hit_at_5"]["hits"] == 0
+    assert summary["metrics"]["retrieval"]["hit_at_10"] == {"hits": 1, "questions": 1, "rate": 1.0}
+    assert summary["metrics"]["retrieval"]["mrr_at_10"]["rate"] == pytest.approx(1 / 6)
+    assert summary["metrics"]["retrieval"]["multi_hop_all_evidence_at_10"]["complete"] == 1
+    assert "abstention" not in summary["metrics"]
+    records = [json.loads(line) for line in records_path.read_text().splitlines()]
+    assert [row["id"] for row in records] == ["q1", "q2"]
+    assert records[0]["retrieval_score"]["evidence_ranks"] == [6, 6]
+    assert records[0]["evidence_found"] == [True, True]
+    assert records[1]["retrieval_score"]["reciprocal_rank_at_10"] is None
+    assert all("generated_answer" not in row and "ollama" not in row for row in records)
+
+
+def test_retrieval_only_requires_top_ten(tmp_path):
+    with pytest.raises(ValueError, match="exactly 10"):
+        run_eval.run_evaluation("dev", None, 5, "unused", mode="retrieval-only")
