@@ -1,5 +1,6 @@
 from typing import List, Tuple
 from pathlib import Path
+from math import isfinite
 from etl_pipeline.chunker import text_to_embedding, get_similarity_score
 import json
 
@@ -7,15 +8,34 @@ import etl_pipeline
 
 prompt_cache = {}
 
+
+def load_index(index_path: Path) -> tuple[list[str], list[list[float]]]:
+    with index_path.open(encoding="utf-8") as source:
+        data = json.load(source)
+    if not isinstance(data, dict):
+        raise ValueError(f"Invalid index: {index_path}")
+    chunks, embeddings = data.get("chunks"), data.get("embeddings")
+    if not isinstance(chunks, list) or not chunks or not isinstance(embeddings, list):
+        raise ValueError(f"Invalid index chunks/embeddings: {index_path}")
+    if len(chunks) != len(embeddings) or any(not isinstance(chunk, str) or not chunk for chunk in chunks):
+        raise ValueError(f"Invalid index chunk count or text: {index_path}")
+    dimension = len(embeddings[0]) if isinstance(embeddings[0], list) else 0
+    if not dimension or any(
+        not isinstance(vector, list) or len(vector) != dimension
+        or any(type(value) not in (int, float) or not isfinite(value) for value in vector)
+        for vector in embeddings
+    ):
+        raise ValueError(f"Invalid embedding dimensions/values: {index_path}")
+    return chunks, embeddings
+
+
 def get_most_similar_chunks(
     prompt: str, top_n: int, index_path: Path | None = None,
 ) -> List[Tuple[float, str]]:
+    if top_n < 1:
+        raise ValueError("top_n must be positive")
     selected = index_path if index_path is not None else etl_pipeline.DATA_DIR / "all_chunks_embeddings.json"
-    with open(selected) as f:
-        data = json.load(f)
-
-    chunks = data["chunks"]
-    embeddings = data["embeddings"]
+    chunks, embeddings = load_index(selected)
     cleaned_prompt= prompt.strip().lower()
 
     if cleaned_prompt in prompt_cache:
@@ -23,6 +43,8 @@ def get_most_similar_chunks(
     else:
         prompt_embedding = text_to_embedding(cleaned_prompt)
         prompt_cache[cleaned_prompt] = prompt_embedding
+    if len(prompt_embedding) != len(embeddings[0]):
+        raise ValueError(f"Question embedding dimension differs from index: {selected}")
 
     scores = []
     for i in range(len(chunks)):

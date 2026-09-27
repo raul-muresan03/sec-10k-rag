@@ -75,3 +75,21 @@ def test_retrieval_uses_existing_prompt_cache_entry(data_directory):
 
     embed.assert_not_called()
     assert results[0][1] == "vertical evidence"
+
+
+def test_retrieval_rejects_inconsistent_index_dimensions(data_directory, monkeypatch):
+    path = data_directory / "bad.json"
+    path.write_text(json.dumps({"chunks": ["one", "two"], "embeddings": [[1.0, 0.0], [1.0]]}))
+    monkeypatch.setattr(vector_store, "text_to_embedding", lambda _: [1.0, 0.0])
+
+    with pytest.raises(ValueError, match="embedding dimensions"):
+        vector_store.get_most_similar_chunks("question", 1, path)
+
+
+def test_retrieval_rejects_inconsistent_question_dimension(data_directory, monkeypatch):
+    path = data_directory / "all_chunks_embeddings.json"
+    write_vector_store(data_directory)
+    monkeypatch.setattr(vector_store, "text_to_embedding", lambda _: [1.0])
+
+    with pytest.raises(ValueError, match="Question embedding dimension"):
+        vector_store.get_most_similar_chunks("question", 1, path)
