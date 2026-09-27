@@ -1,6 +1,6 @@
 from typing import List
 import os
-from math import sqrt
+from math import isfinite, sqrt
 import json
 from pathlib import Path
 
@@ -46,6 +46,13 @@ def paragraphs_to_embeddings(paragraphs: List[str]) -> List[List[float]]:
         raise OllamaInvalidResponse("Embedding response has no embeddings array")
     if len(embeddings) != len(paragraphs):
         raise OllamaInvalidResponse("Embedding count does not match batch size")
+    dimension = len(embeddings[0]) if embeddings and isinstance(embeddings[0], list) else 0
+    if not dimension or any(
+        not isinstance(vector, list) or len(vector) != dimension
+        or any(type(value) not in (int, float) or not isfinite(value) for value in vector)
+        for vector in embeddings
+    ):
+        raise OllamaInvalidResponse("Invalid Ollama embedding vector")
 
     return embeddings
 

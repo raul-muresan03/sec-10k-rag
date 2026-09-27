@@ -2,6 +2,7 @@ import json
 from unittest.mock import patch
 
 import pytest
+from etl_pipeline.ollama import OllamaInvalidResponse
 
 from etl_pipeline import vector_store
 
@@ -112,7 +113,7 @@ def test_retrieval_rejects_inconsistent_question_dimension(data_directory, monke
     write_vector_store(data_directory)
     monkeypatch.setattr(vector_store, "text_to_embedding", lambda _: [1.0])
 
-    with pytest.raises(ValueError, match="Invalid question embedding"):
+    with pytest.raises(OllamaInvalidResponse, match="Invalid question embedding"):
         vector_store.get_most_similar_chunks("question", 1, path)
 
 
@@ -120,7 +121,7 @@ def test_invalid_question_embedding_does_not_poison_prompt_cache(data_directory)
     path = write_vector_store(data_directory)
 
     with patch.object(vector_store, "text_to_embedding", side_effect=[[float("nan"), 0.0], [0.0, 1.0]]) as embed:
-        with pytest.raises(ValueError, match="Invalid question embedding"):
+        with pytest.raises(OllamaInvalidResponse, match="Invalid question embedding"):
             vector_store.get_most_similar_chunks("question", 1, path)
         results = vector_store.get_most_similar_chunks("question", 1, path)
 

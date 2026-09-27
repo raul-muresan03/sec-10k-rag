@@ -1,6 +1,7 @@
 from unittest.mock import Mock, patch
 
 from fastapi.testclient import TestClient
+import pytest
 import requests
 
 from api.main import create_app
@@ -41,3 +42,17 @@ def test_chat_and_filings_report_missing_indexes_as_unavailable():
 
     assert chat.status_code == filings.status_code == 503
     assert "/private/" not in str(chat.json()) + str(filings.json())
+
+
+@pytest.mark.parametrize("embedding", [None, ["bad", 0.0], [1.0], [float("nan"), 0.0], []])
+def test_chat_classifies_invalid_ollama_embedding_as_bad_gateway(tmp_path, embedding):
+    filing = prepared_filing(tmp_path, "NVDA")
+    response = Mock(status_code=200)
+    response.json.return_value = {"embeddings": [embedding]}
+
+    with patch("etl_pipeline.ollama.requests.post", return_value=response):
+        with TestClient(create_app(store=Catalog([filing]))) as client:
+            result = client.post("/api/chat", json={"filing_id": filing.filing_id, "question": "What happened?"})
+
+    assert result.status_code == 502
+    assert result.json()["detail"] == "Ollama returned an invalid response"
