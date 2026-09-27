@@ -1,11 +1,11 @@
 """FastAPI entry point for the filing query service."""
 
-import os
-
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 
-from api.models import FilingSummary
+from api.models import ChatRequest, ChatResponse, FilingSummary
+from api.query import QueryService
+from api.settings import Settings
 from etl_pipeline.chunker import EMBEDDING_MODEL
 from etl_pipeline.embedding_model import installed_models
 from etl_pipeline.filing_store import FilingIndexStore
@@ -22,10 +22,11 @@ def _not_ready(reason: str) -> JSONResponse:
     return JSONResponse(status_code=503, content={"status": "not_ready", "reason": reason})
 
 
-def create_app(store: FilingIndexStore | None = None) -> FastAPI:
+def create_app(store: FilingIndexStore | None = None, settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="SEC RAG API")
     index_store = store if store is not None else FilingIndexStore()
-    generation_model = os.getenv("RAG_MODEL", "gemma3:1b")
+    config = settings if settings is not None else Settings.from_env()
+    query_service = QueryService(index_store, config)
 
     @app.get("/api/health")
     def health() -> dict[str, str]:
@@ -44,7 +45,7 @@ def create_app(store: FilingIndexStore | None = None) -> FastAPI:
         except (OllamaUnavailable, OllamaTimeout, OllamaInvalidResponse) as error:
             return _not_ready(str(error))
         names = {model.get("name") for model in models}
-        for tag in (EMBEDDING_MODEL, generation_model):
+        for tag in (EMBEDDING_MODEL, config.model):
             if tag not in names and f"{tag}:latest" not in names:
                 return _not_ready(f"Ollama model not installed: {tag}")
         return {"status": "ready"}
@@ -59,6 +60,13 @@ def create_app(store: FilingIndexStore | None = None) -> FastAPI:
             )
             for item in index_store.prepared()
         ]
+
+    @app.post("/api/chat", response_model=ChatResponse)
+    def chat(request: ChatRequest) -> ChatResponse:
+        try:
+            return query_service.answer(request.filing_id, request.question)
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail="Unknown filing_id") from error
 
     return app
 
