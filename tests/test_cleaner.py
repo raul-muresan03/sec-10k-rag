@@ -30,6 +30,19 @@ def test_clean_10k_removes_hidden_markup_and_converts_tables(data_directory):
     assert "| 2026 | $ 10 |" in cleaned
 
 
+def test_clean_10k_writes_only_to_selected_path(data_directory):
+    source = data_directory / "parsed.txt"
+    source.write_text("<TEXT><html><body><div>Annual report text</div></body></html></TEXT>")
+    selected = data_directory / "selected-filing"
+    selected.mkdir()
+    output_path = selected / "cleaned.txt"
+
+    clean_10K(str(source), output_path=output_path)
+
+    assert "Annual report text" in output_path.read_text()
+    assert not (data_directory / "output_cleaner.txt").exists()
+
+
 def test_clean_10k_processes_parsed_nvidia_filing(data_directory):
     clean_10K(str(NVIDIA_PARSED_10K))
     cleaned = (data_directory / "output_cleaner.txt").read_text()
