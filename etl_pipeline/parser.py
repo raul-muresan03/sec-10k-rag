@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 
 import etl_pipeline
 
@@ -6,7 +7,7 @@ DOCUMENT_PATTERN = re.compile(r"(?<=<DOCUMENT>).*?(?=</DOCUMENT>)", re.IGNORECAS
 DOCUMENT_TYPE_PATTERN = re.compile(r"<TYPE>\s*([^\r\n<]+)", re.IGNORECASE)
 
 
-def parse_10K(file_path: str) -> None:
+def parse_10K(file_path: str, output_path: Path | None = None) -> None:
     with open(file_path, "r") as f:
         file = f.read()
 
@@ -24,7 +25,8 @@ def parse_10K(file_path: str) -> None:
     if document_10K is None:
         raise ValueError("No 10-K document found in submission")
 
-    with open(etl_pipeline.DATA_DIR / "output_parser.txt", "w") as f:
+    destination = output_path if output_path is not None else etl_pipeline.DATA_DIR / "output_parser.txt"
+    with open(destination, "w") as f:
         f.write(document_10K)
 
 if __name__ == "__main__":
