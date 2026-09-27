@@ -32,6 +32,18 @@ def test_retrieval_returns_highest_similarity_chunks_first(data_directory, monke
     assert results[0][0] > results[1][0]
 
 
+def test_retrieval_uses_only_the_selected_filing_index(data_directory, monkeypatch):
+    first = data_directory / "first.json"
+    second = data_directory / "second.json"
+    for path, text in ((first, "first filing"), (second, "second filing")):
+        path.write_text(json.dumps({"chunks": [text], "embeddings": [[1.0, 0.0]]}))
+    monkeypatch.setattr(vector_store, "text_to_embedding", lambda _: [1.0, 0.0])
+
+    for path, expected in ((first, "first filing"), (second, "second filing"), (first, "first filing")):
+        results = vector_store.get_most_similar_chunks("same question", top_n=1, index_path=path)
+        assert [text for _, text in results] == [expected]
+
+
 def test_retrieval_normalizes_prompt_before_embedding(data_directory, monkeypatch):
     write_vector_store(data_directory)
     embed = patch.object(vector_store, "text_to_embedding", return_value=[1.0, 0.0])
