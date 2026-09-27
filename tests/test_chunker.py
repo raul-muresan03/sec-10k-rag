@@ -78,6 +78,28 @@ def test_chunk_10k_groups_similar_adjacent_paragraphs(data_directory, monkeypatc
     assert chunk_data["embeddings"] == [[1.0, 0.0], [0.0, 1.0]]
 
 
+def test_chunk_10k_writes_to_selected_directory(data_directory, monkeypatch):
+    source = data_directory / "cleaned.txt"
+    source.write_text("first\n\nsecond")
+    selected = data_directory / "selected-filing"
+    selected.mkdir()
+    monkeypatch.setattr(
+        chunker,
+        "_get_all_vector_embeddings",
+        Mock(side_effect=lambda texts: [[1.0, 0.0] for _ in texts]),
+    )
+
+    chunks = chunker.chunk_10K(str(source), output_dir=selected)
+
+    assert chunks == ["first second"]
+    assert json.loads((selected / "all_embeddings.json").read_text()) == [[1.0, 0.0], [1.0, 0.0]]
+    assert json.loads((selected / "all_chunks_embeddings.json").read_text()) == {
+        "chunks": chunks, "embeddings": [[1.0, 0.0]],
+    }
+    assert not (data_directory / "all_embeddings.json").exists()
+    assert not (data_directory / "all_chunks_embeddings.json").exists()
+
+
 def test_chunk_10k_does_not_exceed_character_limit(data_directory, monkeypatch):
     first = "a" * 6_000
     second = "b" * 6_000

@@ -3,6 +3,7 @@ import os
 import requests
 from math import sqrt
 import json
+from pathlib import Path
 
 import etl_pipeline
 
@@ -82,7 +83,8 @@ def _get_all_paragraphs_lengths(paragraphs: List[str]) -> List[int]:
 
     return lengths
 
-def chunk_10K(file_path: str) -> List[str]:
+def chunk_10K(file_path: str, output_dir: Path | None = None) -> List[str]:
+    output_dir = output_dir if output_dir is not None else etl_pipeline.DATA_DIR
     with open(file_path, "r") as f:
         document = f.read()
         paragraphs = []
@@ -91,7 +93,7 @@ def chunk_10K(file_path: str) -> List[str]:
                 paragraphs.append(paragraph[start:start + MAX_CHUNK_LENGTH])
         paragraphs_lengths = _get_all_paragraphs_lengths(paragraphs)
         all_embeddings = _get_all_vector_embeddings(paragraphs)
-        with open(etl_pipeline.DATA_DIR / "all_embeddings.json", "w") as f2:
+        with open(output_dir / "all_embeddings.json", "w") as f2:
             json.dump(all_embeddings, f2)
 
         similarity_scores = []
@@ -102,7 +104,7 @@ def chunk_10K(file_path: str) -> List[str]:
 
     all_chunks = []
     if not paragraphs:
-        with open(etl_pipeline.DATA_DIR / "all_chunks_embeddings.json", "w") as f:
+        with open(output_dir / "all_chunks_embeddings.json", "w") as f:
             json.dump({"chunks": [], "embeddings": []}, f)
         return all_chunks
 
@@ -122,7 +124,7 @@ def chunk_10K(file_path: str) -> List[str]:
     all_chunks.append(current_chunk)
 
     chunk_embeddings = _get_all_vector_embeddings(all_chunks)
-    with open(etl_pipeline.DATA_DIR / "all_chunks_embeddings.json", "w") as f:
+    with open(output_dir / "all_chunks_embeddings.json", "w") as f:
         json.dump({"chunks": all_chunks, "embeddings": chunk_embeddings}, f)
 
     return all_chunks
