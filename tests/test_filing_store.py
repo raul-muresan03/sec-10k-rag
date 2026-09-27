@@ -3,6 +3,7 @@ import json
 import pytest
 
 from etl_pipeline import filing_store
+from etl_pipeline import vector_store
 from etl_pipeline.filings import filing_id, hash_file
 from tests.eval_helpers import make_question, write_manifest
 
@@ -81,3 +82,61 @@ def test_changed_model_digest_selects_a_distinct_index(store, monkeypatch):
     with pytest.raises(RuntimeError, match="not prepared"):
         store.resolve("NVDA", 2026)
     assert path.exists()
+
+
+def test_prepare_dev_isolates_interleaved_queries_and_reuses_indexes(store, monkeypatch):
+    built = []
+
+    def build(filing, directory):
+        built.append(filing.ticker)
+        path = directory / "all_chunks_embeddings.json"
+        path.write_text(json.dumps({"chunks": [filing.ticker], "embeddings": [[1.0, 0.0]]}))
+        return {"sha256": hash_file(path), "chunk_count": 1}
+
+    monkeypatch.setattr(filing_store, "build_index", build)
+    first, second = store.prepare_dev()
+    assert built == ["AMZN", "NVDA"]
+    assert first.index_path != second.index_path
+    assert {item.ticker for item in store.prepared()} == {"AMZN", "NVDA"}
+    monkeypatch.setattr(vector_store, "text_to_embedding", lambda _: [1.0, 0.0])
+    for filing in (first, second, first):
+        assert vector_store.get_most_similar_chunks("question", 1, filing.index_path)[0][1] == filing.ticker
+
+    reopened = filing_store.FilingIndexStore(store.manifest_path, store.index_root)
+    assert [item.index_path for item in reopened.prepare_dev()] == [first.index_path, second.index_path]
+    assert built == ["AMZN", "NVDA"]
+
+
+def test_failed_build_leaves_existing_filing_ready_and_no_partial_index(store, monkeypatch):
+    _, filings = store.dev_filings()
+    config = filing_store._configuration()
+    existing = write_prepared(store, filings[("NVDA", 2026)], config)
+
+    def fail(filing, directory):
+        (directory / "partial.txt").write_text("unfinished")
+        raise RuntimeError("interrupted")
+
+    monkeypatch.setattr(filing_store, "build_index", fail)
+    with pytest.raises(RuntimeError, match="interrupted"):
+        store.prepare_dev()
+    assert store.resolve("NVDA", 2026).index_path == existing
+    with pytest.raises(RuntimeError, match="not prepared"):
+        store.resolve("AMZN", 2021)
+    assert not list(store.index_root.rglob(".building-*"))
+
+
+def test_model_change_during_build_cannot_publish_index(store, monkeypatch):
+    _, filings = store.dev_filings()
+    config = filing_store._configuration()
+    path = store._directory(filings[("NVDA", 2026)], config)
+
+    def build(filing, directory):
+        index_path = directory / "all_chunks_embeddings.json"
+        index_path.write_text(json.dumps({"chunks": ["NVDA"], "embeddings": [[1.0]]}))
+        monkeypatch.setattr(filing_store, "embedding_model_digest", lambda _: "b" * 64)
+        return {"sha256": hash_file(index_path), "chunk_count": 1}
+
+    monkeypatch.setattr(filing_store, "build_index", build)
+    with pytest.raises(RuntimeError, match="model changed"):
+        store.prepare(filings[("NVDA", 2026)], "manifest-sha", config)
+    assert not path.exists()

@@ -1,15 +1,19 @@
 """Resolve verified, filing-scoped indexes from the dev corpus."""
 
+import argparse
 from dataclasses import dataclass
+import errno
 from hashlib import sha256
 import json
+import os
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import etl_pipeline
 from etl_pipeline.chunker import EMBEDDING_MODEL
 from etl_pipeline.embedding_model import embedding_model_digest
 from etl_pipeline.filings import MANIFEST_PATH, VerifiedFiling, filing_id, hash_file, verify_filings
-from etl_pipeline.indexing import INDEX_FILENAME, index_configuration
+from etl_pipeline.indexing import INDEX_FILENAME, build_index, index_configuration
 from etl_pipeline.vector_store import load_index
 
 
@@ -110,3 +114,57 @@ class FilingIndexStore:
         if ready is None:
             raise RuntimeError(f"Index not prepared for {ticker} {year}; run python -m etl_pipeline.filing_store")
         return ready
+
+    def prepare(self, filing: VerifiedFiling, manifest_sha256: str, config: dict) -> PreparedFiling:
+        ready = self._load(filing, config)
+        if ready is not None:
+            return ready
+        directory = self._directory(filing, config)
+        directory.parent.mkdir(parents=True, exist_ok=True)
+        with TemporaryDirectory(prefix=".building-", dir=directory.parent) as temporary:
+            workspace = Path(temporary)
+            index = build_index(filing, workspace)
+            if embedding_model_digest(EMBEDDING_MODEL) != config["embedding_model"]["digest"]:
+                raise RuntimeError(f"Embedding model changed during indexing: {filing.ticker} {filing.year}")
+            metadata = {
+                "schema_version": 1, "filing_id": filing_id(filing), "ticker": filing.ticker,
+                "filing_year": filing.year, "accession": filing.accession, "sec_url": filing.sec_url,
+                "source_sha256": filing.sha256, "manifest_sha256": manifest_sha256,
+                "index_version": directory.name, "index_configuration": config,
+                "index_sha256": index["sha256"], "chunk_count": index["chunk_count"],
+            }
+            (workspace / METADATA_FILENAME).write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
+            for name in ("output_parser.txt", "output_cleaner.txt", "all_embeddings.json"):
+                (workspace / name).unlink(missing_ok=True)
+            if hash_file(workspace / INDEX_FILENAME) != index["sha256"]:
+                raise ValueError(f"Index changed before publication: {filing.ticker} {filing.year}")
+            try:
+                os.rename(workspace, directory)
+            except OSError as error:
+                if error.errno not in (errno.EEXIST, errno.ENOTEMPTY) or not directory.exists():
+                    raise
+        ready = self._load(filing, config)
+        if ready is None:
+            raise RuntimeError(f"Index disappeared during publication: {filing.ticker} {filing.year}")
+        return ready
+
+    def prepare_dev(self) -> list[PreparedFiling]:
+        digest, filings = self.dev_filings()
+        config = _configuration()
+        return [self.prepare(filing, digest, config) for filing in filings.values()]
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Prepare manifest-verified dev filing indexes.")
+    parser.add_argument("--manifest", type=Path, default=MANIFEST_PATH)
+    parser.add_argument("--index-root", type=Path)
+    args = parser.parse_args()
+    try:
+        for filing in FilingIndexStore(args.manifest, args.index_root).prepare_dev():
+            print(f"{filing.ticker} {filing.year}: {filing.filing_id} ({filing.chunk_count} chunks)")
+    except (OSError, ValueError, RuntimeError) as error:
+        parser.error(str(error))
+
+
+if __name__ == "__main__":
+    main()
