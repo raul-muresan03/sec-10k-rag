@@ -40,9 +40,13 @@ def get_most_similar_chunks(
         prompt_embedding = prompt_cache[cache_key]
     else:
         prompt_embedding = text_to_embedding(cleaned_prompt)
-        prompt_cache[cache_key] = prompt_embedding
-    if len(prompt_embedding) != len(embeddings[0]):
-        raise ValueError(f"Question embedding dimension differs from index: {index_path}")
+    if (
+        not isinstance(prompt_embedding, list)
+        or len(prompt_embedding) != len(embeddings[0])
+        or any(type(value) not in (int, float) or not isfinite(value) for value in prompt_embedding)
+    ):
+        raise ValueError(f"Invalid question embedding for index: {index_path}")
+    prompt_cache[cache_key] = prompt_embedding
 
     scores = []
     for i in range(len(chunks)):
