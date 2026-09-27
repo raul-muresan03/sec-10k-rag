@@ -11,7 +11,9 @@ def write_vector_store(data_directory):
         "chunks": ["horizontal evidence", "vertical evidence", "diagonal evidence"],
         "embeddings": [[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
     }
-    (data_directory / "all_chunks_embeddings.json").write_text(json.dumps(payload))
+    path = data_directory / "all_chunks_embeddings.json"
+    path.write_text(json.dumps(payload))
+    return path
 
 
 @pytest.fixture(autouse=True)
@@ -22,10 +24,10 @@ def clear_prompt_cache():
 
 
 def test_retrieval_returns_highest_similarity_chunks_first(data_directory, monkeypatch):
-    write_vector_store(data_directory)
+    path = write_vector_store(data_directory)
     monkeypatch.setattr(vector_store, "text_to_embedding", lambda _: [0.0, 1.0])
 
-    results = vector_store.get_most_similar_chunks("question", top_n=2)
+    results = vector_store.get_most_similar_chunks("question", top_n=2, index_path=path)
 
     assert [result[1] for result in results] == ["vertical evidence", "diagonal evidence"]
     assert results[0][0] == pytest.approx(1.0)
@@ -45,21 +47,21 @@ def test_retrieval_uses_only_the_selected_filing_index(data_directory, monkeypat
 
 
 def test_retrieval_normalizes_prompt_before_embedding(data_directory, monkeypatch):
-    write_vector_store(data_directory)
+    path = write_vector_store(data_directory)
     embed = patch.object(vector_store, "text_to_embedding", return_value=[1.0, 0.0])
 
     with embed as mock_embed:
-        vector_store.get_most_similar_chunks("  NVIDIA Revenue  ", top_n=1)
+        vector_store.get_most_similar_chunks("  NVIDIA Revenue  ", top_n=1, index_path=path)
 
     mock_embed.assert_called_once_with("nvidia revenue")
 
 
 def test_retrieval_reuses_cached_prompt_embedding(data_directory):
-    write_vector_store(data_directory)
+    path = write_vector_store(data_directory)
 
     with patch.object(vector_store, "text_to_embedding", return_value=[1.0, 0.0]) as embed:
-        first = vector_store.get_most_similar_chunks(" NVIDIA Revenue ", top_n=1)
-        second = vector_store.get_most_similar_chunks("nvidia revenue", top_n=1)
+        first = vector_store.get_most_similar_chunks(" NVIDIA Revenue ", top_n=1, index_path=path)
+        second = vector_store.get_most_similar_chunks("nvidia revenue", top_n=1, index_path=path)
 
     assert first == second
     embed.assert_called_once_with("nvidia revenue")
@@ -69,13 +71,13 @@ def test_retrieval_reuses_cached_prompt_embedding(data_directory):
 
 
 def test_retrieval_uses_existing_prompt_cache_entry(data_directory):
-    write_vector_store(data_directory)
+    path = write_vector_store(data_directory)
     path = data_directory / "all_chunks_embeddings.json"
     key = (vector_store.EMBEDDING_MODEL, str(path.resolve()), "cached question")
     vector_store.prompt_cache[key] = [0.0, 1.0]
 
     with patch.object(vector_store, "text_to_embedding") as embed:
-        results = vector_store.get_most_similar_chunks("cached question", top_n=1)
+        results = vector_store.get_most_similar_chunks("cached question", top_n=1, index_path=path)
 
     embed.assert_not_called()
     assert results[0][1] == "vertical evidence"

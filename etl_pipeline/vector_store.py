@@ -4,8 +4,6 @@ from math import isfinite
 from etl_pipeline.chunker import EMBEDDING_MODEL, text_to_embedding, get_similarity_score
 import json
 
-import etl_pipeline
-
 prompt_cache = {}
 
 
@@ -30,14 +28,13 @@ def load_index(index_path: Path) -> tuple[list[str], list[list[float]]]:
 
 
 def get_most_similar_chunks(
-    prompt: str, top_n: int, index_path: Path | None = None,
+    prompt: str, top_n: int, index_path: Path,
 ) -> List[Tuple[float, str]]:
     if top_n < 1:
         raise ValueError("top_n must be positive")
-    selected = index_path if index_path is not None else etl_pipeline.DATA_DIR / "all_chunks_embeddings.json"
-    chunks, embeddings = load_index(selected)
+    chunks, embeddings = load_index(index_path)
     cleaned_prompt= prompt.strip().lower()
-    cache_key = (EMBEDDING_MODEL, str(selected.resolve()), cleaned_prompt)
+    cache_key = (EMBEDDING_MODEL, str(index_path.resolve()), cleaned_prompt)
 
     if cache_key in prompt_cache:
         prompt_embedding = prompt_cache[cache_key]
@@ -45,7 +42,7 @@ def get_most_similar_chunks(
         prompt_embedding = text_to_embedding(cleaned_prompt)
         prompt_cache[cache_key] = prompt_embedding
     if len(prompt_embedding) != len(embeddings[0]):
-        raise ValueError(f"Question embedding dimension differs from index: {selected}")
+        raise ValueError(f"Question embedding dimension differs from index: {index_path}")
 
     scores = []
     for i in range(len(chunks)):
@@ -57,7 +54,9 @@ def get_most_similar_chunks(
 
 
 if __name__ == "__main__":
-    result = get_most_similar_chunks("Who is the CEO in Nvidia?", 5)
+    from etl_pipeline.pipeline import ensure_index
+
+    result = get_most_similar_chunks("Who is the CEO in Nvidia?", 5, ensure_index("NVDA", 2026))
     for score, chunk in result:
         print("Score:", score)
         print(chunk)

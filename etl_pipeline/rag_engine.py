@@ -7,7 +7,8 @@ SYSTEM_PROMPT = (
     "Use the provided context to answer the user's question. "
     "\n\n"
     "Rules:\n"
-    "1. If you cannot find the exact answer in the context, strictly state: 'Information not available in the provided context'. Do not hallucinate numbers.\n"
+    "1. If you cannot find the exact answer in the context, strictly state: "
+    "'Information not available in the provided context'. Do not hallucinate numbers.\n"
     "2. Use a professional, concise tone.\n"
     "\n\n"
 )
@@ -54,7 +55,9 @@ def get_llm_response(
         return "Error", {}
 
 if __name__ == "__main__":
+    from etl_pipeline.pipeline import ensure_index
+
     user_prompt = "Who is the CEO of NVIDIA?"
-    relevant_chunks = get_most_similar_chunks(user_prompt, 5)
+    relevant_chunks = get_most_similar_chunks(user_prompt, 5, ensure_index("NVDA", 2026))
     response, _ = get_llm_response(user_prompt, relevant_chunks, "gemma3:1b")
     print(response)
