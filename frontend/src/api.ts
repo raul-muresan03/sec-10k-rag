@@ -89,6 +89,9 @@ export async function fetchFilings(signal: AbortSignal): Promise<FilingSummary[]
   if (!Array.isArray(data) || !data.every(isFiling)) {
     throw new ApiError(response.status, 'The filing catalog is incomplete or uses an unsupported format.')
   }
+  if (data.length === 0) {
+    throw new ApiError(response.status, 'No verified filings are prepared yet. Prepare the dev indexes and try again.')
+  }
   return data
 }
 

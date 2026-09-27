@@ -21,7 +21,7 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
       .then(data => {
         if (controller.signal.aborted) return
         setFilings(data)
-        if (data.length > 0 && (selectedId === null || !data.some(filing => filing.filing_id === selectedId))) {
+        if (selectedId === null || !data.some(filing => filing.filing_id === selectedId)) {
           onSelect(data[0])
         }
       })
