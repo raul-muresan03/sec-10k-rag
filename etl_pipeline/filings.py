@@ -8,6 +8,11 @@ import re
 
 
 MANIFEST_PATH = Path(__file__).resolve().parents[1] / "eval" / "corpus_manifest.v1.json"
+ACCESSION = re.compile(r"[0-9]{10}-[0-9]{2}-[0-9]{6}")
+SEC_URL = re.compile(
+    r"https://www\.sec\.gov/Archives/edgar/data/(?P<cik>[0-9]+)/(?P<archive>[0-9]{18})/"
+    r"(?P<accession>[0-9]{10}-[0-9]{2}-[0-9]{6})\.txt"
+)
 
 
 @dataclass(frozen=True)
@@ -18,6 +23,19 @@ class VerifiedFiling:
     accession: str
     path: Path
     sha256: str
+    sec_url: str | None = None
+
+
+def filing_id(filing: VerifiedFiling) -> str:
+    match = SEC_URL.fullmatch(filing.sec_url or "")
+    if (
+        match is None
+        or match["accession"] != filing.accession
+        or match["archive"] != filing.accession.replace("-", "")
+        or int(match["cik"]) != int(filing.accession[:10])
+    ):
+        raise ValueError(f"Invalid SEC identity for {filing.ticker} {filing.year}")
+    return f"{match['cik']}-{filing.accession}"
 
 
 def hash_file(path: Path) -> str:
@@ -65,6 +83,7 @@ def verify_filings(
         expected_path = f"data/sec-edgar-filings/{ticker}/10-K/{accession}/full-submission.txt"
         if (
             not isinstance(accession, str)
+            or not ACCESSION.fullmatch(accession)
             or relative_path != expected_path
             or not isinstance(expected_hash, str)
             or not re.fullmatch(r"[0-9a-f]{64}", expected_hash)
@@ -88,7 +107,10 @@ def verify_filings(
             or fields["FILED AS OF DATE"].group(1).strip()[:4] != str(year)
         ):
             raise ValueError(f"SEC header accession/form/filing year mismatch for {ticker} {year}: {path}")
-        selected[key] = VerifiedFiling(ticker, year, split, accession, path, expected_hash)
+        sec_url = entry.get("sec_url")
+        if sec_url is not None and (not isinstance(sec_url, str) or not SEC_URL.fullmatch(sec_url)):
+            raise ValueError(f"Invalid SEC source URL for {ticker} {year}")
+        selected[key] = VerifiedFiling(ticker, year, split, accession, path, expected_hash, sec_url)
 
     missing = keys - selected.keys()
     if missing:
