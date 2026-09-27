@@ -52,14 +52,17 @@ def create_app(store: FilingIndexStore | None = None, settings: Settings | None 
 
     @app.get("/api/filings", response_model=list[FilingSummary])
     def filings() -> list[FilingSummary]:
-        return [
-            FilingSummary(
-                filing_id=item.filing_id, ticker=item.ticker,
-                company=COMPANY_NAMES.get(item.ticker, item.ticker),
-                filing_year=item.year, sec_url=item.sec_url,
-            )
-            for item in index_store.prepared()
-        ]
+        try:
+            return [
+                FilingSummary(
+                    filing_id=item.filing_id, ticker=item.ticker,
+                    company=COMPANY_NAMES.get(item.ticker, item.ticker),
+                    filing_year=item.year, sec_url=item.sec_url,
+                )
+                for item in index_store.prepared()
+            ]
+        except (OSError, ValueError, RuntimeError) as error:
+            raise HTTPException(status_code=503, detail="Filing indexes unavailable") from error
 
     @app.post("/api/chat", response_model=ChatResponse)
     def chat(request: ChatRequest) -> ChatResponse:
@@ -67,6 +70,14 @@ def create_app(store: FilingIndexStore | None = None, settings: Settings | None 
             return query_service.answer(request.filing_id, request.question)
         except KeyError as error:
             raise HTTPException(status_code=404, detail="Unknown filing_id") from error
+        except OllamaTimeout as error:
+            raise HTTPException(status_code=504, detail="Ollama timed out") from error
+        except OllamaInvalidResponse as error:
+            raise HTTPException(status_code=502, detail="Ollama returned an invalid response") from error
+        except OllamaUnavailable as error:
+            raise HTTPException(status_code=503, detail="Ollama unavailable") from error
+        except (OSError, ValueError, RuntimeError) as error:
+            raise HTTPException(status_code=503, detail="Filing index unavailable") from error
 
     return app
 
