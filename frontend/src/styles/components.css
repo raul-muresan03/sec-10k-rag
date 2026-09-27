@@ -18,6 +18,14 @@
 
 .answer-panel, .evidence-panel { min-width: 0; border: 1px solid #dce2dc; border-radius: 5px; background: #fff; }
 .answer-panel { padding: 32px; }
+.chat-form label { display: block; margin-bottom: 12px; color: #385450; font-size: .82rem; font-weight: 750; }
+.chat-form textarea { display: block; width: 100%; min-height: 120px; padding: 14px; border: 1px solid #bfcac4;
+  border-radius: 3px; background: #f9faf7; color: #1d3032; font: inherit; line-height: 1.6; resize: vertical; }
+.chat-form textarea::placeholder { color: #697978; }
+.chat-form .selector-nav { margin: 14px 0 0; color: #65737b; font-size: .75rem; }
+.chat-form .selector-nav button { min-height: 44px; padding: 8px 18px; border: 1px solid #bdd6cc;
+  border-radius: 3px; background: #e9f2ed; color: #205f50; }
+.chat-form .selector-nav button:disabled { cursor: not-allowed; opacity: .55; }
 .panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 25px;
   margin-bottom: 30px; }
 .panel-heading .eyebrow { margin-bottom: 13px; }

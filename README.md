@@ -2,7 +2,7 @@
 
 A local SEC 10-K RAG pipeline with a live FastAPI endpoint. It verifies manifest-listed filings, persists separate
 indexes per filing, retrieves relevant chunks with cosine similarity, and generates answers through Ollama. The
-frontend currently replays saved evaluation results; the live chat UI is a later step.
+frontend asks live filing-scoped questions by default and keeps the saved evaluation replay in an Evaluation view.
 
 The backend uses local files without a vector database or orchestration framework.
 
@@ -18,7 +18,8 @@ Implemented:
 - Store verified, versioned filing-scoped indexes locally in JSON
 - Retrieve chunks with brute-force cosine similarity
 - Generate an answer with a local Ollama model
-- Answer filing-scoped questions through the [live API](api/README.md)
+- Answer filing-scoped questions through the [live API](api/README.md) or the default Chat view
+- Inspect saved dev answers, evidence, and retrieval metrics in the frontend Evaluation replay
 - Prepare the six dev filings with `python3 -m etl_pipeline.filing_store` or prepare one through `ask.py`
 - Log questions, answers, retrieved chunks, latency, and Ollama metrics as JSONL
 
@@ -28,7 +29,7 @@ Not implemented:
 - Confidence scores or similarity thresholds
 - Cross-filing, multi-company, or year-over-year answers; each query selects one filing
 - Pinecone, LangChain, cloud LLM providers, or hybrid search
-- Live web chat or Docker Compose
+- Docker Compose
 
 ## How It Works
 
@@ -121,6 +122,17 @@ question, answer, model, retrieved chunk text and scores, retrieval and generati
 durations returned by Ollama. Ollama duration fields are stored unchanged in nanoseconds.
 
 To ask through HTTP, see the [API runbook](api/README.md). The API does not append to the CLI query log.
+
+To ask through the Chat UI, start the API, then run the frontend dev server (it proxies `/api` to
+`http://127.0.0.1:8000`):
+
+```bash
+npm --prefix frontend ci
+npm --prefix frontend run dev -- --port 5173
+```
+
+Chat is the default view; the saved evaluation replay stays under Evaluation. Each question selects one filing,
+is independent, and clears on refresh. In production the same origin serves the UI and reverse-proxies `/api`.
 
 ## Generated Data
 
