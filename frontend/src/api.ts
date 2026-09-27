@@ -65,6 +65,14 @@ function isFiling(value: unknown): value is FilingSummary {
     && typeof filing.sec_url === 'string'
 }
 
+function isStageTimes(value: unknown): value is StageTimes {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return false
+  const times = value as Record<string, unknown>
+  return ['retrieval', 'generation', 'total'].every(stage =>
+    typeof times[stage] === 'number' && Number.isFinite(times[stage]) && times[stage] >= 0,
+  )
+}
+
 function isChat(value: unknown): value is ChatResponse {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return false
   const chat = value as Record<string, unknown>
@@ -79,7 +87,7 @@ function isChat(value: unknown): value is ChatResponse {
       && typeof (chunk as { text: unknown }).text === 'string')
     && typeof chat.sec_url === 'string'
     && typeof chat.request_id === 'string'
-    && chat.stage_times_seconds !== null && typeof chat.stage_times_seconds === 'object'
+    && isStageTimes(chat.stage_times_seconds)
 }
 
 export async function fetchFilings(signal: AbortSignal): Promise<FilingSummary[]> {
