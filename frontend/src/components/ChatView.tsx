@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { postChat } from '../api'
 import type { ChatResponse, FilingSummary } from '../api'
 import { FilingSelector } from './FilingSelector'
@@ -24,7 +24,10 @@ export function ChatView() {
   const messageRef = useRef(0)
   const abortRef = useRef<AbortController | null>(null)
 
+  useEffect(() => () => abortRef.current?.abort(), [])
+
   const handleSelect = (next: FilingSummary) => {
+    if (next.filing_id === filing?.filing_id) return
     abortRef.current?.abort()
     abortRef.current = null
     sessionRef.current += 1
