@@ -112,7 +112,7 @@ export function ChatView() {
           />
         </div>
         <div className="case-content">
-          <form className="answer-panel" aria-label="Ask the selected filing" onSubmit={onSubmit}>
+          <form className="answer-panel chat-form" aria-label="Ask the selected filing" onSubmit={onSubmit}>
             <label htmlFor="chat-question">
               {filing === null
                 ? 'Question'
