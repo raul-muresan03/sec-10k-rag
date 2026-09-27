@@ -7,19 +7,14 @@ import pytest
 import ask
 
 
-def create_vector_store(data_directory):
-    (data_directory / "all_chunks_embeddings.json").write_text("{}")
-
-
 @pytest.fixture
-def ensure_index(monkeypatch):
-    ensure = Mock()
+def ensure_index(monkeypatch, data_directory):
+    ensure = Mock(return_value=data_directory / "indexes" / "selected" / "all_chunks_embeddings.json")
     monkeypatch.setattr(ask, "ensure_index", ensure)
     return ensure
 
 
 def test_main_retrieves_chunks_and_generates_answer(data_directory, monkeypatch, capsys, ensure_index):
-    create_vector_store(data_directory)
     chunks = [(0.95, "relevant evidence")]
     retrieve = Mock(return_value=chunks)
     generate = Mock(return_value=("Grounded answer", {"eval_count": 12}))
@@ -35,7 +30,7 @@ def test_main_retrieves_chunks_and_generates_answer(data_directory, monkeypatch,
     ask.main()
 
     ensure_index.assert_called_once_with("NVDA", 2026)
-    retrieve.assert_called_once_with("What happened?", ask.DEFAULT_TOP_N)
+    retrieve.assert_called_once_with("What happened?", ask.DEFAULT_TOP_N, ensure_index.return_value)
     generate.assert_called_once_with("What happened?", chunks, ask.DEFAULT_MODEL)
     output = capsys.readouterr().out
     assert "Retrieved 1 chunks" in output
@@ -72,7 +67,6 @@ def test_query_log_failure_warns_without_raising(tmp_path, monkeypatch, capsys):
 
 
 def test_main_accepts_retrieval_and_model_options(data_directory, monkeypatch, ensure_index):
-    create_vector_store(data_directory)
     retrieve = Mock(return_value=[])
     generate = Mock(return_value=("answer", {}))
     monkeypatch.setattr(ask, "get_most_similar_chunks", retrieve)
@@ -97,7 +91,7 @@ def test_main_accepts_retrieval_and_model_options(data_directory, monkeypatch, e
     ask.main()
 
     ensure_index.assert_called_once_with("NVDA", 2025)
-    retrieve.assert_called_once_with("What happened?", 3)
+    retrieve.assert_called_once_with("What happened?", 3, ensure_index.return_value)
     generate.assert_called_once_with("What happened?", [], "custom-model")
 
 

@@ -153,6 +153,10 @@ class FilingIndexStore:
         config = _configuration()
         return [self.prepare(filing, digest, config) for filing in filings.values()]
 
+    def prepare_selected(self, ticker: str, year: int) -> PreparedFiling:
+        digest, filing = self.verified(ticker, year)
+        return self.prepare(filing, digest, _configuration())
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Prepare manifest-verified dev filing indexes.")

@@ -104,6 +104,9 @@ def test_prepare_dev_isolates_interleaved_queries_and_reuses_indexes(store, monk
 
     reopened = filing_store.FilingIndexStore(store.manifest_path, store.index_root)
     assert [item.index_path for item in reopened.prepare_dev()] == [first.index_path, second.index_path]
+    assert reopened.prepare_selected("nvda", 2026).index_path == second.index_path
+    with pytest.raises(ValueError, match="Split mismatch"):
+        reopened.prepare_selected("AAPL", 2024)
     assert built == ["AMZN", "NVDA"]
 
 
