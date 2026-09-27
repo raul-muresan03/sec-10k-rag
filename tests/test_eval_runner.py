@@ -9,6 +9,7 @@ import pytest
 from eval import run_eval
 from eval import provenance
 import etl_pipeline
+from etl_pipeline import indexing
 from tests.eval_helpers import make_question, write_manifest, write_questions
 
 
@@ -267,21 +268,21 @@ def test_build_index_ignores_existing_active_index(tmp_path, monkeypatch):
     monkeypatch.setattr(etl_pipeline, "DATA_DIR", active_dir)
     calls = []
 
-    def parse(path):
+    def parse(path, output_path):
         calls.append(path)
-        (etl_pipeline.DATA_DIR / "output_parser.txt").write_text("parsed")
+        output_path.write_text("parsed")
 
-    def clean(path):
-        (etl_pipeline.DATA_DIR / "output_cleaner.txt").write_text("cleaned")
+    def clean(path, output_path):
+        output_path.write_text("cleaned")
 
-    def chunk(path):
-        (etl_pipeline.DATA_DIR / "all_chunks_embeddings.json").write_text(
+    def chunk(path, output_dir):
+        (output_dir / "all_chunks_embeddings.json").write_text(
             json.dumps({"chunks": ["fresh"], "embeddings": [[0.1]]})
         )
 
-    monkeypatch.setattr(provenance, "parse_10K", parse)
-    monkeypatch.setattr(provenance, "clean_10K", clean)
-    monkeypatch.setattr(provenance, "chunk_10K", chunk)
+    monkeypatch.setattr(indexing, "parse_10K", parse)
+    monkeypatch.setattr(indexing, "clean_10K", clean)
+    monkeypatch.setattr(indexing, "chunk_10K", chunk)
     with TemporaryDirectory(dir=tmp_path) as temporary:
         directory = Path(temporary)
         with provenance.use_index_directory(directory):
