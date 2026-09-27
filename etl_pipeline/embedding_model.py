@@ -2,22 +2,20 @@
 
 import re
 
-import requests
+from etl_pipeline.ollama import OllamaInvalidResponse, get_json
+
+
+def installed_models() -> list[dict]:
+    models = get_json("/api/tags", timeout=5.0).get("models")
+    if not isinstance(models, list) or any(not isinstance(model, dict) for model in models):
+        raise OllamaInvalidResponse("Invalid Ollama model list")
+    return models
 
 
 def embedding_model_digest(model_tag: str) -> str:
-    try:
-        response = requests.get("http://localhost:11434/api/tags", timeout=5)
-        response.raise_for_status()
-        models = response.json()["models"]
-    except (requests.RequestException, ValueError, KeyError, TypeError) as error:
-        raise RuntimeError(f"Could not inspect Ollama embedding model {model_tag}") from error
-
-    if not isinstance(models, list):
-        raise RuntimeError("Invalid Ollama model list")
     names = {model_tag, f"{model_tag}:latest"}
-    for model in models:
-        if not isinstance(model, dict) or model.get("name") not in names:
+    for model in installed_models():
+        if model.get("name") not in names:
             continue
         digest = model.get("digest")
         if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
