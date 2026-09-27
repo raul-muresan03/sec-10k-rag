@@ -23,12 +23,7 @@ def _not_ready(reason: str) -> JSONResponse:
     return JSONResponse(status_code=503, content={"status": "not_ready", "reason": reason})
 
 
-def create_app(store: FilingIndexStore | None = None, settings: Settings | None = None) -> FastAPI:
-    app = FastAPI(title="SEC RAG API")
-    index_store = store if store is not None else FilingIndexStore()
-    config = settings if settings is not None else Settings.from_env()
-    query_service = QueryService(index_store, config)
-
+def _register_status_routes(app: FastAPI, index_store: FilingIndexStore, config: Settings) -> None:
     @app.get("/api/health")
     async def health() -> dict[str, str]:
         return {"status": "ok"}
@@ -51,6 +46,8 @@ def create_app(store: FilingIndexStore | None = None, settings: Settings | None 
                 return _not_ready(f"Ollama model not installed: {tag}")
         return {"status": "ready"}
 
+
+def _register_filing_route(app: FastAPI, index_store: FilingIndexStore) -> None:
     @app.get("/api/filings", response_model=list[FilingSummary])
     def filings() -> list[FilingSummary]:
         try:
@@ -65,6 +62,8 @@ def create_app(store: FilingIndexStore | None = None, settings: Settings | None 
         except (OSError, ValueError, RuntimeError) as error:
             raise HTTPException(status_code=503, detail="Filing indexes unavailable") from error
 
+
+def _register_chat_route(app: FastAPI, query_service: QueryService) -> None:
     @app.post("/api/chat", response_model=ChatResponse)
     async def chat(request: ChatRequest) -> ChatResponse:
         try:
@@ -83,6 +82,14 @@ def create_app(store: FilingIndexStore | None = None, settings: Settings | None 
         except (OSError, ValueError, RuntimeError) as error:
             raise HTTPException(status_code=503, detail="Filing index unavailable") from error
 
+
+def create_app(store: FilingIndexStore | None = None, settings: Settings | None = None) -> FastAPI:
+    app = FastAPI(title="SEC RAG API")
+    index_store = store if store is not None else FilingIndexStore()
+    config = settings if settings is not None else Settings.from_env()
+    _register_status_routes(app, index_store, config)
+    _register_filing_route(app, index_store)
+    _register_chat_route(app, QueryService(index_store, config))
     return app
 
 
