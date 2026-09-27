@@ -5,7 +5,7 @@ import type { FilingSummary } from '../api'
 interface Props {
   selectedId: string | null
   disabled: boolean
-  onSelect: (filingId: string) => void
+  onSelect: (filing: FilingSummary) => void
 }
 
 export function FilingSelector({ selectedId, disabled, onSelect }: Props) {
@@ -23,7 +23,7 @@ export function FilingSelector({ selectedId, disabled, onSelect }: Props) {
         if (controller.signal.aborted) return
         setFilings(data)
         if (data.length > 0 && (selectedId === null || !data.some(filing => filing.filing_id === selectedId))) {
-          onSelect(data[0].filing_id)
+          onSelect(data[0])
         }
       })
       .catch(reason => {
@@ -69,7 +69,10 @@ export function FilingSelector({ selectedId, disabled, onSelect }: Props) {
         id="filing-select"
         value={selected.filing_id}
         disabled={disabled}
-        onChange={event => onSelect(event.target.value)}
+        onChange={event => {
+          const filing = filings.find(candidate => candidate.filing_id === event.target.value)
+          if (filing) onSelect(filing)
+        }}
       >
         {filings.map(filing => (
           <option key={filing.filing_id} value={filing.filing_id}>
