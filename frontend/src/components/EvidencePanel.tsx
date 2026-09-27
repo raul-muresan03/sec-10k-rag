@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ChunkText } from './ChunkText'
 import type { Example } from '../types'
 
 interface Props {
@@ -67,9 +68,7 @@ export function EvidencePanel({ example }: Props) {
               </button>
             </div>}
             <div className="chunk-viewport">
-              {unwrappedChunk === chunkId
-                ? <TableAwareText text={chunk.text} />
-                : <pre className="chunk-text">{chunk.text}</pre>}
+              <ChunkText text={chunk.text} unwrapped={unwrappedChunk === chunkId} />
             </div>
           </details>
         })}
@@ -80,20 +79,4 @@ export function EvidencePanel({ example }: Props) {
       </p>
     </section>
   )
-}
-
-function TableAwareText({ text }: { text: string }) {
-  return <div className="chunk-text table-layout">
-    {text.split('\n').map((line, index) => {
-      const first = line.indexOf('|')
-      const last = line.lastIndexOf('|')
-      return <div className="source-line" key={index}>
-        {first >= 0 && last > first ? <>
-          {line.slice(0, first) && <span>{line.slice(0, first)}</span>}
-          <span className="source-table-row">{line.slice(first, last + 1)}</span>
-          {line.slice(last + 1) && <span>{line.slice(last + 1)}</span>}
-        </> : (line || '\u00a0')}
-      </div>
-    })}
-  </div>
 }
