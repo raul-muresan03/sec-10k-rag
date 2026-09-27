@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { postChat } from '../api'
 import type { ChatResponse, FilingSummary } from '../api'
 import { FilingSelector } from './FilingSelector'
+import { LiveAnswer } from './LiveAnswer'
 
 const CLIENT_TIMEOUT_MS = 125_000
 
@@ -159,23 +160,7 @@ export function ChatView() {
                   </div>
                 )}
                 {message.status === 'done' && message.answer && (
-                  <>
-                    <p className="answer-text">{message.answer.answer}</p>
-                    <p className="selector-context">
-                      {message.answer.model} · retrieval {message.answer.stage_times_seconds.retrieval.toFixed(2)}s
-                      {' · '}generation {message.answer.stage_times_seconds.generation.toFixed(2)}s
-                      {' · '}total {message.answer.stage_times_seconds.total.toFixed(2)}s
-                      {' · '}{message.answer.request_id.slice(0, 8)}
-                      {' · '}<a
-                        className="inline-link"
-                        href={message.answer.sec_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        SEC filing ↗
-                      </a>
-                    </p>
-                  </>
+                  <LiveAnswer answer={message.answer} />
                 )}
               </article>
             ))}
