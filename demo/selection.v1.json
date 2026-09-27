@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "answer_run": {
+    "id": "20260923T125212753976Z-dev",
+    "sha256": "69db1f90d8e1bc7125c3eda20246f6cc56a448d8d040a73be336a8cc68eac60d"
+  },
+  "retrieval_run": {
+    "id": "20260925T090403491346Z-dev-retrieval",
+    "sha256": "2e5e321dd1510b37d3832b226be16176ac1296b9338bbf5c3bab5d2444e697bf"
+  },
+  "examples": [
+    "amzn-2021-narrative",
+    "pfe-2015-numeric",
+    "pfe-2015-no-answer",
+    "amzn-2021-multi-hop",
+    "sbux-2019-numeric",
+    "f-2014-numeric",
+    "nvda-2026-multi-hop",
+    "adbe-2018-multi-hop"
+  ]
+}
