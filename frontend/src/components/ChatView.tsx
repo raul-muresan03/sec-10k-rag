@@ -108,7 +108,6 @@ export function ChatView() {
         <div>
           <FilingSelector
             selectedId={filing?.filing_id ?? null}
-            disabled={pending}
             onSelect={handleSelect}
           />
         </div>

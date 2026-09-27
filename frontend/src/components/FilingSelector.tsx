@@ -4,11 +4,10 @@ import type { FilingSummary } from '../api'
 
 interface Props {
   selectedId: string | null
-  disabled: boolean
   onSelect: (filing: FilingSummary) => void
 }
 
-export function FilingSelector({ selectedId, disabled, onSelect }: Props) {
+export function FilingSelector({ selectedId, onSelect }: Props) {
   const [filings, setFilings] = useState<FilingSummary[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -68,7 +67,6 @@ export function FilingSelector({ selectedId, disabled, onSelect }: Props) {
       <select
         id="filing-select"
         value={selected.filing_id}
-        disabled={disabled}
         onChange={event => {
           const filing = filings.find(candidate => candidate.filing_id === event.target.value)
           if (filing) onSelect(filing)
