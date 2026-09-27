@@ -10,13 +10,15 @@ from etl_pipeline.ollama import base_url, timeout_seconds
 class Settings:
     model: str = "gemma3:1b"
     top_n: int = 5
+    max_concurrent_generations: int = 1
 
     @classmethod
     def from_env(cls) -> "Settings":
         model = os.getenv("RAG_MODEL", "gemma3:1b").strip()
         top_n = int(os.getenv("RAG_TOP_N", "5"))
-        if not model or top_n < 1:
-            raise ValueError("RAG_MODEL must be nonempty and RAG_TOP_N must be positive")
+        capacity = int(os.getenv("RAG_MAX_CONCURRENT_GENERATIONS", "1"))
+        if not model or top_n < 1 or capacity < 1:
+            raise ValueError("RAG_MODEL must be nonempty; RAG_TOP_N and generation capacity must be positive")
         base_url()
         timeout_seconds()
-        return cls(model=model, top_n=top_n)
+        return cls(model=model, top_n=top_n, max_concurrent_generations=capacity)

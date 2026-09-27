@@ -1,6 +1,7 @@
 """One independent filing question through retrieval and Ollama generation."""
 
 import time
+from threading import BoundedSemaphore
 from uuid import uuid4
 
 from api.models import ChatResponse, RetrievedChunk, StageTimes
@@ -10,10 +11,15 @@ from etl_pipeline.rag_engine import get_llm_response
 from etl_pipeline.vector_store import get_most_similar_chunks
 
 
+class AtCapacity(RuntimeError):
+    pass
+
+
 class QueryService:
     def __init__(self, store: FilingIndexStore, settings: Settings):
         self.store = store
         self.settings = settings
+        self.generation_slots = BoundedSemaphore(settings.max_concurrent_generations)
 
     def answer(self, filing_id: str, question: str) -> ChatResponse:
         started = time.perf_counter()
@@ -23,9 +29,14 @@ class QueryService:
         chunks = get_most_similar_chunks(question, self.settings.top_n, filing.index_path)
         retrieval_seconds = time.perf_counter() - retrieval_start
 
-        generation_start = time.perf_counter()
-        answer, _ = get_llm_response(question, chunks, self.settings.model)
-        generation_seconds = time.perf_counter() - generation_start
+        if not self.generation_slots.acquire(blocking=False):
+            raise AtCapacity("Generation capacity reached")
+        try:
+            generation_start = time.perf_counter()
+            answer, _ = get_llm_response(question, chunks, self.settings.model)
+            generation_seconds = time.perf_counter() - generation_start
+        finally:
+            self.generation_slots.release()
 
         return ChatResponse(
             answer=answer, filing_id=filing.filing_id, model=self.settings.model,

@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 
 from api.models import ChatRequest, ChatResponse, FilingSummary
-from api.query import QueryService
+from api.query import AtCapacity, QueryService
 from api.settings import Settings
 from etl_pipeline.chunker import EMBEDDING_MODEL
 from etl_pipeline.embedding_model import installed_models
@@ -70,6 +70,8 @@ def create_app(store: FilingIndexStore | None = None, settings: Settings | None 
             return query_service.answer(request.filing_id, request.question)
         except KeyError as error:
             raise HTTPException(status_code=404, detail="Unknown filing_id") from error
+        except AtCapacity as error:
+            raise HTTPException(status_code=503, detail="Generation capacity reached") from error
         except OllamaTimeout as error:
             raise HTTPException(status_code=504, detail="Ollama timed out") from error
         except OllamaInvalidResponse as error:
