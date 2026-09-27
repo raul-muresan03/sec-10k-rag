@@ -41,6 +41,12 @@ def test_post_json_rejects_malformed_success_payload():
             ollama.post_json("/api/generate", {})
 
 
+def test_get_json_classifies_unavailable_service():
+    with patch.object(ollama.requests, "get", side_effect=requests.ConnectionError):
+        with pytest.raises(ollama.OllamaUnavailable):
+            ollama.get_json("/api/tags")
+
+
 def test_ollama_classifies_timeout_while_reading_response_body(monkeypatch):
     release = Event()
 

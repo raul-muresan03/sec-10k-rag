@@ -2,6 +2,7 @@
 
 from math import isfinite
 import os
+from typing import Callable
 from urllib.parse import urlsplit
 
 import requests
@@ -54,12 +55,9 @@ def _is_body_read_timeout(error: requests.RequestException) -> bool:
     )
 
 
-def post_json(endpoint: str, payload: dict, *, timeout: float | None = None) -> dict:
+def _request_json(endpoint: str, request: Callable[[], requests.Response]) -> dict:
     try:
-        response = requests.post(
-            url=base_url() + endpoint, json=payload,
-            timeout=timeout if timeout is not None else timeout_seconds(),
-        )
+        response = request()
     except requests.Timeout as error:
         raise OllamaTimeout(f"Ollama {endpoint} timed out") from error
     except requests.RequestException as error:
@@ -67,15 +65,20 @@ def post_json(endpoint: str, payload: dict, *, timeout: float | None = None) -> 
             raise OllamaTimeout(f"Ollama {endpoint} timed out") from error
         raise OllamaUnavailable(f"Ollama {endpoint} is unavailable") from error
     return _json_response(response, endpoint)
+
+
+def post_json(endpoint: str, payload: dict, *, timeout: float | None = None) -> dict:
+    return _request_json(
+        endpoint,
+        lambda: requests.post(
+            url=base_url() + endpoint, json=payload,
+            timeout=timeout if timeout is not None else timeout_seconds(),
+        ),
+    )
 
 
 def get_json(endpoint: str, *, timeout: float = 5.0) -> dict:
-    try:
-        response = requests.get(url=base_url() + endpoint, timeout=timeout)
-    except requests.Timeout as error:
-        raise OllamaTimeout(f"Ollama {endpoint} timed out") from error
-    except requests.RequestException as error:
-        if _is_body_read_timeout(error):
-            raise OllamaTimeout(f"Ollama {endpoint} timed out") from error
-        raise OllamaUnavailable(f"Ollama {endpoint} is unavailable") from error
-    return _json_response(response, endpoint)
+    return _request_json(
+        endpoint,
+        lambda: requests.get(url=base_url() + endpoint, timeout=timeout),
+    )
