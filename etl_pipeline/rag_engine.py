@@ -1,6 +1,7 @@
-from etl_pipeline.vector_store import get_most_similar_chunks
 from typing import List, Tuple
-import requests
+
+from etl_pipeline.ollama import OllamaInvalidResponse, post_json
+from etl_pipeline.vector_store import get_most_similar_chunks
 
 SYSTEM_PROMPT = (
     "You are a Senior Financial Analyst expert in SEC filings (10-K). "
@@ -34,25 +35,22 @@ def get_llm_response(
 
     combined_chunks = "\n".join(chunks_text)
 
-    url = "http://localhost:11434/api/generate"
     data = {
         "model": ollama_llm_model_name,
         "prompt": f"{SYSTEM_PROMPT} Context: {combined_chunks} \n\n Use Question: {user_prompt}",
         "stream": False
     }
 
-    response = requests.post(url=url, json=data)
-    if response.status_code == 200:
-        llm_response = response.json()
-        metrics = {
-            field: llm_response[field]
-            for field in OLLAMA_METRIC_FIELDS
-            if field in llm_response
-        }
-        return llm_response.get("response", ""), metrics
-    else:
-        print(f"Error: {response.status_code}")
-        return "Error", {}
+    llm_response = post_json("/api/generate", data)
+    answer = llm_response.get("response")
+    if not isinstance(answer, str) or not answer.strip():
+        raise OllamaInvalidResponse("Generation response has no answer")
+    metrics = {
+        field: llm_response[field]
+        for field in OLLAMA_METRIC_FIELDS
+        if field in llm_response
+    }
+    return answer, metrics
 
 if __name__ == "__main__":
     from etl_pipeline.pipeline import ensure_index
