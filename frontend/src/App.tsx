@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ChatView } from './components/ChatView'
 import { EvaluationView } from './views/EvaluationView'
 
 const REPO_URL = 'https://github.com/raul-muresan03/sec-rag-tool'
@@ -70,12 +71,7 @@ function App() {
         <div className="content-surface">
           <div className="container">
             {view === 'chat' ? (
-              <section aria-labelledby="chat-heading">
-                <div className="load-message" role="status">
-                  <h2 id="chat-heading">Live chat loads here.</h2>
-                  <p>The filing catalog and question form arrive in the next change.</p>
-                </div>
-              </section>
+              <ChatView />
             ) : (
               <EvaluationView />
             )}
