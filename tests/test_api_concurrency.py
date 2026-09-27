@@ -1,8 +1,10 @@
+import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import threading
 from unittest.mock import Mock, patch
 
 from fastapi.testclient import TestClient
+import httpx
 import requests
 
 from api.main import create_app
@@ -20,9 +22,11 @@ def test_chat_rejects_excess_generation_and_recovers_after_release(tmp_path):
     filing = prepared_filing(tmp_path, "NVDA")
     entered = threading.Event()
     release = threading.Event()
+    embedding_calls = []
 
     def ollama_post(*, url, json, timeout):
         if url.endswith("/api/embed"):
+            embedding_calls.append(json["input"])
             return _response({"embeddings": [[1.0, 0.0]]})
         if not entered.is_set():
             entered.set()
@@ -36,13 +40,18 @@ def test_chat_rejects_excess_generation_and_recovers_after_release(tmp_path):
             first = executor.submit(client.post, "/api/chat", json=request)
             try:
                 assert entered.wait(timeout=3)
-                rejected = client.post("/api/chat", json=request)
+                rejected = client.post("/api/chat", json={
+                    "filing_id": filing.filing_id, "question": "Different question?",
+                })
+                health = client.get("/api/health")
+                assert embedding_calls == [["what happened?"]]
             finally:
                 release.set()
             completed = first.result(timeout=5)
             later = client.post("/api/chat", json=request)
 
     assert rejected.status_code == 503
+    assert health.status_code == 200
     assert "capacity" in rejected.json()["detail"].lower()
     assert completed.status_code == later.status_code == 200
 
@@ -97,3 +106,43 @@ def test_generation_timeout_releases_capacity_for_next_question(tmp_path):
     assert timeout.status_code == 504
     assert recovered.status_code == 200
     assert recovered.json()["answer"] == "Recovered answer"
+
+
+def test_health_remains_responsive_under_excess_chat_load(tmp_path):
+    filing = prepared_filing(tmp_path, "NVDA")
+    started = threading.Event()
+    release = threading.Event()
+    embedded = []
+
+    def ollama_post(*, url, json, timeout):
+        if url.endswith("/api/embed"):
+            embedded.append(json["input"])
+            return _response({"embeddings": [[1.0, 0.0]]})
+        started.set()
+        assert release.wait(timeout=5)
+        return _response({"response": "Answer"})
+
+    async def run():
+        app = create_app(store=Catalog([filing]), settings=Settings(max_concurrent_generations=1))
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            first = asyncio.create_task(client.post("/api/chat", json={
+                "filing_id": filing.filing_id, "question": "First question?",
+            }))
+            try:
+                assert await asyncio.to_thread(started.wait, 3)
+                excess = await asyncio.wait_for(asyncio.gather(*[
+                    client.post("/api/chat", json={
+                        "filing_id": filing.filing_id, "question": f"Other question {i}?",
+                    }) for i in range(50)
+                ]), timeout=3)
+                health = await asyncio.wait_for(client.get("/api/health"), timeout=1)
+                assert [item.status_code for item in excess] == [503] * 50
+                assert health.status_code == 200
+                assert embedded == [["first question?"]]
+            finally:
+                release.set()
+                assert (await first).status_code == 200
+
+    with patch("etl_pipeline.ollama.requests.post", side_effect=ollama_post):
+        asyncio.run(run())

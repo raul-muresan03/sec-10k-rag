@@ -1,6 +1,7 @@
 """FastAPI entry point for the filing query service."""
 
 from fastapi import FastAPI, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 
 from api.models import ChatRequest, ChatResponse, FilingSummary
@@ -29,7 +30,7 @@ def create_app(store: FilingIndexStore | None = None, settings: Settings | None 
     query_service = QueryService(index_store, config)
 
     @app.get("/api/health")
-    def health() -> dict[str, str]:
+    async def health() -> dict[str, str]:
         return {"status": "ok"}
 
     @app.get("/api/ready")
@@ -65,9 +66,10 @@ def create_app(store: FilingIndexStore | None = None, settings: Settings | None 
             raise HTTPException(status_code=503, detail="Filing indexes unavailable") from error
 
     @app.post("/api/chat", response_model=ChatResponse)
-    def chat(request: ChatRequest) -> ChatResponse:
+    async def chat(request: ChatRequest) -> ChatResponse:
         try:
-            return query_service.answer(request.filing_id, request.question)
+            with query_service.reserve():
+                return await run_in_threadpool(query_service.answer, request.filing_id, request.question)
         except KeyError as error:
             raise HTTPException(status_code=404, detail="Unknown filing_id") from error
         except AtCapacity as error:

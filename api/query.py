@@ -1,5 +1,6 @@
 """One independent filing question through retrieval and Ollama generation."""
 
+from contextlib import contextmanager
 import time
 from threading import BoundedSemaphore
 from uuid import uuid4
@@ -21,6 +22,15 @@ class QueryService:
         self.settings = settings
         self.generation_slots = BoundedSemaphore(settings.max_concurrent_generations)
 
+    @contextmanager
+    def reserve(self):
+        if not self.generation_slots.acquire(blocking=False):
+            raise AtCapacity("Generation capacity reached")
+        try:
+            yield
+        finally:
+            self.generation_slots.release()
+
     def answer(self, filing_id: str, question: str) -> ChatResponse:
         started = time.perf_counter()
         filing = self.store.resolve_id(filing_id)
@@ -29,14 +39,9 @@ class QueryService:
         chunks = get_most_similar_chunks(question, self.settings.top_n, filing.index_path)
         retrieval_seconds = time.perf_counter() - retrieval_start
 
-        if not self.generation_slots.acquire(blocking=False):
-            raise AtCapacity("Generation capacity reached")
-        try:
-            generation_start = time.perf_counter()
-            answer, _ = get_llm_response(question, chunks, self.settings.model)
-            generation_seconds = time.perf_counter() - generation_start
-        finally:
-            self.generation_slots.release()
+        generation_start = time.perf_counter()
+        answer, _ = get_llm_response(question, chunks, self.settings.model)
+        generation_seconds = time.perf_counter() - generation_start
 
         return ChatResponse(
             answer=answer, filing_id=filing.filing_id, model=self.settings.model,
