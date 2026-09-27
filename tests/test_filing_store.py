@@ -143,3 +143,23 @@ def test_model_change_during_build_cannot_publish_index(store, monkeypatch):
     with pytest.raises(RuntimeError, match="model changed"):
         store.prepare(filings[("NVDA", 2026)], "manifest-sha", config)
     assert not path.exists()
+
+
+def test_replacing_model_under_the_same_tag_builds_another_version(store, monkeypatch):
+    def build(filing, directory):
+        path = directory / "all_chunks_embeddings.json"
+        path.write_text(json.dumps({"chunks": [filing.ticker], "embeddings": [[1.0, 0.0]]}))
+        return {"sha256": hash_file(path), "chunk_count": 1}
+
+    monkeypatch.setattr(filing_store, "build_index", build)
+    old = store.prepare_selected("NVDA", 2026)
+    monkeypatch.setattr(filing_store, "embedding_model_digest", lambda _: "b" * 64)
+    new = store.prepare_selected("NVDA", 2026)
+
+    assert new.index_path != old.index_path
+    assert old.index_path.is_file() and new.index_path.is_file()
+    assert store.resolve("NVDA", 2026).index_path == new.index_path
+    metadata = json.loads((new.index_path.parent / "filing.json").read_text())
+    assert metadata["index_configuration"]["embedding_model"] == {
+        "tag": "nomic-embed-text", "digest": "b" * 64,
+    }
