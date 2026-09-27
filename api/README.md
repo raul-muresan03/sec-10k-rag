@@ -18,9 +18,13 @@ ollama pull gemma3:1b
 ```
 
 The raw SEC submissions must already be at the paths and SHA-256 hashes pinned by `eval/corpus_manifest.v1.json`.
-Build the dev indexes once (reruns reuse matching versions), then start the API:
+Export the same `.env` settings for index preparation and the API, then build the dev indexes once (reruns reuse
+matching versions) and start the API:
 
 ```sh
+set -a
+. ./.env
+set +a
 python3 -m etl_pipeline.filing_store
 python3 -m uvicorn api.main:app --host 127.0.0.1 --port 8000 --env-file .env
 ```
