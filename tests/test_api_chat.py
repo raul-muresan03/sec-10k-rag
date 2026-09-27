@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 from uuid import UUID
 
 from fastapi.testclient import TestClient
+import pytest
 
 from api.main import create_app
 from etl_pipeline.filing_store import PreparedFiling
@@ -74,3 +75,42 @@ def test_chat_rejects_blank_or_long_questions_and_unknown_filing(tmp_path):
     assert blank.status_code == 422
     assert long.status_code == 422
     assert unknown.status_code == 404
+
+
+def test_chat_model_and_retrieval_count_are_server_configuration(tmp_path, monkeypatch):
+    monkeypatch.setenv("RAG_MODEL", "gemma3:4b")
+    monkeypatch.setenv("RAG_TOP_N", "1")
+    filing = prepared_filing(tmp_path, "NVDA")
+    filing.index_path.write_text(json.dumps({
+        "chunks": ["closest evidence", "unrelated evidence"],
+        "embeddings": [[1.0, 0.0], [0.0, 1.0]],
+    }))
+    sent_models = []
+
+    def ollama_post(*, url, json, timeout):
+        response = Mock(status_code=200)
+        if url.endswith("/api/embed"):
+            response.json.return_value = {"embeddings": [[1.0, 0.0]]}
+        else:
+            sent_models.append(json["model"])
+            response.json.return_value = {"response": "Grounded answer"}
+        return response
+
+    with patch("etl_pipeline.ollama.requests.post", side_effect=ollama_post):
+        with TestClient(create_app(store=Catalog([filing]))) as client:
+            response = client.post("/api/chat", json={"filing_id": filing.filing_id, "question": "Revenue?"})
+            override = client.post("/api/chat", json={
+                "filing_id": filing.filing_id, "question": "Revenue?", "model": "untrusted",
+            })
+
+    assert response.status_code == 200
+    assert response.json()["model"] == "gemma3:4b"
+    assert [chunk["text"] for chunk in response.json()["retrieved_chunks"]] == ["closest evidence"]
+    assert sent_models == ["gemma3:4b"]
+    assert override.status_code == 422
+
+
+def test_invalid_server_capacity_is_rejected_at_startup(monkeypatch):
+    monkeypatch.setenv("RAG_MAX_CONCURRENT_GENERATIONS", "0")
+    with pytest.raises(ValueError, match="capacity"):
+        create_app()

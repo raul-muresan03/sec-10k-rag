@@ -3,6 +3,7 @@ import threading
 from unittest.mock import Mock, patch
 
 from fastapi.testclient import TestClient
+import requests
 
 from api.main import create_app
 from api.settings import Settings
@@ -72,3 +73,27 @@ def test_simultaneous_queries_keep_distinct_filing_evidence(tmp_path):
     assert [result.json()["retrieved_chunks"][0]["text"] for result in results] == [
         "NVDA filing evidence", "AMZN filing evidence",
     ]
+
+
+def test_generation_timeout_releases_capacity_for_next_question(tmp_path):
+    filing = prepared_filing(tmp_path, "NVDA")
+    attempts = 0
+
+    def ollama_post(*, url, json, timeout):
+        nonlocal attempts
+        if url.endswith("/api/embed"):
+            return _response({"embeddings": [[1.0, 0.0]]})
+        attempts += 1
+        if attempts == 1:
+            raise requests.Timeout("generation timed out")
+        return _response({"response": "Recovered answer"})
+
+    request = {"filing_id": filing.filing_id, "question": "What happened?"}
+    with patch("etl_pipeline.ollama.requests.post", side_effect=ollama_post):
+        with TestClient(create_app(store=Catalog([filing]))) as client:
+            timeout = client.post("/api/chat", json=request)
+            recovered = client.post("/api/chat", json=request)
+
+    assert timeout.status_code == 504
+    assert recovered.status_code == 200
+    assert recovered.json()["answer"] == "Recovered answer"
