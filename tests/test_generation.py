@@ -1,10 +1,14 @@
 from typing import Any
 from unittest.mock import Mock, patch
 
-from etl_pipeline import rag_engine
+import pytest
+
+from etl_pipeline import ollama, rag_engine
 
 
-def test_generation_sends_question_context_and_model_to_ollama():
+def test_generation_sends_question_context_and_model_to_ollama(monkeypatch):
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://ollama:11434")
+    monkeypatch.setenv("OLLAMA_TIMEOUT_SECONDS", "7")
     response = Mock(status_code=200)
     response.json.return_value = {
         "response": "NVIDIA evidence-based answer",
@@ -17,7 +21,7 @@ def test_generation_sends_question_context_and_model_to_ollama():
     }
     chunks: Any = [(0.95, "First evidence"), (0.80, "Second evidence")]
 
-    with patch.object(rag_engine.requests, "post", return_value=response) as post:
+    with patch.object(ollama.requests, "post", return_value=response) as post:
         answer, metrics = rag_engine.get_llm_response("What happened?", chunks, "gemma3:1b")
 
     assert answer == "NVIDIA evidence-based answer"
@@ -31,7 +35,8 @@ def test_generation_sends_question_context_and_model_to_ollama():
     }
     post.assert_called_once()
     payload = post.call_args.kwargs["json"]
-    assert post.call_args.kwargs["url"] == "http://localhost:11434/api/generate"
+    assert post.call_args.kwargs["url"] == "http://ollama:11434/api/generate"
+    assert post.call_args.kwargs["timeout"] == 7.0
     assert payload["model"] == "gemma3:1b"
     assert payload["stream"] is False
     assert "First evidence\nSecond evidence" in payload["prompt"]
@@ -44,21 +49,20 @@ def test_generation_preserves_retrieval_order_in_context():
     response.json.return_value = {"response": "answer"}
     chunks: Any = [(0.90, "highest ranked"), (0.70, "lower ranked")]
 
-    with patch.object(rag_engine.requests, "post", return_value=response) as post:
+    with patch.object(ollama.requests, "post", return_value=response) as post:
         rag_engine.get_llm_response("question", chunks, "model")
 
     prompt = post.call_args.kwargs["json"]["prompt"]
     assert prompt.index("highest ranked") < prompt.index("lower ranked")
 
 
-def test_generation_returns_error_for_failed_ollama_request():
+def test_generation_raises_for_failed_ollama_request():
     response = Mock(status_code=503)
     chunks: Any = [(0.95, "evidence")]
 
-    with patch.object(rag_engine.requests, "post", return_value=response):
-        result = rag_engine.get_llm_response("question", chunks, "model")
-
-    assert result == ("Error", {})
+    with patch.object(ollama.requests, "post", return_value=response):
+        with pytest.raises(ollama.OllamaUnavailable, match="HTTP 503"):
+            rag_engine.get_llm_response("question", chunks, "model")
 
 
 def test_system_prompt_requires_abstention_and_concise_answers():

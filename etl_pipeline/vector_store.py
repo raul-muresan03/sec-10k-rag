@@ -2,6 +2,7 @@ from typing import List, Tuple
 from pathlib import Path
 from math import isfinite
 from etl_pipeline.chunker import EMBEDDING_MODEL, text_to_embedding, get_similarity_score
+from etl_pipeline.ollama import OllamaInvalidResponse
 import json
 
 prompt_cache = {}
@@ -45,7 +46,7 @@ def get_most_similar_chunks(
         or len(prompt_embedding) != len(embeddings[0])
         or any(type(value) not in (int, float) or not isfinite(value) for value in prompt_embedding)
     ):
-        raise ValueError(f"Invalid question embedding for index: {index_path}")
+        raise OllamaInvalidResponse(f"Invalid question embedding for index: {index_path}")
     prompt_cache[cache_key] = prompt_embedding
 
     scores = []

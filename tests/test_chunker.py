@@ -4,6 +4,7 @@ from unittest.mock import Mock, call, patch
 import pytest
 
 from etl_pipeline import chunker
+from etl_pipeline import ollama
 
 
 def test_similarity_score_handles_equal_orthogonal_and_zero_vectors():
@@ -12,25 +13,28 @@ def test_similarity_score_handles_equal_orthogonal_and_zero_vectors():
     assert chunker.get_similarity_score([0.0, 0.0], [1.0, 0.0]) == -2
 
 
-def test_paragraphs_to_embeddings_sends_batch_to_ollama():
+def test_paragraphs_to_embeddings_sends_batch_to_ollama(monkeypatch):
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://ollama:11434")
+    monkeypatch.setenv("OLLAMA_TIMEOUT_SECONDS", "7")
     response = Mock(status_code=200)
     response.json.return_value = {"embeddings": [[1.0, 0.0], [0.0, 1.0]]}
 
-    with patch.object(chunker.requests, "post", return_value=response) as post:
+    with patch.object(ollama.requests, "post", return_value=response) as post:
         embeddings = chunker.paragraphs_to_embeddings(["first", "second"])
 
     assert embeddings == [[1.0, 0.0], [0.0, 1.0]]
     post.assert_called_once_with(
-        url="http://localhost:11434/api/embed",
+        url="http://ollama:11434/api/embed",
         json={"model": "nomic-embed-text", "input": ["first", "second"]},
+        timeout=7.0,
     )
 
 
 def test_paragraphs_to_embeddings_rejects_failed_request():
     response = Mock(status_code=500)
 
-    with patch.object(chunker.requests, "post", return_value=response):
-        with pytest.raises(RuntimeError, match="status 500"):
+    with patch.object(ollama.requests, "post", return_value=response):
+        with pytest.raises(RuntimeError, match="HTTP 500"):
             chunker.paragraphs_to_embeddings(["paragraph"])
 
 
@@ -38,7 +42,7 @@ def test_paragraphs_to_embeddings_rejects_incomplete_response():
     response = Mock(status_code=200)
     response.json.return_value = {"embeddings": [[1.0, 0.0]]}
 
-    with patch.object(chunker.requests, "post", return_value=response):
+    with patch.object(ollama.requests, "post", return_value=response):
         with pytest.raises(RuntimeError, match="does not match batch size"):
             chunker.paragraphs_to_embeddings(["first", "second"])
 

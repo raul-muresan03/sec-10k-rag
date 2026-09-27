@@ -56,6 +56,18 @@ def test_catalog_lists_only_verified_dev_indexes(store):
         store.resolve("AAPL", 2024)
 
 
+def test_resolve_id_selects_only_a_prepared_dev_filing(store):
+    _, filings = store.dev_filings()
+    filing = filings[("NVDA", 2026)]
+    path = write_prepared(store, filing, filing_store._configuration())
+
+    assert store.resolve_id(filing_id(filing)).index_path == path
+    with pytest.raises(KeyError):
+        store.resolve_id("unknown-filing")
+    with pytest.raises(KeyError):
+        store.resolve_id("0-0000000000-24-000001")
+
+
 def test_catalog_rejects_tampered_index_and_metadata(store):
     _, filings = store.dev_filings()
     filing = filings[("NVDA", 2026)]

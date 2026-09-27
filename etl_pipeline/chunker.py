@@ -1,11 +1,11 @@
 from typing import List
 import os
-import requests
-from math import sqrt
+from math import isfinite, sqrt
 import json
 from pathlib import Path
 
 import etl_pipeline
+from etl_pipeline.ollama import OllamaInvalidResponse, post_json
 
 EMBEDDING_BATCH_SIZE = int(os.getenv("EMBEDDING_BATCH_SIZE", "512"))
 EMBEDDING_MODEL = "nomic-embed-text"
@@ -36,19 +36,23 @@ def get_similarity_score(first: List[float], second: List[float]) -> float:
     return cosine_similarity
 
 def paragraphs_to_embeddings(paragraphs: List[str]) -> List[List[float]]:
-    url = "http://localhost:11434/api/embed"
     data = {
         "model": EMBEDDING_MODEL,
         "input": paragraphs,
     }
 
-    response = requests.post(url=url, json=data)
-    if response.status_code != 200:
-        raise RuntimeError(f"Embedding request failed with status {response.status_code}")
-
-    embeddings = response.json()["embeddings"]
+    embeddings = post_json("/api/embed", data).get("embeddings")
+    if not isinstance(embeddings, list):
+        raise OllamaInvalidResponse("Embedding response has no embeddings array")
     if len(embeddings) != len(paragraphs):
-        raise RuntimeError("Embedding count does not match batch size")
+        raise OllamaInvalidResponse("Embedding count does not match batch size")
+    dimension = len(embeddings[0]) if embeddings and isinstance(embeddings[0], list) else 0
+    if not dimension or any(
+        not isinstance(vector, list) or len(vector) != dimension
+        or any(type(value) not in (int, float) or not isfinite(value) for value in vector)
+        for vector in embeddings
+    ):
+        raise OllamaInvalidResponse("Invalid Ollama embedding vector")
 
     return embeddings
 

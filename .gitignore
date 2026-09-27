@@ -6,6 +6,7 @@ data/
 resurse/
 *.txt
 !requirements-dev.txt
+!requirements-api.txt
 frontend/node_modules/
 frontend/dist/
 .vercel/

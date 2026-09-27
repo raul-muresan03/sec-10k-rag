@@ -1,10 +1,10 @@
 # SEC RAG Tool
 
-A local SEC 10-K RAG pipeline. It verifies manifest-listed filings, persists separate indexes per filing, retrieves
-relevant chunks with cosine similarity, and generates answers through Ollama. The frontend currently replays saved
-evaluation results; live chat is a later step.
+A local SEC 10-K RAG pipeline with a live FastAPI endpoint. It verifies manifest-listed filings, persists separate
+indexes per filing, retrieves relevant chunks with cosine similarity, and generates answers through Ollama. The
+frontend currently replays saved evaluation results; the live chat UI is a later step.
 
-The backend uses local files without a vector database, orchestration framework, or web API.
+The backend uses local files without a vector database or orchestration framework.
 
 ## Current Scope
 
@@ -18,6 +18,7 @@ Implemented:
 - Store verified, versioned filing-scoped indexes locally in JSON
 - Retrieve chunks with brute-force cosine similarity
 - Generate an answer with a local Ollama model
+- Answer filing-scoped questions through the [live API](api/README.md)
 - Prepare the six dev filings with `python3 -m etl_pipeline.filing_store` or prepare one through `ask.py`
 - Log questions, answers, retrieved chunks, latency, and Ollama metrics as JSONL
 
@@ -27,7 +28,7 @@ Not implemented:
 - Confidence scores or similarity thresholds
 - Cross-filing, multi-company, or year-over-year answers; each query selects one filing
 - Pinecone, LangChain, cloud LLM providers, or hybrid search
-- FastAPI, live web chat, or Docker Compose
+- Live web chat or Docker Compose
 
 ## How It Works
 
@@ -36,7 +37,7 @@ Manifest-verified SEC EDGAR submission
   -> parse -> clean HTML/tables -> chunk -> embed with Ollama
   -> data/indexes/<CIK>-<ACCESSION>/<INDEX_VERSION>/all_chunks_embeddings.json
 Question -> embed -> cosine similarity in selected filing -> top N chunks
-  -> Ollama generation -> terminal answer
+  -> Ollama generation -> CLI or API answer
 ```
 
 Each query loads the selected filing's chunks and embeddings and compares them to its question embedding.
@@ -58,7 +59,7 @@ Run all commands from the repository root.
 ```bash
 python3 -m venv venv
 source venv/bin/activate
-python3 -m pip install -r etl_pipeline/requirements.txt -r requirements-dev.txt
+python3 -m pip install -r etl_pipeline/requirements.txt -r requirements-api.txt -r requirements-dev.txt
 cp .env.example .env
 ```
 
@@ -119,6 +120,8 @@ Each completed query appends one record to `data/query_log.jsonl`. Records inclu
 question, answer, model, retrieved chunk text and scores, retrieval and generation latency, and the token counts and
 durations returned by Ollama. Ollama duration fields are stored unchanged in nanoseconds.
 
+To ask through HTTP, see the [API runbook](api/README.md). The API does not append to the CLI query log.
+
 ## Generated Data
 
 | File | Purpose |
@@ -163,6 +166,7 @@ Historical machine-specific measurements are in [`perf/results.md`](perf/results
 
 ```text
 ask.py                         Question CLI
+api/                           FastAPI filing discovery, chat, readiness and runbook
 etl_pipeline/
   ingest.py                    SEC EDGAR download
   filings.py                   Verified SEC filing identities
@@ -185,6 +189,6 @@ tests/                         Unit and integration-style tests with mocks
 - Indexing embeds paragraph pieces and final chunks, which repeats embedding work.
 - Retrieval reads the complete store for every query and performs a linear scan in Python.
 - Retrieved chunks have no source metadata, so generated answers cannot provide citations.
-- Ollama requests have no timeout, retry, or streaming support.
+- Ollama requests have configurable timeouts, but no retry or streaming support.
 - The generation prompt does not enforce a context token budget.
 - Generated answers can misstate numerical units even when evidence is retrieved correctly.
