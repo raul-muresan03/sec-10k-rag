@@ -9,6 +9,7 @@ import pytest
 from eval import run_eval
 from eval import provenance
 import etl_pipeline
+from etl_pipeline import indexing
 from tests.eval_helpers import make_question, write_manifest, write_questions
 
 
@@ -117,11 +118,12 @@ def test_run_evaluation_indexes_once_per_filing_and_saves_results(tmp_path, monk
 
     def build_index(filing, directory):
         indexed.append((filing.ticker, filing.year))
-        assert etl_pipeline.DATA_DIR == directory
+        assert etl_pipeline.DATA_DIR != directory
         return {"strategy": "test", "sha256": "abc", "chunk_count": 1}
 
-    def get_chunks(question, top_n):
+    def get_chunks(question, top_n, index_path):
         retrieved.append((question, top_n))
+        assert index_path.parent.is_dir()
         evidence = question.replace("Question ", "").rstrip("?")
         return [(0.9, f"Expected evidence for {evidence}")]
 
@@ -184,7 +186,7 @@ def test_run_evaluation_scores_alternate_abstention_in_saved_results(tmp_path, m
     )
     manifest_path = write_manifest(tmp_path, [make_question("pfe-2015-no-answer", "no_answer", [], None, "PFE", 2015)])
     monkeypatch.setattr(run_eval, "build_index", lambda filing, directory: {"sha256": "abc"})
-    monkeypatch.setattr(run_eval, "get_most_similar_chunks", lambda question, top_n: [])
+    monkeypatch.setattr(run_eval, "get_most_similar_chunks", lambda question, top_n, index_path: [])
     monkeypatch.setattr(
         run_eval,
         "get_llm_response",
@@ -267,25 +269,24 @@ def test_build_index_ignores_existing_active_index(tmp_path, monkeypatch):
     monkeypatch.setattr(etl_pipeline, "DATA_DIR", active_dir)
     calls = []
 
-    def parse(path):
+    def parse(path, output_path):
         calls.append(path)
-        (etl_pipeline.DATA_DIR / "output_parser.txt").write_text("parsed")
+        output_path.write_text("parsed")
 
-    def clean(path):
-        (etl_pipeline.DATA_DIR / "output_cleaner.txt").write_text("cleaned")
+    def clean(path, output_path):
+        output_path.write_text("cleaned")
 
-    def chunk(path):
-        (etl_pipeline.DATA_DIR / "all_chunks_embeddings.json").write_text(
+    def chunk(path, output_dir):
+        (output_dir / "all_chunks_embeddings.json").write_text(
             json.dumps({"chunks": ["fresh"], "embeddings": [[0.1]]})
         )
 
-    monkeypatch.setattr(provenance, "parse_10K", parse)
-    monkeypatch.setattr(provenance, "clean_10K", clean)
-    monkeypatch.setattr(provenance, "chunk_10K", chunk)
+    monkeypatch.setattr(indexing, "parse_10K", parse)
+    monkeypatch.setattr(indexing, "clean_10K", clean)
+    monkeypatch.setattr(indexing, "chunk_10K", chunk)
     with TemporaryDirectory(dir=tmp_path) as temporary:
         directory = Path(temporary)
-        with provenance.use_index_directory(directory):
-            metadata = provenance.build_index(filing, directory)
+        metadata = provenance.build_index(filing, directory)
     assert calls == [str(filing.path)]
     assert metadata["chunk_count"] == 1
     assert metadata["sha256"] == sha256(b'{"chunks": ["fresh"], "embeddings": [[0.1]]}').hexdigest()
@@ -301,7 +302,7 @@ def test_failed_index_restores_active_directory_and_removes_workspace(tmp_path, 
     active_dir = etl_pipeline.DATA_DIR
 
     def fail_index(filing, directory):
-        assert etl_pipeline.DATA_DIR == directory
+        assert etl_pipeline.DATA_DIR == active_dir
         raise RuntimeError("index failed")
 
     monkeypatch.setattr(run_eval, "build_index", fail_index)
@@ -326,8 +327,9 @@ def test_retrieval_only_retrieves_once_at_ten_without_generation(tmp_path, monke
         indexed.append((filing.ticker, filing.year))
         return {"sha256": "fake-index"}
 
-    def get_chunks(question, top_n):
+    def get_chunks(question, top_n, index_path):
         retrieved.append((question, top_n))
+        assert index_path.parent.is_dir()
         if question == "Question q1?":
             return [(1.0, "not relevant")] * 5 + [(0.5, "first and second")]
         return [(1.0, "context without gold evidence")]

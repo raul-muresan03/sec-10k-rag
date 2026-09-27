@@ -41,16 +41,15 @@ def main() -> None:
         parser.error(f"year must be between {EARLIEST_EDGAR_YEAR} and {current_year}")
 
     try:
-        ensure_index(ticker, args.year)
+        index_path = ensure_index(ticker, args.year)
     except (RuntimeError, ValueError) as error:
         parser.error(str(error))
 
-    vector_store_path = etl_pipeline.DATA_DIR / "all_chunks_embeddings.json"
-    print(f"Vector store: {vector_store_path}", flush=True)
+    print(f"Vector store: {index_path}", flush=True)
 
     print(f"Retrieving the top {args.top_n} relevant chunks...", flush=True)
     retrieval_start = time.perf_counter()
-    chunks = get_most_similar_chunks(args.question, args.top_n)
+    chunks = get_most_similar_chunks(args.question, args.top_n, index_path)
     retrieval_end = time.perf_counter()
     retrieval_seconds = retrieval_end - retrieval_start
     print(f"Retrieved {len(chunks)} chunks in {retrieval_seconds:.2f}s.", flush=True)

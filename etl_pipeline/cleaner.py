@@ -1,5 +1,6 @@
 import re
 import os
+from pathlib import Path
 from bs4 import BeautifulSoup
 
 import etl_pipeline
@@ -18,7 +19,7 @@ def _remove_empty_sections(content: str) -> str:
 def parse_tables(content: str) -> str:
     pass
 
-def clean_10K(file_path: str) -> None:
+def clean_10K(file_path: str, output_path: Path | None = None) -> None:
     with open(file_path, "r") as f:
 
         cleaned_doc = f.read()
@@ -157,7 +158,8 @@ def clean_10K(file_path: str) -> None:
         for placeholder, md_table in table_placeholders.items():
             cleaned_doc = cleaned_doc.replace(placeholder, "\n\n" + md_table + "\n\n")
 
-    with open(etl_pipeline.DATA_DIR / "output_cleaner.txt", "w") as f:
+    destination = output_path if output_path is not None else etl_pipeline.DATA_DIR / "output_cleaner.txt"
+    with open(destination, "w") as f:
         f.write(cleaned_doc)
 
 if __name__ == "__main__":

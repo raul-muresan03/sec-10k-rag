@@ -4,8 +4,9 @@ Run commands from the repository root with the project's `venv` and the
 manifest-listed SEC submissions downloaded at their recorded `data/` paths.
 The evaluator checks each selected filing's accession, form, filing year,
 split, and SHA-256 before rebuilding a temporary per-filing index. Embeddings
-require local Ollama; full runs also require the generation model. The active
-application index is not reused. `--split dev` is the default. Leave the
+require local Ollama; full runs also require the generation model. The persistent
+application indexes are not reused: each run builds its own temporary indexes
+and passes their paths explicitly to retrieval. `--split dev` is the default. Leave the
 16 real `test` questions for the final check after dev-based changes are chosen.
 
 ## Run and inspect

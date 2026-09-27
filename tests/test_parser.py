@@ -31,6 +31,19 @@ def test_parse_10k_selects_10k_when_exhibit_comes_first(data_directory):
     assert "exhibit" not in parsed
 
 
+def test_parse_10k_writes_only_to_selected_path(data_directory):
+    source = data_directory / "submission.txt"
+    source.write_text("<DOCUMENT>\n<TYPE>10-K\n<TEXT>annual report</TEXT>\n</DOCUMENT>")
+    selected = data_directory / "selected-filing"
+    selected.mkdir()
+    output_path = selected / "parsed.txt"
+
+    parse_10K(str(source), output_path=output_path)
+
+    assert "annual report" in output_path.read_text()
+    assert not (data_directory / "output_parser.txt").exists()
+
+
 def test_parsed_nvidia_fixture_has_expected_10k_structure():
     parsed = NVIDIA_PARSED_10K.read_text()
 
