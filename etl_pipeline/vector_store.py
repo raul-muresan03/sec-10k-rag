@@ -1,7 +1,7 @@
 from typing import List, Tuple
 from pathlib import Path
 from math import isfinite
-from etl_pipeline.chunker import text_to_embedding, get_similarity_score
+from etl_pipeline.chunker import EMBEDDING_MODEL, text_to_embedding, get_similarity_score
 import json
 
 import etl_pipeline
@@ -37,12 +37,13 @@ def get_most_similar_chunks(
     selected = index_path if index_path is not None else etl_pipeline.DATA_DIR / "all_chunks_embeddings.json"
     chunks, embeddings = load_index(selected)
     cleaned_prompt= prompt.strip().lower()
+    cache_key = (EMBEDDING_MODEL, str(selected.resolve()), cleaned_prompt)
 
-    if cleaned_prompt in prompt_cache:
-        prompt_embedding = prompt_cache[cleaned_prompt]
+    if cache_key in prompt_cache:
+        prompt_embedding = prompt_cache[cache_key]
     else:
         prompt_embedding = text_to_embedding(cleaned_prompt)
-        prompt_cache[cleaned_prompt] = prompt_embedding
+        prompt_cache[cache_key] = prompt_embedding
     if len(prompt_embedding) != len(embeddings[0]):
         raise ValueError(f"Question embedding dimension differs from index: {selected}")
 

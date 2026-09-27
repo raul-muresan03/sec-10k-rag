@@ -63,18 +63,37 @@ def test_retrieval_reuses_cached_prompt_embedding(data_directory):
 
     assert first == second
     embed.assert_called_once_with("nvidia revenue")
-    assert "nvidia revenue" in vector_store.prompt_cache
+    path = data_directory / "all_chunks_embeddings.json"
+    key = (vector_store.EMBEDDING_MODEL, str(path.resolve()), "nvidia revenue")
+    assert key in vector_store.prompt_cache
 
 
 def test_retrieval_uses_existing_prompt_cache_entry(data_directory):
     write_vector_store(data_directory)
-    vector_store.prompt_cache["cached question"] = [0.0, 1.0]
+    path = data_directory / "all_chunks_embeddings.json"
+    key = (vector_store.EMBEDDING_MODEL, str(path.resolve()), "cached question")
+    vector_store.prompt_cache[key] = [0.0, 1.0]
 
     with patch.object(vector_store, "text_to_embedding") as embed:
         results = vector_store.get_most_similar_chunks("cached question", top_n=1)
 
     embed.assert_not_called()
     assert results[0][1] == "vertical evidence"
+
+
+def test_prompt_cache_is_isolated_by_index_and_model(data_directory, monkeypatch):
+    first = data_directory / "first.json"
+    second = data_directory / "second.json"
+    for path in (first, second):
+        path.write_text(json.dumps({"chunks": ["evidence"], "embeddings": [[1.0, 0.0]]}))
+
+    with patch.object(vector_store, "text_to_embedding", return_value=[1.0, 0.0]) as embed:
+        vector_store.get_most_similar_chunks("question", 1, first)
+        vector_store.get_most_similar_chunks("question", 1, second)
+        monkeypatch.setattr(vector_store, "EMBEDDING_MODEL", "another-model")
+        vector_store.get_most_similar_chunks("question", 1, second)
+
+    assert embed.call_count == 3
 
 
 def test_retrieval_rejects_inconsistent_index_dimensions(data_directory, monkeypatch):
