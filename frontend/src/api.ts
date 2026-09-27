@@ -107,5 +107,8 @@ export async function postChat(filingId: string, question: string, signal: Abort
   if (!isChat(data)) {
     throw new ApiError(response.status, 'The answer is incomplete or uses an unsupported format.')
   }
+  if (data.filing_id !== filingId) {
+    throw new ApiError(response.status, 'The answer belongs to a different filing. Please try again.')
+  }
   return data
 }

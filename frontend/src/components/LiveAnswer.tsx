@@ -14,10 +14,11 @@ export function LiveAnswer({ answer }: Props) {
     <>
       <p className="answer-text">{answer.answer}</p>
       <p className="selector-context">
-        {answer.model} · retrieval {times.retrieval.toFixed(2)}s
+        Filing ID: {answer.filing_id}
+        {' · '}{answer.model} · retrieval {times.retrieval.toFixed(2)}s
         {' · '}generation {times.generation.toFixed(2)}s
         {' · '}total {times.total.toFixed(2)}s
-        {' · '}{answer.request_id.slice(0, 8)}
+        {' · '}Request ID: {answer.request_id}
         {' · '}<a className="inline-link" href={answer.sec_url} target="_blank" rel="noopener noreferrer">
           SEC filing ↗
         </a>
