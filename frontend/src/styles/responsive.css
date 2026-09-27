@@ -10,7 +10,6 @@
   .container { width: min(100% - 32px, 550px); }
   .site-header { min-height: 68px; }
   .site-header nav { gap: 14px; }
-  .site-header nav a:nth-child(1), .site-header nav a:nth-child(2) { display: none; }
   .hero { grid-template-columns: 1fr; gap: 36px; padding-block: 65px 75px; }
   .hero h1 { font-size: clamp(3.75rem, 12vw, 5.2rem); }
   .hero-card { max-width: 430px; transform: none; }
