@@ -9,8 +9,7 @@ from typing import Any
 import etl_pipeline
 from eval.answer_reviews import RUBRIC_VERSION
 from eval.provenance import (
-    MANIFEST_PATH, build_index, hash_file, index_configuration,
-    use_index_directory, verify_filings,
+    MANIFEST_PATH, build_index, hash_file, index_configuration, verify_filings,
 )
 from eval.retrieval_metrics import evidence_found, normalize_text, score_retrieval, summarize_retrieval
 from eval.runtime_metrics import runtime_environment, summarize_ollama, summarize_stage_timings
@@ -202,60 +201,60 @@ def run_evaluation(
     for (ticker, year), filing_questions in grouped_questions.items():
         filing = filings[(ticker, year)]
         with TemporaryDirectory(prefix=f"{run_name}-{ticker}-", dir=output_directory) as temporary:
-            with use_index_directory(Path(temporary)):
-                indexing_start = time.perf_counter()
-                index = build_index(filing, Path(temporary))
-                indexing_duration = time.perf_counter() - indexing_start
-                indexing_seconds.append(indexing_duration)
-                filing_records.append({
-                    "ticker": ticker, "filing_year": year, "accession": filing.accession,
-                    "source_path": str(filing.path), "source_sha256": filing.sha256, "index": index,
-                    "indexing_seconds": indexing_duration,
-                })
+            index_dir = Path(temporary)
+            indexing_start = time.perf_counter()
+            index = build_index(filing, index_dir)
+            indexing_duration = time.perf_counter() - indexing_start
+            indexing_seconds.append(indexing_duration)
+            filing_records.append({
+                "ticker": ticker, "filing_year": year, "accession": filing.accession,
+                "source_path": str(filing.path), "source_sha256": filing.sha256, "index": index,
+                "indexing_seconds": indexing_duration,
+            })
 
-                for question in filing_questions:
-                    retrieval_start = time.perf_counter()
-                    chunks = get_most_similar_chunks(question["question"], top_n)
-                    retrieval_seconds = time.perf_counter() - retrieval_start
+            for question in filing_questions:
+                retrieval_start = time.perf_counter()
+                chunks = get_most_similar_chunks(question["question"], top_n, index_dir / "all_chunks_embeddings.json")
+                retrieval_seconds = time.perf_counter() - retrieval_start
 
-                    result = {
-                        "run_id": run_name,
-                        "id": question["id"],
-                        "split": question["split"],
-                        "ticker": ticker,
-                        "year": year,
-                        "question_type": question["type"],
-                        "question": question["question"],
-                        "reference_answer": question["answer"],
-                        "section": question.get("section"),
-                        "expected_evidence": question["evidence"],
-                        "retrieved_chunks": [
-                            {"score": score, "text": text} for score, text in chunks
-                        ],
-                        "latency_seconds": {"retrieval": retrieval_seconds},
-                    }
-                    if mode == "retrieval-only":
-                        score = score_retrieval(question, chunks)
-                        scored.append((question, score))
-                        result["retrieval_score"] = score
-                        result["evidence_found"] = [rank is not None for rank in score["evidence_ranks"]]
-                        results.append(result)
-                        continue
-
-                    generation_start = time.perf_counter()
-                    answer, ollama_metrics = get_llm_response(
-                        question["question"], chunks, model
-                    )
-                    generation_seconds = time.perf_counter() - generation_start
-
-                    result.update({
-                        "generated_answer": answer,
-                        "evidence_found": [evidence_found(passage, chunks) for passage in question["evidence"]],
-                        "abstained": is_abstention(answer),
-                        "ollama": ollama_metrics,
-                    })
-                    result["latency_seconds"]["generation"] = generation_seconds
+                result = {
+                    "run_id": run_name,
+                    "id": question["id"],
+                    "split": question["split"],
+                    "ticker": ticker,
+                    "year": year,
+                    "question_type": question["type"],
+                    "question": question["question"],
+                    "reference_answer": question["answer"],
+                    "section": question.get("section"),
+                    "expected_evidence": question["evidence"],
+                    "retrieved_chunks": [
+                        {"score": score, "text": text} for score, text in chunks
+                    ],
+                    "latency_seconds": {"retrieval": retrieval_seconds},
+                }
+                if mode == "retrieval-only":
+                    score = score_retrieval(question, chunks)
+                    scored.append((question, score))
+                    result["retrieval_score"] = score
+                    result["evidence_found"] = [rank is not None for rank in score["evidence_ranks"]]
                     results.append(result)
+                    continue
+
+                generation_start = time.perf_counter()
+                answer, ollama_metrics = get_llm_response(
+                    question["question"], chunks, model
+                )
+                generation_seconds = time.perf_counter() - generation_start
+
+                result.update({
+                    "generated_answer": answer,
+                    "evidence_found": [evidence_found(passage, chunks) for passage in question["evidence"]],
+                    "abstained": is_abstention(answer),
+                    "ollama": ollama_metrics,
+                })
+                result["latency_seconds"]["generation"] = generation_seconds
+                results.append(result)
 
     if mode == "retrieval-only":
         summary = {

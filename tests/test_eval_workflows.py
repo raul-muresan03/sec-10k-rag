@@ -28,11 +28,13 @@ def test_modes_isolate_synthetic_splits_and_keep_saved_artifacts_consistent(
 
     def build_index(filing, directory):
         indexed.append((filing.ticker, filing.year, filing.split))
-        assert etl_pipeline.DATA_DIR == directory
+        assert etl_pipeline.DATA_DIR != directory
+        assert directory.is_dir()
         return {"sha256": "test-index", "chunk_count": 10}
 
-    def retrieve(question, k):
-        retrieval_calls.append((question, k))
+    def retrieve(question, k, index_path):
+        retrieval_calls.append((question, k, index_path))
+        assert index_path.parent.is_dir()
         text = "dev evidence first second" if "dev" in question else "test evidence"
         return [(0.9, text)]
 
@@ -60,7 +62,7 @@ def test_modes_isolate_synthetic_splits_and_keep_saved_artifacts_consistent(
     assert summary["provenance"]["filings"][0]["ticker"] == selected[0]["ticker"]
     assert indexed == [(selected[0]["ticker"], selected[0]["year"], split)]
     assert len(retrieval_calls) == len(selected)
-    assert all(k == top_n for _, k in retrieval_calls)
+    assert all(k == top_n for _, k, _ in retrieval_calls)
 
     if mode == "retrieval-only":
         assert generation_calls == []
