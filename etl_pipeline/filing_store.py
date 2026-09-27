@@ -12,7 +12,7 @@ from tempfile import TemporaryDirectory
 import etl_pipeline
 from etl_pipeline.chunker import EMBEDDING_MODEL
 from etl_pipeline.embedding_model import embedding_model_digest
-from etl_pipeline.filings import MANIFEST_PATH, VerifiedFiling, filing_id, hash_file, verify_filings
+from etl_pipeline.filings import MANIFEST_PATH, SEC_URL, VerifiedFiling, filing_id, hash_file, verify_filings
 from etl_pipeline.indexing import INDEX_FILENAME, build_index, index_configuration
 from etl_pipeline.vector_store import load_index
 
@@ -114,6 +114,23 @@ class FilingIndexStore:
         if ready is None:
             raise RuntimeError(f"Index not prepared for {ticker} {year}; run python -m etl_pipeline.filing_store")
         return ready
+
+    def resolve_id(self, selected_id: str) -> PreparedFiling:
+        manifest = json.loads(self.manifest_path.read_text(encoding="utf-8"))
+        if not isinstance(manifest, dict) or not isinstance(manifest.get("filings"), list):
+            raise ValueError("Invalid corpus manifest")
+        for entry in manifest["filings"]:
+            if not isinstance(entry, dict) or entry.get("split") != "dev":
+                continue
+            url = entry.get("sec_url")
+            match = SEC_URL.fullmatch(url) if isinstance(url, str) else None
+            if match is None or selected_id != f"{match['cik']}-{entry.get('accession')}":
+                continue
+            ready = self.resolve(entry["ticker"], entry["filing_year"])
+            if ready.filing_id != selected_id:
+                raise ValueError("Filing identity changed during resolution")
+            return ready
+        raise KeyError(f"Unknown dev filing: {selected_id}")
 
     def prepare(self, filing: VerifiedFiling, manifest_sha256: str, config: dict) -> PreparedFiling:
         ready = self._load(filing, config)
