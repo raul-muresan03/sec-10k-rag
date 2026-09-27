@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from fastapi.testclient import TestClient
 
@@ -46,3 +46,14 @@ def test_ready_reports_unavailable_ollama_or_missing_generation_model():
             missing = client.get("/api/ready")
     assert missing.status_code == 503
     assert "gemma3:1b" in missing.json()["reason"]
+
+
+def test_ready_rejects_malformed_ollama_model_metadata():
+    response = Mock(status_code=200)
+    response.json.return_value = {"models": [{"name": []}]}
+    with patch("etl_pipeline.ollama.requests.get", return_value=response):
+        with TestClient(create_app(store=Catalog(6))) as client:
+            ready = client.get("/api/ready")
+
+    assert ready.status_code == 503
+    assert ready.json()["status"] == "not_ready"

@@ -7,7 +7,12 @@ from etl_pipeline.ollama import OllamaInvalidResponse, get_json
 
 def installed_models() -> list[dict]:
     models = get_json("/api/tags", timeout=5.0).get("models")
-    if not isinstance(models, list) or any(not isinstance(model, dict) for model in models):
+    if not isinstance(models, list) or any(
+        not isinstance(model, dict)
+        or not isinstance(model.get("name"), str)
+        or not model["name"].strip()
+        for model in models
+    ):
         raise OllamaInvalidResponse("Invalid Ollama model list")
     return models
 
