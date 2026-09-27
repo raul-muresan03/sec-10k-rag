@@ -1,0 +1,622 @@
+{
+  "schema_version": 1,
+  "dataset": {
+    "split": "dev",
+    "questions": 24,
+    "answerable": 18,
+    "no_answer": 6,
+    "filings": 6
+  },
+  "runs": {
+    "answers": {
+      "run_id": "20260923T125212753976Z-dev",
+      "jsonl_sha256": "69db1f90d8e1bc7125c3eda20246f6cc56a448d8d040a73be336a8cc68eac60d",
+      "split": "dev",
+      "mode": "full",
+      "top_n": 5,
+      "generation_model_tag": "gemma3:1b",
+      "provenance_note": "Legacy full run; immutable model and index identities were not saved."
+    },
+    "retrieval": {
+      "run_id": "20260925T090403491346Z-dev-retrieval",
+      "jsonl_sha256": "2e5e321dd1510b37d3832b226be16176ac1296b9338bbf5c3bab5d2444e697bf",
+      "split": "dev",
+      "mode": "retrieval-only",
+      "top_n": 10,
+      "embedding_model": {
+        "tag": "nomic-embed-text",
+        "digest": null
+      },
+      "questions_sha256": "3edf6ccfd7c40f8fe3ec88755aa4446fcc067a22b9292089df959b70f7f0a259",
+      "manifest_sha256": "63fa93007e8dd3a10db11ff65ee381c9e97e0dc1385dc77418e0dd2b6fd5cc6a",
+      "filings": [
+        {
+          "ticker": "NVDA",
+          "filing_year": 2026,
+          "accession": "0001045810-26-000021",
+          "source_sha256": "c4b1420f24a0157f17c5af448e14b07b62cd5eb7bc22237da5f759faf75ae5a1",
+          "index_sha256": "ecc88df19f1ae013bd1b00f6cd9ccaf859cd3133fd9c2975ad0b7b4d4b74351e"
+        },
+        {
+          "ticker": "AMZN",
+          "filing_year": 2021,
+          "accession": "0001018724-21-000004",
+          "source_sha256": "1a3c8b3e364b8c2f19795b9eaadef9c444594fefecbb30f730bf0997a44e8c97",
+          "index_sha256": "f141054129fe3ffdc7509f5e6711a2c642be548a6ce8b6d2f74ca3c16e68d942"
+        },
+        {
+          "ticker": "SBUX",
+          "filing_year": 2019,
+          "accession": "0000829224-19-000051",
+          "source_sha256": "952ab5715861359ce69e70418e31568328786fe135e08a3971416cd737bcbb57",
+          "index_sha256": "9ae4f8862d25e473e181c955805cc13f484f8c43a2789c26ecda9123b6e7bbee"
+        },
+        {
+          "ticker": "ADBE",
+          "filing_year": 2018,
+          "accession": "0000796343-18-000015",
+          "source_sha256": "c2af9a66dba86c91702e01d920ac833daaef7ecc783ebbdd609ac938129d892f",
+          "index_sha256": "1c8e6e67663b26c7c5dc43957a8e84023379406e71a72dee7da262ee23548db0"
+        },
+        {
+          "ticker": "PFE",
+          "filing_year": 2015,
+          "accession": "0000078003-15-000014",
+          "source_sha256": "0346663a6933dfd978ebaaf0f306cb701e59cec885cebe11cb4d6a2503b7a139",
+          "index_sha256": "e999b7d8a63e7e05e5363f973ed49b54285bd8eb1d4a998febabebe0206bae3e"
+        },
+        {
+          "ticker": "F",
+          "filing_year": 2014,
+          "accession": "0000037996-14-000010",
+          "source_sha256": "5b46a98bf0b03c97fb3c56ac9ca8efdc6f8ba44cdd14bda899b12e3cab31a6c2",
+          "index_sha256": "ea26daf67e9f182d0c9fdfc691623bee95411d89490536fa7752a6aca36464e5"
+        }
+      ]
+    }
+  },
+  "retrieval_metrics": {
+    "run_id": "20260925T090403491346Z-dev-retrieval",
+    "method": "strict quoted-evidence text matching",
+    "scope": "answerable dev questions; not answer correctness",
+    "values": {
+      "hit_at_5": {
+        "hits": 15,
+        "questions": 18,
+        "rate": 0.8333333333333334
+      },
+      "multi_hop_all_evidence_at_5": {
+        "complete": 4,
+        "questions": 6,
+        "rate": 0.6666666666666666
+      },
+      "hit_at_10": {
+        "hits": 17,
+        "questions": 18,
+        "rate": 0.9444444444444444
+      },
+      "multi_hop_all_evidence_at_10": {
+        "complete": 5,
+        "questions": 6,
+        "rate": 0.8333333333333334
+      },
+      "mrr_at_10": {
+        "reciprocal_rank_sum": 11.670634920634921,
+        "questions": 18,
+        "rate": 0.6483686067019401
+      }
+    }
+  },
+  "answer_review": {
+    "run_id": "20260923T125212753976Z-dev",
+    "run_sha256": "69db1f90d8e1bc7125c3eda20246f6cc56a448d8d040a73be336a8cc68eac60d",
+    "reviews_sha256": "0169a4c31814035711f67304ec21c51ba77f0c10fa83a49e91214286dc3fc794",
+    "rubric_version": "answer-review-v1",
+    "assessment_source": "AI-assisted failure analysis; medium-confidence cases need owner confirmation",
+    "summary": {
+      "questions": 24,
+      "reviewed": 24,
+      "unreviewed": 0,
+      "pending_owner_confirmation": 4,
+      "pending_owner_question_ids": [
+        "adbe-2018-multi-hop",
+        "adbe-2018-narrative",
+        "pfe-2015-multi-hop",
+        "pfe-2015-narrative"
+      ],
+      "unreviewed_question_ids": [],
+      "ai_reviewed": 20,
+      "owner_confirmed": 0,
+      "verdicts": {
+        "pass": 11,
+        "partial": 6,
+        "incorrect": 7
+      },
+      "publication_status": "provisional"
+    }
+  },
+  "examples": [
+    {
+      "id": "amzn-2021-narrative",
+      "answer_run_id": "20260923T125212753976Z-dev",
+      "ticker": "AMZN",
+      "filing_year": 2021,
+      "question_type": "narrative",
+      "question": "When does Amazon primarily recognize revenue from AWS services?",
+      "generated_answer": "Amazon primarily recognizes revenue from AWS services when the customer uses them, based on the quantity of services rendered, such as compute or storage capacity delivered on-demand.",
+      "reference_answer": "When customers use the services, based on the quantity of compute, storage or other services delivered.",
+      "reference_evidence": [
+        "Revenue is allocated to services using stand-alone selling prices and is primarily recognized when the customer uses these services, based on the quantity of services rendered"
+      ],
+      "section": "Note 1 - Accounting Policies",
+      "reference_verification_note": null,
+      "answer_run_evidence_found": [
+        true
+      ],
+      "review": {
+        "status": "ai_reviewed",
+        "confidence": "high",
+        "verdict": "pass",
+        "dimensions": {
+          "completeness": "pass",
+          "faithfulness": "pass",
+          "numeric_precision": "not_applicable",
+          "abstention": "pass",
+          "citations": "not_applicable"
+        },
+        "explanation": "Describes AWS revenue recognition as services are delivered and used."
+      },
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872421000004/0001018724-21-000004.txt",
+      "accession": "0001018724-21-000004",
+      "retrieved_context": [
+        {
+          "rank": 1,
+          "score": 0.7853358924010501,
+          "text": "Unearned Revenue Unearned revenue is recorded when payments are received or due in advance of performing our service obligations and is recognized over the service period. Unearned revenue primarily relates to prepayments of AWS services and Amazon Prime memberships. Our total unearned revenue as of December 31, 2019 was $ 10.2 billion, of which $ 7.9 billion was recognized as revenue during the year ended December 31, 2020 and our total unearned revenue as of December 31, 2020 was $ 11.6 billion. Included in “Other long-term liabilities” on our consolidated balance sheets was $ 2.0 billion and $ 1.9 billion of unearned revenue as of December 31, 2019 and 2020. Additionally, we have performance obligations, primarily related to AWS, associated with commitments in customer contracts for future services that have not yet been recognized in our financial statements. For contracts with original terms that exceed one year, those commitments not yet recognized were $ 50.0 billion as of December 31, 2020. The weighted average remaining life of our long-term contracts is 3.4 years. However, the amount and timing of revenue recognition is largely driven by customer usage, which can extend beyond the original contractual term."
+        },
+        {
+          "rank": 2,
+          "score": 0.7769877765575347,
+          "text": "Revenue Revenue is measured based on the amount of consideration that we expect to receive, reduced by estimates for return allowances, promotional discounts, and rebates. Revenue also excludes any amounts collected on behalf of third parties, including sales and indirect taxes. In arrangements where we have multiple performance obligations, the transaction price is allocated to each performance obligation using the relative stand-alone selling price. We generally determine stand-alone selling prices based on the prices charged to customers or using expected cost plus a margin. A description of our principal revenue generating activities is as follows: Retail sales - We offer consumer products through our online and physical stores. Revenue is recognized when control of the goods is transferred to the customer, which generally occurs upon our delivery to a third-party carrier or, in the case of an Amazon delivery, to the customer. Third-party seller services - We offer programs that enable sellers to sell their products in our stores, and fulfill orders through us. We are not the seller of record in these transactions. The commissions and any related fulfillment and shipping fees we earn from these arrangements are recognized when the services are rendered, which generally occurs upon delivery of the related products to a third-party carrier or, in the case of an Amazon delivery, to the customer. Subscription services - Our subscription sales include fees associated with Amazon Prime memberships and access to content including digital video, audiobooks, digital music, e-books, and other non-AWS subscription services. Prime memberships provide our customers with access to an evolving suite of benefits that represent a single stand-ready obligation. Subscriptions are paid for at the time of or in advance of delivering the services. Revenue from such arrangements is recognized over the subscription period. AWS - Our AWS arrangements include global sales of compute, storage, database, and other services. Revenue is allocated to services using stand-alone selling prices and is primarily recognized when the customer uses these services, based on the quantity of services rendered, such as compute or storage capacity delivered on-demand. Certain services, including compute and database, are also offered as a fixed quantity over a specified term, for which revenue is recognized ratably. Sales commissions we pay in connection with contracts that exceed one year are capitalized and amortized over the contract term."
+        },
+        {
+          "rank": 3,
+          "score": 0.7753917406593529,
+          "text": "AWS The AWS segment consists of amounts earned from global sales of compute, storage, database, and other services for start-ups, enterprises, government agencies, and academic institutions."
+        },
+        {
+          "rank": 4,
+          "score": 0.7214863952974745,
+          "text": "Net Sales Net sales include product and service sales. Product sales represent revenue from the sale of products and related shipping fees and digital media content where we record revenue gross. Service sales primarily represent third-party seller fees, which includes commissions and any related fulfillment and shipping fees, AWS sales, advertising services, Amazon Prime membership fees, and certain digital content subscriptions. Net sales information is as follows (in millions): |  | Year Ended December 31, |  |\n| --- | --- | --- |\n|  | 2019 | 2020 |\n| Net Sales: |  |  |\n| North America | $ 170,773 | $ 236,282 |\n| International | 74,723 | 104,412 |\n| AWS | 35,026 | 45,370 |\n| Consolidated | $ 280,522 | $ 386,064 |\n| Year-over-year Percentage Growth: |  |  |\n| North America | 21% | 38% |\n| International | 13 | 40 |\n| AWS | 37 | 30 |\n| Consolidated | 20 | 38 |\n| Year-over-year Percentage Growth, excluding the effect of foreign exchange rates: |  |  |\n| North America | 21% | 38% |\n| International | 17 | 38 |\n| AWS | 37 | 30 |\n| Consolidated | 22 | 37 |\n| Net sales mix: |  |  |\n| North America | 61% | 61% |\n| International | 27 | 27 |\n| AWS | 12 | 12 |\n| Consolidated | 100% | 100% | Sales increased 38% in 2020, compared to the prior year. Changes in foreign currency exchange rates impacted net sales by $(2.6) billion and $1.4 billion for 2019 and 2020. For a discussion of the effect of foreign exchange rates on sales growth, see “Effect of Foreign Exchange Rates” below. North America sales increased 38% in 2020, compared to the prior year. The sales growth primarily reflects increased unit sales, including sales by third-party sellers. Increased unit sales were driven largely by our continued efforts to reduce prices for our customers, including from our shipping offers, and increased demand, including for household staples and other essential and home products, partially offset by fulfillment network capacity and supply chain constraints. International sales increased 40% in 2020, compared to the prior year. The sales growth primarily reflects increased unit sales, including sales by third-party sellers. Increased unit sales were driven largely by our continued efforts to reduce prices for our customers, including from our shipping offers, and increased demand, including for household staples and other essential and home products, partially offset by fulfillment network capacity and supply chain constraints. Changes in foreign currency exchange rates impacted International net sales by $(2.4) billion and $1.7 billion in 2019 and 2020. AWS sales increased 30% in 2020, compared to the prior year. The sales growth primarily reflects increased customer usage, partially offset by pricing changes. Pricing changes were driven largely by our continued efforts to reduce prices for our customers."
+        },
+        {
+          "rank": 5,
+          "score": 0.7067372303860675,
+          "text": "Developers and Enterprises We serve developers and enterprises of all sizes, including start-ups, government agencies, and academic institutions, through AWS, which offers a broad set of on-demand technology services, including compute, storage, database, analytics, and machine learning, and other services."
+        }
+      ]
+    },
+    {
+      "id": "pfe-2015-numeric",
+      "answer_run_id": "20260923T125212753976Z-dev",
+      "ticker": "PFE",
+      "filing_year": 2015,
+      "question_type": "numeric",
+      "question": "Approximately what percentage of Pfizer's total revenues came from biopharmaceutical products in 2014?",
+      "generated_answer": "Approximately 92%.",
+      "reference_answer": "92%",
+      "reference_evidence": [
+        "Revenues from biopharmaceutical products contributed approximately 92% of our total revenues in 2014"
+      ],
+      "section": "Item 1 - Business",
+      "reference_verification_note": null,
+      "answer_run_evidence_found": [
+        true
+      ],
+      "review": {
+        "status": "ai_reviewed",
+        "confidence": "high",
+        "verdict": "pass",
+        "dimensions": {
+          "completeness": "pass",
+          "faithfulness": "pass",
+          "numeric_precision": "pass",
+          "abstention": "pass",
+          "citations": "not_applicable"
+        },
+        "explanation": "Approximately 92% matches the 2014 biopharmaceutical revenue share in R3."
+      },
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/78003/000007800315000014/0000078003-15-000014.txt",
+      "accession": "0000078003-15-000014",
+      "retrieved_context": [
+        {
+          "rank": 1,
+          "score": 0.7733931244244351,
+          "text": "Pfizer Inc. is a research-based, global biopharmaceutical company. We apply science and our global resources to bring therapies to people that extend and significantly improve their lives through the discovery, development and manufacture of healthcare products. Our global portfolio includes medicines and vaccines, as well as many of the world’s best-known consumer healthcare products. We work across developed and emerging markets to advance wellness, prevention, treatments and cures that challenge the most feared diseases of our time. We collaborate with healthcare providers, governments and local communities to support and expand access to reliable, affordable healthcare around the world. Our revenues are derived from the sale of our products, and, to a much lesser extent, from alliance agreements, under which we co-promote products discovered by other companies (Alliance revenues). The majority of our revenues come from the manufacture and sale of biopharmaceutical products. The Company was incorporated under the laws of the State of Delaware on June 2, 1942. Unless the context requires otherwise, references to “Pfizer,” “the Company,” “we,” “us” or “our” in this Annual Report on Form 10-K for the fiscal year ended December 31, 2014 (2014 Form 10-K) refer to Pfizer Inc. and its subsidiaries. References to developed markets in this 2014 Form 10-K include the United States (U.S.), Western Europe, Japan, Canada, Australia, Scandinavia, South Korea, Finland and New Zealand; and references to emerging markets in this 2014 Form 10-K include the rest of the world, including, among other countries, China, Brazil, Mexico, Russia, India and Turkey. On February 5, 2015, we announced that we have entered into a definitive merger agreement under which we agreed to acquire Hospira, Inc. (Hospira), the world’s leading provider of injectable drugs and infusion technologies and a global leader in biosimilars, for $90 per share in cash, for a total enterprise value of approximately $17 billion. The transaction is subject to customary closing conditions, including regulatory approvals in several jurisdictions and the approval of Hospira’s shareholders, and is expected to close in the second half of 2015. On June 24, 2013, we completed the full disposition of our Animal Health business. For additional information, see the Notes to Consolidated Financial Statements— Note 2D. Acquisitions, Licensing Agreements, Collaborative Arrangements, Divestitures and Equity-Method Investments: Divestitures in our 2014 Financial Report (as defined below). On November 30, 2012, we completed the sale of our Nutrition business to Nestlé for $11.85 billion in cash. For additional information, see the Notes to Consolidated Financial Statements— Note 2D. Acquisitions, Licensing Agreements, Collaborative Arrangements, Divestitures and Equity-Method Investments: Divestitures in our 2014 Financial Report."
+        },
+        {
+          "rank": 2,
+          "score": 0.7480926578139195,
+          "text": "As of year-end 2014, we had 298 projects in R&D, ranging from discovery through registration, of which 86 programs are in Phase 1 through registration, with the remainder of the projects in pre-clinical development. At year-end 2014, our Phase 3 portfolio contained 23 programs. Development of a single compound is often pursued as part of multiple programs. While these new candidates may or may not eventually receive regulatory approval, new drug candidates entering clinical development phases are the foundation for future products. In addition to discovering and developing new products, our R&D operations seek to add value to our existing products by improving their effectiveness, enhancing ease of dosing and by discovering new indications for them. Information concerning several of our drug candidates in development, as well as supplemental filings for existing products, is set forth in the Analysis of the Consolidated Statements of Income—Product Developments — Biopharmaceutical section in our 2014 Financial Report, which is incorporated by reference. Our competitors also devote substantial funds and resources to R&D. We also compete against numerous small biotechnology companies in developing potential drug candidates. The extent to which our competitors are successful in their research could result in erosion of the sales of our existing products and potential sales of products in development, as well as unanticipated product obsolescence. See Item 1A. Risk Factors — Competitive Products below. We continue to strengthen our global R&D organization and pursue strategies intended to improve innovation and overall productivity in R&D to achieve a sustainable pipeline that will deliver value in the near term and over time. Our R&D priorities include delivering a pipeline of differentiated therapies with the greatest scientific and commercial promise, innovating new capabilities that can position Pfizer for long-term leadership and creating new models for biomedical collaboration that will expedite the pace of innovation and productivity. To that end, our research primarily focuses on six high-priority areas that have a mix of small molecules and large molecules — immunology and inflammation; cardiovascular and metabolic diseases; oncology; vaccines; neuroscience and pain; and rare diseases. Another area of focus is biosimilars. For additional information regarding our R&D operations, see the Overview of Our Performance, Operating Environment, Strategy and Outlook—Our Strategy—Research Operations and Costs and Expenses—Research and Development (R&D) Expenses — Description of Research and Development Operations sections in our 2014 Financial Report."
+        },
+        {
+          "rank": 3,
+          "score": 0.7406380547651064,
+          "text": "Biopharmaceutical Products In 2014, our biopharmaceutical business was managed through GIP, GEP and the vaccines and oncology businesses of VOC, which are discussed under Commercial Operations above. For a discussion of certain of our key biopharmaceutical products, including Lyrica , the Prevnar family of products, Enbrel , Celebrex , Lipitor , Viagra , Zyvox , Sutent , Norvasc , the Premarin family of products, Eliquis and Xeljanz , see the Analysis of the Consolidated Statements of Income — Biopharmaceutical — Selected Product Descriptions section in our 2014 Financial Report. We have entered into collaboration and/or co-promotion agreements relating to certain biopharmaceutical products, including Aricept , Enbrel (in the U.S. and Canada), Spiriva and Rebif , each of which has expired or will expire in various markets over the next several years. For additional information, including a description of these collaboration and co-promotion agreements and their expiration dates, see the Analysis of the Consolidated Statements of Income — Biopharmaceutical — Selected Product Descriptions and the Overview of Our Performance, Operating Environment, Strategy and Outlook—Our Operating Environment — Industry-Specific Challenges — Intellectual Property Rights and Collaboration/Licensing Rights sections in our 2014 Financial Report and Item 1A. Risk Factors — Dependence on Key In-Line Products below. In addition, Eliquis was developed and is being commercialized in collaboration with Bristol-Myers Squibb Company (BMS). For additional information, see the Analysis of the Consolidated Statements of Income — Biopharmaceutical — Selected Product Descriptions section in our 2014 Financial Report. Revenues from biopharmaceutical products contributed approximately 92% of our total revenues in 2014 , 93% of our total revenues in 2013 , and 94% of our total revenues in 2012 . We recorded direct product sales of more than $1 billion for each of 10 biopharmaceutical products in 2014 , 2013 and 2012 . These products represented 54% of our revenues from biopharmaceutical products in 2014, 51% of our revenues from biopharmaceutical products in 2013 and 50% of our revenues from biopharmaceutical products in 2012. See Item 1A. Risk Factors — Dependence on Key In-Line Products below. Worldwide revenues from biopharmaceutical products in 2014 were $45.7 billion , a decrease of 5% compared to 2013 , reflecting a decrease in operational revenues of 3% and the unfavorable impact of foreign exchange of 2% . Geographically, in the U.S., revenues from biopharmaceutical products decreased 8% in 2014 , compared to 2013 . In our international markets, revenues from biopharmaceutical products decreased 3% in 2014 , compared to 2013 , which primarily reflects the unfavorable impact of foreign exchange. During 2014 , international revenues from biopharmaceutical products represented 62% of total revenues from biopharmaceutical products, compared to 61% in 2013 . For additional information, including a discussion of key operational revenue drivers, see the Analysis of the Consolidated Statements of Income — Biopharmaceutical Revenues — Revenues—Major Biopharmaceutical Products and —Biopharmaceutical—Selected Product Descriptions sections in our 2014 Financial Report."
+        },
+        {
+          "rank": 4,
+          "score": 0.7213315591433139,
+          "text": "We recorded direct product revenues of more than $1 billion for each of 10 biopharmaceutical products in 2014: Lyrica , the Prevnar family of products, Enbrel , Celebrex , Lipitor , Viagra , Zyvox , Sutent , Norvasc and the Premarin family of products. Those products accounted for 54% of our total biopharmaceutical revenues in 2014. If these products or any of our other major products were to become subject to problems such as loss of patent protection, changes in prescription growth rates, material product liability litigation, unexpected side effects, regulatory proceedings, publicity affecting doctor or patient confidence, pressure from existing competitive products, changes in labeling or, if a new, more effective treatment should be introduced, the adverse impact on our revenues could be significant. Patents covering several of our best-selling medicines have recently expired or will expire in the next few years (including some of our billion-dollar and previously billion-dollar products), and patents covering a number of our best-selling medicines are the subject of pending legal challenges. For example, on December 10, 2014, generic versions of Celebrex became available pursuant to settlement agreements licensing the reissue patent to several generic manufacturers. In addition, our revenues could be significantly impacted by the timing and rate of commercial acceptance of key new products. Further, our Alliance revenues have been and will continue to be adversely affected by the termination or expiration of collaboration and co-promotion agreements that we have entered into and that we may enter into from time to time. For example, our collaboration with Boehringer Ingelheim for Spiriva has expired in major markets (U.S., the EU, Canada and Australia), and is expiring in other markets through 2016; the co-promotion term of our U.S. and Canada collaboration agreement with Amgen Inc. (Amgen) for Enbrel expired in October 2013 (our exclusive rights to Enbrel outside the U.S. and Canada are not affected by the expiration of the co-promotion term of the collaboration agreement with Amgen); and our collaboration agreement with EMD Serono Inc. to co-promote Rebif in the U.S. will expire at the end of 2015. See the Overview of Our Performance, Operating Environment, Strategy and Outlook—Our Operating Environment — Industry-Specific Challenges — Intellectual Property Rights and Collaboration/Licensing Rights and Analysis of the Consolidated"
+        },
+        {
+          "rank": 5,
+          "score": 0.7100052218812742,
+          "text": "PFIZER INC."
+        }
+      ]
+    },
+    {
+      "id": "pfe-2015-no-answer",
+      "answer_run_id": "20260923T125212753976Z-dev",
+      "ticker": "PFE",
+      "filing_year": 2015,
+      "question_type": "no_answer",
+      "question": "How many patients in Brazil received Pfizer's Prevnar vaccine during 2014?",
+      "generated_answer": "Information not found in the provided context.",
+      "reference_answer": null,
+      "reference_evidence": [],
+      "section": null,
+      "reference_verification_note": "Search the full submission, including EX-13, for Prevnar patient counts in Brazil; no country/product patient count located. Human confirmation required.",
+      "answer_run_evidence_found": [],
+      "review": {
+        "status": "ai_reviewed",
+        "confidence": "high",
+        "verdict": "pass",
+        "dimensions": {
+          "completeness": "not_applicable",
+          "faithfulness": "not_assessed",
+          "numeric_precision": "not_applicable",
+          "abstention": "pass",
+          "citations": "not_applicable"
+        },
+        "explanation": "Valid alternate refusal; the stored abstained flag was a false negative."
+      },
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/78003/000007800315000014/0000078003-15-000014.txt",
+      "accession": "0000078003-15-000014",
+      "retrieved_context": [
+        {
+          "rank": 1,
+          "score": 0.6116519570260579,
+          "text": "Pfizer Inc. is a research-based, global biopharmaceutical company. We apply science and our global resources to bring therapies to people that extend and significantly improve their lives through the discovery, development and manufacture of healthcare products. Our global portfolio includes medicines and vaccines, as well as many of the world’s best-known consumer healthcare products. We work across developed and emerging markets to advance wellness, prevention, treatments and cures that challenge the most feared diseases of our time. We collaborate with healthcare providers, governments and local communities to support and expand access to reliable, affordable healthcare around the world. Our revenues are derived from the sale of our products, and, to a much lesser extent, from alliance agreements, under which we co-promote products discovered by other companies (Alliance revenues). The majority of our revenues come from the manufacture and sale of biopharmaceutical products. The Company was incorporated under the laws of the State of Delaware on June 2, 1942. Unless the context requires otherwise, references to “Pfizer,” “the Company,” “we,” “us” or “our” in this Annual Report on Form 10-K for the fiscal year ended December 31, 2014 (2014 Form 10-K) refer to Pfizer Inc. and its subsidiaries. References to developed markets in this 2014 Form 10-K include the United States (U.S.), Western Europe, Japan, Canada, Australia, Scandinavia, South Korea, Finland and New Zealand; and references to emerging markets in this 2014 Form 10-K include the rest of the world, including, among other countries, China, Brazil, Mexico, Russia, India and Turkey. On February 5, 2015, we announced that we have entered into a definitive merger agreement under which we agreed to acquire Hospira, Inc. (Hospira), the world’s leading provider of injectable drugs and infusion technologies and a global leader in biosimilars, for $90 per share in cash, for a total enterprise value of approximately $17 billion. The transaction is subject to customary closing conditions, including regulatory approvals in several jurisdictions and the approval of Hospira’s shareholders, and is expected to close in the second half of 2015. On June 24, 2013, we completed the full disposition of our Animal Health business. For additional information, see the Notes to Consolidated Financial Statements— Note 2D. Acquisitions, Licensing Agreements, Collaborative Arrangements, Divestitures and Equity-Method Investments: Divestitures in our 2014 Financial Report (as defined below). On November 30, 2012, we completed the sale of our Nutrition business to Nestlé for $11.85 billion in cash. For additional information, see the Notes to Consolidated Financial Statements— Note 2D. Acquisitions, Licensing Agreements, Collaborative Arrangements, Divestitures and Equity-Method Investments: Divestitures in our 2014 Financial Report."
+        },
+        {
+          "rank": 2,
+          "score": 0.6015998995944352,
+          "text": "Consumer Healthcare Based on 2014 revenues, our Consumer Healthcare business is the fifth-largest branded multi-national, OTC, healthcare products business in the world and produces two of the ten largest selling consumer healthcare brands ( Centrum and Advil ) in the world. Consumer Healthcare revenues totaled $3.4 billion for 2014, an increase of 3% compared to 2013, reflecting operational revenue growth of 5% , partially offset by the unfavorable impact of foreign exchange of 2% . The Consumer Healthcare business holds strong positions in various geographic markets, with its highest revenue volume in the U.S., China, Canada, Germany, Italy and Brazil. Major categories and product lines in our Consumer Healthcare business include: In August 2012, we entered into an agreement with AstraZeneca PLC (AstraZeneca) for the exclusive, global, OTC rights for Nexium , a leading prescription drug currently approved to treat the symptoms of gastroesophageal reflux disease. In December 2011, we completed our acquisition of the consumer healthcare business of Ferrosan, a Danish company engaged in the sale of science-based consumer healthcare products, including dietary supplements and lifestyle products, primarily in the Nordic region and the emerging markets of Russia and Central and Eastern Europe. For additional information, see the Notes to Consolidated Financial Statements— Note 2A. Acquisitions, Licensing Agreements, Collaborative Arrangements, Divestitures, and Equity-Method Investments : Acquisitions and — Note 2B. Acquisitions, Licensing Agreements, Collaborative Arrangements, Divestitures, and Equity-Method Investments: Licensing Agreements in our 2014 Financial Report and the Overview of Our Performance, Operating Environment, Strategy and Outlook — Our Business Development Initiatives section in our 2014 Financial Report. For additional information regarding the revenues of our Consumer Healthcare business, see the Notes to Consolidated Financial Statements— Note 18. Segment, Geographic and Other Revenue Information and the Analysis of Operating Segment Information — Global Vaccines, Oncology and Consumer Healthcare Operating Segment section in our 2014 Financial Report."
+        },
+        {
+          "rank": 3,
+          "score": 0.5924339662533583,
+          "text": "As of year-end 2014, we had 298 projects in R&D, ranging from discovery through registration, of which 86 programs are in Phase 1 through registration, with the remainder of the projects in pre-clinical development. At year-end 2014, our Phase 3 portfolio contained 23 programs. Development of a single compound is often pursued as part of multiple programs. While these new candidates may or may not eventually receive regulatory approval, new drug candidates entering clinical development phases are the foundation for future products. In addition to discovering and developing new products, our R&D operations seek to add value to our existing products by improving their effectiveness, enhancing ease of dosing and by discovering new indications for them. Information concerning several of our drug candidates in development, as well as supplemental filings for existing products, is set forth in the Analysis of the Consolidated Statements of Income—Product Developments — Biopharmaceutical section in our 2014 Financial Report, which is incorporated by reference. Our competitors also devote substantial funds and resources to R&D. We also compete against numerous small biotechnology companies in developing potential drug candidates. The extent to which our competitors are successful in their research could result in erosion of the sales of our existing products and potential sales of products in development, as well as unanticipated product obsolescence. See Item 1A. Risk Factors — Competitive Products below. We continue to strengthen our global R&D organization and pursue strategies intended to improve innovation and overall productivity in R&D to achieve a sustainable pipeline that will deliver value in the near term and over time. Our R&D priorities include delivering a pipeline of differentiated therapies with the greatest scientific and commercial promise, innovating new capabilities that can position Pfizer for long-term leadership and creating new models for biomedical collaboration that will expedite the pace of innovation and productivity. To that end, our research primarily focuses on six high-priority areas that have a mix of small molecules and large molecules — immunology and inflammation; cardiovascular and metabolic diseases; oncology; vaccines; neuroscience and pain; and rare diseases. Another area of focus is biosimilars. For additional information regarding our R&D operations, see the Overview of Our Performance, Operating Environment, Strategy and Outlook—Our Strategy—Research Operations and Costs and Expenses—Research and Development (R&D) Expenses — Description of Research and Development Operations sections in our 2014 Financial Report."
+        },
+        {
+          "rank": 4,
+          "score": 0.5753504342769074,
+          "text": "PFIZER INC."
+        },
+        {
+          "rank": 5,
+          "score": 0.5711650974530568,
+          "text": "Specialty Pharmaceuticals Specialty pharmaceuticals are medicines that treat rare or life-threatening conditions that typically have smaller patient populations. The growing availability and use of innovative specialty pharmaceuticals, combined with their relative higher cost as compared to other types of pharmaceutical products, has generated payer interest in developing cost-containment strategies targeted to this sector. While the impact of payers’ efforts to control access to and pricing of specialty pharmaceuticals has had limited impact on Pfizer to date, a number of factors may lead to a more significant adverse business impact in the future given our growing specialty business portfolio. These include the increasing use of health technology assessment in markets around the world, U.S. PBMs seeking to negotiate greater discounts, deteriorating finances of certain governments and the uptake of biosimilars as they become available."
+        }
+      ]
+    },
+    {
+      "id": "amzn-2021-multi-hop",
+      "answer_run_id": "20260923T125212753976Z-dev",
+      "ticker": "AMZN",
+      "filing_year": 2021,
+      "question_type": "multi_hop",
+      "question": "In 2020, did Amazon's International or North America sales grow faster, and by how many percentage points?",
+      "generated_answer": "During 2020, international net sales increased 40% compared to the prior year.",
+      "reference_answer": "International grew faster by 2 percentage points (40% versus 38%).",
+      "reference_evidence": [
+        "North America sales increased 38% in 2020, compared to the prior year.",
+        "International sales increased 40% in 2020, compared to the prior year."
+      ],
+      "section": "Item 7 - Management's Discussion and Analysis",
+      "reference_verification_note": null,
+      "answer_run_evidence_found": [
+        true,
+        true
+      ],
+      "review": {
+        "status": "ai_reviewed",
+        "confidence": "high",
+        "verdict": "partial",
+        "dimensions": {
+          "completeness": "partial",
+          "faithfulness": "pass",
+          "numeric_precision": "partial",
+          "abstention": "pass",
+          "citations": "not_applicable"
+        },
+        "explanation": "Reports International's 40% growth but omits North America's 38% and the two-point comparison."
+      },
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872421000004/0001018724-21-000004.txt",
+      "accession": "0001018724-21-000004",
+      "retrieved_context": [
+        {
+          "rank": 1,
+          "score": 0.7533155685343395,
+          "text": "Net Sales Net sales include product and service sales. Product sales represent revenue from the sale of products and related shipping fees and digital media content where we record revenue gross. Service sales primarily represent third-party seller fees, which includes commissions and any related fulfillment and shipping fees, AWS sales, advertising services, Amazon Prime membership fees, and certain digital content subscriptions. Net sales information is as follows (in millions): |  | Year Ended December 31, |  |\n| --- | --- | --- |\n|  | 2019 | 2020 |\n| Net Sales: |  |  |\n| North America | $ 170,773 | $ 236,282 |\n| International | 74,723 | 104,412 |\n| AWS | 35,026 | 45,370 |\n| Consolidated | $ 280,522 | $ 386,064 |\n| Year-over-year Percentage Growth: |  |  |\n| North America | 21% | 38% |\n| International | 13 | 40 |\n| AWS | 37 | 30 |\n| Consolidated | 20 | 38 |\n| Year-over-year Percentage Growth, excluding the effect of foreign exchange rates: |  |  |\n| North America | 21% | 38% |\n| International | 17 | 38 |\n| AWS | 37 | 30 |\n| Consolidated | 22 | 37 |\n| Net sales mix: |  |  |\n| North America | 61% | 61% |\n| International | 27 | 27 |\n| AWS | 12 | 12 |\n| Consolidated | 100% | 100% | Sales increased 38% in 2020, compared to the prior year. Changes in foreign currency exchange rates impacted net sales by $(2.6) billion and $1.4 billion for 2019 and 2020. For a discussion of the effect of foreign exchange rates on sales growth, see “Effect of Foreign Exchange Rates” below. North America sales increased 38% in 2020, compared to the prior year. The sales growth primarily reflects increased unit sales, including sales by third-party sellers. Increased unit sales were driven largely by our continued efforts to reduce prices for our customers, including from our shipping offers, and increased demand, including for household staples and other essential and home products, partially offset by fulfillment network capacity and supply chain constraints. International sales increased 40% in 2020, compared to the prior year. The sales growth primarily reflects increased unit sales, including sales by third-party sellers. Increased unit sales were driven largely by our continued efforts to reduce prices for our customers, including from our shipping offers, and increased demand, including for household staples and other essential and home products, partially offset by fulfillment network capacity and supply chain constraints. Changes in foreign currency exchange rates impacted International net sales by $(2.4) billion and $1.7 billion in 2019 and 2020. AWS sales increased 30% in 2020, compared to the prior year. The sales growth primarily reflects increased customer usage, partially offset by pricing changes. Pricing changes were driven largely by our continued efforts to reduce prices for our customers."
+        },
+        {
+          "rank": 2,
+          "score": 0.737067570494813,
+          "text": "During 2020, net sales from our International segment accounted for 27% of our consolidated revenues. Net sales and related expenses generated from our internationally-focused stores, including within Canada and Mexico (which are included in our North America segment), are primarily denominated in the functional currencies of the corresponding stores and primarily include Euros, British Pounds, and Japanese Yen. The results of operations of, and certain of our intercompany balances associated with, our internationally-focused stores and AWS are exposed to foreign exchange rate fluctuations. Upon consolidation, as foreign exchange rates vary, net sales and other operating results may differ materially from expectations, and we may record significant gains or losses on the remeasurement of intercompany balances. For example, as a result of fluctuations in foreign exchange rates throughout the year compared to rates in effect the prior year, International segment net sales increased by $1.7 billion in comparison with the prior year."
+        },
+        {
+          "rank": 3,
+          "score": 0.7133842473742886,
+          "text": "|  | December 31, |  |  |\n| --- | --- | --- | --- |\n|  | 2018 | 2019 | 2020 |\n| North America | $ 27,052 | $ 31,719 | $ 54,912 |\n| International | 8,552 | 9,566 | 15,375 |\n| AWS | 18,851 | 23,481 | 32,151 |\n| Corporate | 7,342 | 7,939 | 10,676 |\n| Consolidated | $ 61,797 | $ 72,705 | $ 113,114 |"
+        },
+        {
+          "rank": 4,
+          "score": 0.7116826801453886,
+          "text": "(2) This includes 611 North America and 7 International stores as of December 31, 2020. | Segment | Leased Square Footage (1) | Owned Square Footage (1) |\n| --- | --- | --- |\n| North America | 298,879 | 3,813 |\n| International | 102,192 | 1,294 |\n| AWS | 10,599 | 7,465 |\n| Total | 411,670 | 12,572 |"
+        },
+        {
+          "rank": 5,
+          "score": 0.7097642715604877,
+          "text": "(1) Includes product sales and digital media content where we record revenue gross. We leverage our retail infrastructure to offer a wide selection of consumable and durable goods that includes media products available in both a physical and digital format, such as books, videos, games, music, and software. These product sales include digital products sold on a transactional basis. Digital product subscriptions that provide unlimited viewing or usage rights are included in “Subscription services.” (2) Includes product sales where our customers physically select items in a store. Sales to customers who order goods online for delivery or pickup at our physical stores are included in “Online stores.” (3) Includes commissions and any related fulfillment and shipping fees, and other third-party seller services. (4) Includes annual and monthly fees associated with Amazon Prime memberships, as well as digital video, audiobook, digital music, e-book, and other non-AWS subscription services. (5) Primarily includes sales of advertising services, as well as sales related to our other service offerings. Net sales generated from our internationally-focused online stores are denominated in local functional currencies. Revenues are translated at average rates prevailing throughout the period. Net sales attributed to countries that represent a significant portion of consolidated net sales are as follows (in millions): |  | Year Ended December 31, |  |  |\n| --- | --- | --- | --- |\n|  | 2018 | 2019 | 2020 |\n| United States | $ 160,146 | $ 193,636 | $ 263,520 |\n| Germany | 19,881 | 22,232 | 29,565 |\n| United Kingdom | 14,524 | 17,527 | 26,483 |\n| Japan | 13,829 | 16,002 | 20,461 |\n| Rest of world | 24,507 | 31,125 | 46,035 |\n| Consolidated | $ 232,887 | $ 280,522 | $ 386,064 |"
+        }
+      ]
+    },
+    {
+      "id": "sbux-2019-numeric",
+      "answer_run_id": "20260923T125212753976Z-dev",
+      "ticker": "SBUX",
+      "filing_year": 2019,
+      "question_type": "numeric",
+      "question": "What was Starbucks' Americas operating income in fiscal 2019, in billions of U.S. dollars rounded to one decimal place?",
+      "generated_answer": "$3,485.2",
+      "reference_answer": "$3.8 billion",
+      "reference_evidence": [
+        "Americas operating income for fiscal 2019 increased 9% to $3.8 billion"
+      ],
+      "section": "Item 7 - Management's Discussion and Analysis",
+      "reference_verification_note": null,
+      "answer_run_evidence_found": [
+        false
+      ],
+      "review": {
+        "status": "ai_reviewed",
+        "confidence": "high",
+        "verdict": "incorrect",
+        "dimensions": {
+          "completeness": "fail",
+          "faithfulness": "fail",
+          "numeric_precision": "fail",
+          "abstention": "pass",
+          "citations": "not_applicable"
+        },
+        "explanation": "Uses the 2018 column ($3,485.2m) instead of the 2019 value ($3,782.8m) in R3."
+      },
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/829224/000082922419000051/0000829224-19-000051.txt",
+      "accession": "0000829224-19-000051",
+      "retrieved_context": [
+        {
+          "rank": 1,
+          "score": 0.8177859407887705,
+          "text": "|  | First Quarter | Second Quarter | Third Quarter | Fourth Quarter | Full Year |\n| --- | --- | --- | --- | --- | --- |\n| Fiscal 2019: |  |  |  |  |  |\n| Net revenues | $ 6,632.7 | $ 6,305.9 | $ 6,823.0 | $ 6,747.0 | $ 26,508.6 |\n| Operating income | 1,015.7 | 857.7 | 1,121.3 | 1,083.3 | 4,077.9 |\n| Net earnings attributable to Starbucks | 760.6 | 663.2 | 1,372.8 | 802.9 | 3,599.2 |\n| EPS — diluted | 0.61 | 0.53 | 1.12 | 0.67 | 2.92 |\n| Fiscal 2018: |  |  |  |  |  |\n| Net revenues | $ 6,073.7 | $ 6,031.8 | $ 6,310.3 | $ 6,303.6 | $ 24,719.5 |\n| Operating income | 1,116.1 | 772.5 | 1,038.2 | 956.6 | 3,883.3 |\n| Net earnings attributable to Starbucks | 2,250.2 | 660.1 | 852.5 | 755.8 | 4,518.3 |\n| EPS — diluted | 1.57 | 0.47 | 0.61 | 0.56 | 3.24 |"
+        },
+        {
+          "rank": 2,
+          "score": 0.8056965738493407,
+          "text": "| Fiscal Year Ended | Sep 29, 2019 | Sep 30, 2018 | % Change |\n| --- | --- | --- | --- |\n| Net revenues: |  |  |  |\n| Company-operated stores | $ 21,544.4 | $ 19,690.3 | 9.4% |\n| Licensed stores | 2,875.0 | 2,652.2 | 8.4 |\n| Other | 2,089.2 | 2,377.0 | (12.1 ) |\n| Total net revenues | $ 26,508.6 | $ 24,719.5 | 7.2% | Total net revenues increased $1.8 billion , or 7% , over fiscal 2018 , primarily driven by higher revenues from company-operated stores ( $1.9 billion ). The growth in company-operated store revenues was driven by incremental revenues from 947 net new Starbucks ® company-operated store openings over the past 12 months ($957 million) and a 5% increase in comparable store sales ($879 million), attributable to a 3% increase in average ticket and a 2% increase in comparable transactions. These increases were partially offset by unfavorable foreign currency translation ($189 million) and the conversion of our Thailand, France, and the Netherlands retail businesses to fully licensed markets during fiscal 2019 ($161 million). Licensed store revenue growth also contributed to the increase in total net revenues ( $223 million ), primarily due to higher product and equipment sales to and royalty revenues from our licensees ($228 million), largely due to the opening of 992 net new Starbucks ® licensed stores over the past 12 months, and the conversion of our Thailand, France, and the Netherlands retail businesses to fully licensed markets ($35 million), partially offset by unfavorable foreign currency translation ($41 million). Other revenues decreased $288 million , primarily driven by the licensing of our CPG and Foodservice businesses to Nestlé. Partially offsetting this decrease was growth in product revenue, primarily premium single-serve products, in connection with the Global Coffee Alliance."
+        },
+        {
+          "rank": 3,
+          "score": 0.8031280184633236,
+          "text": "| Fiscal Year Ended | Sep 29, 2019 | Sep 30, 2018 | Sep 29, 2019 | Sep 30, 2018 |\n| --- | --- | --- | --- | --- |\n|  |  |  | As a % of Americas Total Net Revenues |  |\n| Net revenues: |  |  |  |  |\n| Company-operated stores | $ 16,288.2 | $ 14,921.5 | 89.2% | 89.1% |\n| Licensed stores | 1,958.0 | 1,814.0 | 10.7 | 10.8 |\n| Other | 12.8 | 13.1 | 0.1 | 0.1 |\n| Total net revenues | 18,259.0 | 16,748.6 | 100.0 | 100.0 |\n| Cost of sales | 5,174.7 | 4,884.1 | 28.3 | 29.2 |\n| Store operating expenses | 8,064.8 | 7,248.6 | 44.2 | 43.3 |\n| Other operating expenses | 159.8 | 151.2 | 0.9 | 0.9 |\n| Depreciation and amortization expenses | 696.1 | 641.0 | 3.8 | 3.8 |\n| General and administrative expenses | 323.9 | 305.1 | 1.8 | 1.8 |\n| Restructuring and impairments | 56.9 | 33.4 | 0.3 | 0.2 |\n| Total operating expenses | 14,476.2 | 13,263.4 | 79.3 | 79.2 |\n| Operating income | $ 3,782.8 | $ 3,485.2 | 20.7% | 20.8% | Revenues Americas total net revenues for fiscal 2019 increased $1.5 billion, or 9%, primarily driven by a 5% increase in comparable store sales ($744 million) and 282 net new Starbucks ® company-operated stores, or a 3% increase, over the past 12 months ($580 million). Also contributing were higher product sales to and royalty revenues from our licensees ($144 million), primarily resulting from comparable store sales growth and the opening of 323 net new Starbucks® licensed stores, or 4% increase, over the past 12 months and the impact of the adoption of revenue recognition guidance on stored value card breakage ($119 million)."
+        },
+        {
+          "rank": 4,
+          "score": 0.7977811469417828,
+          "text": "International total net revenues for fiscal 2019 increased $640 million, or 12%, primarily driven by 665 net new Starbucks ® company-operated stores, or a 12% increase, over the past 12 months ($377 million), the ownership change in East China ($280 million) and a 3% increase in comparable store sales ($135 million). Also contributing were increased product sales to and royalty revenues from licensees ($84 million), primarily resulting from opening of 669 net new Starbucks ® licensed stores, or an 11% increase, over the past 12 months and the impact of the adoption of revenue recognition guidance on stored value card breakage ($20 million). These increases were partially offset by unfavorable foreign currency translation ($183 million) and the conversion of our Thailand, France, and the Netherlands retail businesses to fully licensed markets ($126 million)."
+        },
+        {
+          "rank": 5,
+          "score": 0.7895257392029796,
+          "text": "| Fiscal Year Ended | Sep 30, 2018 | Oct 1, 2017 | Sep 30, 2018 | Oct 1, 2017 |\n| --- | --- | --- | --- | --- |\n|  |  |  | As a % of Americas Total Net Revenues |  |\n| Net revenues: |  |  |  |  |\n| Company-operated stores | $ 14,921.5 | $ 14,005.8 | 89.1% | 89.6% |\n| Licensed stores | 1,814.0 | 1,617.3 | 10.8 | 10.4 |\n| Other | 13.1 | 6.3 | 0.1 | — |\n| Total net revenues | 16,748.6 | 15,629.4 | 100.0 | 100.0 |\n| Cost of sales | 4,884.1 | 4,371.0 | 29.2 | 28.0 |\n| Store operating expenses | 7,248.6 | 6,673.1 | 43.3 | 42.7 |\n| Other operating expenses | 151.2 | 131.6 | 0.9 | 0.8 |\n| Depreciation and amortization expenses | 641.0 | 616.1 | 3.8 | 3.9 |\n| General and administrative expenses | 305.1 | 256.3 | 1.8 | 1.6 |\n| Restructuring and impairments | 33.4 | 4.1 | 0.2 | — |\n| Total operating expenses | 13,263.4 | 12,052.2 | 79.2 | 77.1 |\n| Operating income | $ 3,485.2 | $ 3,577.2 | 20.8% | 22.9% | Revenues Americas total net revenues for fiscal 2018 increased $1.1 billion, or 7%, primarily driven by 383 net new Starbucks ® company-operated store openings, or a 4.1% increase, over the past 12 months ($604 million) and a 2% increase in comparable store sales ($319 million). Also contributing were higher product sales to and royalty revenues from our licensees ($173 million), primarily resulting from the opening of 512 net new Starbucks® licensed stores, or a 7.2% increase, over the past 12 months."
+        }
+      ]
+    },
+    {
+      "id": "f-2014-numeric",
+      "answer_run_id": "20260923T125212753976Z-dev",
+      "ticker": "F",
+      "filing_year": 2014,
+      "question_type": "numeric",
+      "question": "What was Ford's U.S. industry market share in 2013?",
+      "generated_answer": "Ford was the second best-selling car brand in the traditional 19 markets we tracked in Europe.\n",
+      "reference_answer": "15.7%",
+      "reference_evidence": [
+        "In 2013, our market share was up 0.5 percentage points to 15.7% of the industry."
+      ],
+      "section": "Item 1 - Business",
+      "reference_verification_note": null,
+      "answer_run_evidence_found": [
+        true
+      ],
+      "review": {
+        "status": "ai_reviewed",
+        "confidence": "high",
+        "verdict": "incorrect",
+        "dimensions": {
+          "completeness": "fail",
+          "faithfulness": "fail",
+          "numeric_precision": "fail",
+          "abstention": "pass",
+          "citations": "not_applicable"
+        },
+        "explanation": "Gives a European brand rank instead of the requested 2013 U.S. market share of 15.7% in R1."
+      },
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/37996/000003799614000010/0000037996-14-000010.txt",
+      "accession": "0000037996-14-000010",
+      "retrieved_context": [
+        {
+          "rank": 1,
+          "score": 0.7889317479876459,
+          "text": "United States. The competitive environment in the United States remains intense.  In 2013, our market share was up 0.5 percentage points to 15.7% of the industry.  Many of the import brand automakers have plans to increase production capacity in North America in the near-term, as competitive pressures mount. The small car segment has increased its share from 14% in 2004 to approximately 20% in 2013.  We expect small cars to plateau, with a slower rate of growth going forward. Overall, small cars were up 5% in 2013, relative to an industry that was up 7%. The mid-size car segment grew at just 1% in 2013, relative to an industry that was up 7%.  The mid-size car segment  represented about 16% of the overall industry.  The segment has been stable over the past decade, with the segment ranging from a low of 14% to a high of 17% of the industry.  The all-new Fusion was a success for us in 2013 as we sold 295,280 vehicles, with sales increasing 22% compared with 2012. The small car-based utility segment grew 16% in 2013, more than twice the rate of the overall industry.  The small utility segment now represents 14% of the U.S. auto industry, its highest percent of industry ever.  We expect the small utility segment will continue to grow and out-pace the overall industry for a number of years.  This is due to the appeal of the segment with the growing number of baby-boomers crossing into empty nester status.  Our Escape small utility produced another record sales year in 2013, with 295,993 vehicles sold—a 13 percent increase over 2012.  In 2013, Ford was the number-one selling brand of utilities in America for the third straight year. The full-size pickup segment represented 12% of the overall industry in 2013, an increase from 11.5% in 2012.  Given continued improvements in new home construction and the overall average age of the truck fleet of approximately 11 years, we believe the segment can continue to support growth in the short to medium-term.  Our F-Series sales totaled 763,402 vehicles in 2013.  This represents an 18% increase over 2012 and our 37 th year as America’s best-selling pickup  and our 32 nd straight year as America’s best-selling vehicle (car, truck, or utility).  F-Series market share was 40% of the full-size pickup segment in 2013, which represented our best share of the segment since 2000. Our strong U.S. vehicle sales in 2013 reflected our balanced portfolio of fuel-efficient vehicles, as our passenger cars, utilities, and trucks each reported gains last year.  Cars were up 10%, utilities posted a 9% gain, and trucks expanded 13%.  Retail sales across the country were up 14% in 2013.  Our strongest retail sales growth is coming from areas where historically our sales have been lower relative to our traditionally strong Great Lakes and Central regions of the country."
+        },
+        {
+          "rank": 2,
+          "score": 0.783113513812067,
+          "text": "|  | Market Share |  |  |  |  |\n| --- | --- | --- | --- | --- | --- |\n|  | 2013 | 2012 | 2011 | 2010 | 2009 |\n| Europe | 7.8% | 7.9% | 8.3% | 8.4% | 9.1% | In 2013, Ford was again the second best-selling car brand in the traditional 19 markets we tracked in Europe.  Our continued market strength reflects the strong momentum of our new or refreshed vehicles, including the B-MAX, Fiesta, Kuga, Tourneo Custom, and Transit Custom. Within the 19 markets, Britain and Germany are our highest-volume markets.  Any change in the British or German market has a significant effect on the results of Europe.  The following tables show our wholesales and market share for Britain and Germany (which are included within the traditional 19 markets data above): |  | Wholesales |  |  |  |  |\n| --- | --- | --- | --- | --- | --- |\n|  | (in thousands) |  |  |  |  |\n|  | 2013 | 2012 | 2011 | 2010 | 2009 |\n| Britain | 379 | 337 | 342 | 341 | 354 |\n| Germany | 227 | 208 | 250 | 216 | 286 | |  | Market Share |  |  |  |  |\n| --- | --- | --- | --- | --- | --- |\n|  | 2013 | 2012 | 2011 | 2010 | 2009 |\n| Britain | 14.7% | 14.9% | 15.0% | 15.0% | 16.7% |\n| Germany | 6.9 | 6.8 | 7.4 | 6.9 | 7.6 | Britain. Industry in Britain began to decline in 2008 with the global financial crisis, and between 2009 and 2012 remained in the 2.2 million–2.3 million unit range (compared with 2.8 million units in 2007).  In 2013, industry sales volume, at 2.6 million, increased 11% compared with 2012, reflecting a higher demand from private customers.  The retail channel industry increased 16% in 2013 compared with 2012.  Our market share decreased slightly in 2013 compared with 2012, reflecting our reduced participation in low-margin business such as daily rental and demonstration vehicles.  We continued to be the market share leader in Britain for total, passenger, and commercial vehicles. Germany. With 3.3 million new vehicle registrations in 2013, Germany’s industry sales volume declined 4% compared with the prior year, reflecting declines in both retail and fleet industry—retail industry decreased 5% and fleet 6%.  Germany remains the largest vehicle market in the European Union.  Despite our reduced participation in low-margin business such as daily rental and demonstration vehicles, our market share in 2013 increased compared with 2012, driven by a strong share of the retail segment and growth in commercial vehicles. The following tables show our wholesales and market share for Turkey and Russia: |  | Wholesales |  |  |  |  |\n| --- | --- | --- | --- | --- | --- |\n|  | (in thousands) |  |  |  |  |\n|  | 2013 | 2012 | 2011 | 2010 | 2009 |\n| Turkey | 114 | 108 | 140 | 130 | 79 |\n| Russia | 105 | 134 | 124 | 93 | 74 | |  | Market Share |  |  |  |  |\n| --- | --- | --- | --- | --- | --- |\n|  | 2013 | 2012 | 2011 | 2010 | 2009 |\n| Turkey | 12.8% | 13.8% | 15.8% | 15.8% | 15.1% |\n| Russia | 3.8 | 4.3 | 4.3 | 4.6 | 5.5 |"
+        },
+        {
+          "rank": 3,
+          "score": 0.7810071598097574,
+          "text": "Our net income attributable to Ford Motor Company was $7.2 billion or $1.76 per share of Common and Class B Stock in 2013, an improvement of $1.5 billion or $0.34 per share from 2012."
+        },
+        {
+          "rank": 4,
+          "score": 0.7768064388737763,
+          "text": "As of June 28, 2013, Ford had outstanding 3,865,186,521 shares of Common Stock and 70,852,076 shares of Class B Stock.  Based on the New York Stock Exchange Composite Transaction closing price of the Common Stock on that date ($15.47 per share), the aggregate market value of such Common Stock was $59,794,435,480.  Although there is no quoted market for our Class B Stock, shares of Class B Stock may be converted at any time into an equal number of shares of Common Stock for the purpose of effecting the sale or other disposition of such shares of Common Stock.  The shares of Common Stock and Class B Stock outstanding at June 28, 2013 included shares owned by persons who may be deemed to be “affiliates” of Ford.  We do not believe, however, that any such person should be considered to be an affiliate.  For information concerning ownership of outstanding Common Stock and Class B Stock, see the Proxy Statement for Ford’s Annual Meeting of Stockholders currently scheduled to be held on May 8, 2014 (our “Proxy Statement”), which is incorporated by reference under various Items of this Report as indicated below. As of February 7, 2014, Ford had outstanding 3,872,970,301 shares of Common Stock and 70,852,076 shares of Class B Stock.  Based on the New York Stock Exchange Composite Transaction closing price of the Common Stock on that date ($14.97 per share), the aggregate market value of such Common Stock was $57,978,365,406."
+        },
+        {
+          "rank": 5,
+          "score": 0.774616962194598,
+          "text": "North America accounted for 99% of Ford Credit’s total operating leases at December 31, 2013.  The following table shows operating lease placement, termination, and return volumes for this operation for the years ending December 31 (in thousands, except for percentages): |  | 2013 | 2012 | 2011 |\n| --- | --- | --- | --- |\n| Placements | 365 | 257 | 219 |\n| Terminations | 174 | 126 | 246 |\n| Returns | 117 | 76 | 144 |\n| Memo: |  |  |  |\n| Return Rates | 67% | 60% | 59% | In 2013, placement volumes were up 108,000 units compared with 2012, primarily reflecting changes in Ford’s marketing programs and higher industry sales.  Termination volumes increased by 48,000 units compared with 2012, reflecting higher placements in 2011 relative to prior years.  Return volumes increased 41,000 units compared with 2012, reflecting higher terminations and higher return rates . U.S. Ford and Lincoln Brand Operating Lease Experience. The following charts show annual return volumes and auction values at incurred vehicle mix for vehicles returned in the respective periods.  In 2013, Ford Credit’s U.S. lease originations represented about 18% of total U.S. retail sales of Ford and Lincoln brand vehicles, and the U.S. operating lease portfolio accounted for about 88% of Ford Credit’s total net investment in operating leases at December 31, 2013. Ford Credit’s lease return volumes in 2013 were up significantly from 2012, reflecting primarily the higher lease placements in 2011 relative to prior years.  Its 2013 lease return rate was 71%, up 9 percentage points compared with 2012 reflecting lower auction values. In 2013, Ford Credit’s auction values for both 24-month and 36-month vehicles declined, consistent with industry trends. Ford Credit’s worldwide net investment in operating leases was $18.3 billion at the end of 2013, up from $13.6 billion in 2012."
+        }
+      ]
+    },
+    {
+      "id": "nvda-2026-multi-hop",
+      "answer_run_id": "20260923T125212753976Z-dev",
+      "ticker": "NVDA",
+      "filing_year": 2026,
+      "question_type": "multi_hop",
+      "question": "In fiscal 2026, which NVIDIA platform grew faster, Data Center or Gaming, and by how many percentage points?",
+      "generated_answer": "Based on the provided text:\n\n*   Data center compute revenue increased 59% compared to fiscal year 2024.\n*   Gaming revenue increased 142% compared to fiscal year 2024.\n\nTherefore, Gaming grew faster.",
+      "reference_answer": "Data Center grew faster by 27 percentage points (68% versus 41%).",
+      "reference_evidence": [
+        "Data Center revenue for fiscal year 2026 was up 68% from a year ago.",
+        "Gaming revenue for fiscal year 2026 was up 41% from a year ago"
+      ],
+      "section": "Item 7 - Management's Discussion and Analysis",
+      "reference_verification_note": null,
+      "answer_run_evidence_found": [
+        false,
+        false
+      ],
+      "review": {
+        "status": "ai_reviewed",
+        "confidence": "high",
+        "verdict": "incorrect",
+        "dimensions": {
+          "completeness": "fail",
+          "faithfulness": "fail",
+          "numeric_precision": "fail",
+          "abstention": "pass",
+          "citations": "not_applicable"
+        },
+        "explanation": "The 68%/41% comparison is absent from this top five; the answer invents a different comparison."
+      },
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/0001045810-26-000021.txt",
+      "accession": "0001045810-26-000021",
+      "retrieved_context": [
+        {
+          "rank": 1,
+          "score": 0.768229414668774,
+          "text": "Data Center The NVIDIA Data Center platform is focused on accelerating compute-intensive workloads, such as AI, data processing, graphics, robotics, and scientific computing, delivering superior total cost of ownership relative to conventional CPU-only approaches. It is deployed in cloud, hyperscale, on-premises and edge data centers. The platform consists of data center compute and networking infrastructure offerings typically delivered to customers as rack-scale systems, subsystems, or modules, along with software and services. Our Data Center infrastructure systems include supercomputing platforms and servers, bringing together our higher performance, energy efficient GPUs, CPUs, interconnects, and fully optimized AI and HPC software stacks. In addition, they include a growing body of acceleration libraries, AI models and training data sets, APIs, SDKs, and domain-specific application frameworks. Our networking offerings include NVLink interconnects and switches, end-to-end platforms for InfiniBand and Ethernet, consisting of network adapters, cables, DPUs, switch chips and systems, as well as software. This has enabled us to architect data center-scale computing platforms that can interconnect up to hundreds of thousands of compute nodes with high-performance networking. Fueled by an expansion in AI and HPC workloads, the data center has become the new unit of computing, with networking as an integral part. In fiscal year 2026, we introduced NVIDIA NVLink Fusion to enable hyperscalers and custom ASIC designers to integrate custom CPUs and XPUs with our platform. Our customers include all major public and private cloud providers, AI model makers, enterprises and startups, and public sector entities. We work with industry leaders to help build or transform their applications and data center infrastructure. Some of our direct customers include original equipment manufacturers, or OEMs, original device manufacturers, or"
+        },
+        {
+          "rank": 2,
+          "score": 0.7585686156462328,
+          "text": "Revenue growth in fiscal year 2026 was driven by data center compute and networking platforms for accelerated computing and AI solutions. Our Blackwell architectures represented the majority of our Data Center revenue. The availability of data centers, energy, and capital to support the buildout of NVIDIA AI infrastructure by our customers and partners is crucial, and any shortage of these or other necessary resources could impact our future revenue and financial performance. Expanding energy capacity to meet demand is a complex, multi-year process that involves significant regulatory, technical, and construction challenges. In addition, access to capital can be particularly constrained for less-capitalized companies, which may face difficulties securing financing for large-scale infrastructure projects. These limitations could delay customer and partner deployments or reduce the scale of accelerated computing and AI adoption. We continue to execute Data Center compute product introductions, bringing new advanced architectures on a one-year product cadence, including our Rubin platform. We began shipping production units of our new Blackwell Ultra platforms including GB300 in the second quarter of fiscal year 2026. The complexity of our product transitions and sophisticated system configurations has and may in the future cause delays in production and create challenges in managing supply and demand. This could further result in revenue volatility, quality issues, increased inventory provisions, decreases in product yields and higher material costs, and/or increased warranty costs. Customers may postpone purchasing new architectures or may adopt new technologies more gradually than anticipated, affecting our revenue timing and supply chain expenses."
+        },
+        {
+          "rank": 3,
+          "score": 0.7273292979746148,
+          "text": "|  | Year Ended |  |  |  |\n| --- | --- | --- | --- | --- |\n|  | Jan 25, 2026 | Jan 26, 2025 | $ Change | % Change |\n|  | ($ in millions) |  |  |  |\n| Compute & Networking | $ 130,141 | $ 82,875 | $ 47,266 | 57% |\n| Graphics | 9,156 | 5,085 | 4,071 | 80% |\n| Total | $ 139,297 | $ 87,960 | $ 51,337 | 58% | Compute & Networking revenue – The year over year increase was driven by the major platform shifts – accelerated computing and AI. Revenue from Data Center computing grew 59% driven by demand for our Blackwell computing platform. Revenue from Data Center networking grew 142% driven by the introduction and continued ramp of NVLink compute fabric for GB200 and GB300 systems and the growth of Ethernet and InfiniBand platforms. Graphics revenue – The year over year increase was driven by sales of our Blackwell architecture. Reportable segment operating income – The year over year increase in Compute & Networking segment operating income was driven by growth in revenue, partially offset by a $4.5 billion charge associated with H20 excess inventory and purchase obligations in the first quarter of fiscal year 2026. The year over year increase in Graphics segment operating income was driven by the growth in revenue."
+        },
+        {
+          "rank": 4,
+          "score": 0.725976461344368,
+          "text": "|  | 1/31/2021 | 1/30/2022 | 1/29/2023 | 1/28/2024 | 1/26/2025 | 1/25/2026 |\n| --- | --- | --- | --- | --- | --- | --- |\n| NVIDIA Corporation | $ 100.00 | $ 175.98 | $ 157.05 | $ 470.88 | $ 1,100.68 | $ 1,448.75 |\n| S&P 500 | $ 100.00 | $ 121.00 | $ 112.98 | $ 137.98 | $ 174.50 | $ 200.33 |\n| Nasdaq 100 | $ 100.00 | $ 112.60 | $ 95.60 | $ 138.07 | $ 173.95 | $ 206.01 |"
+        },
+        {
+          "rank": 5,
+          "score": 0.721877918973728,
+          "text": "Gaming Gaming is the largest entertainment industry, with PC gaming as the predominant platform. Many factors propel its growth, including new high production value games, the continued rise of eSports, social connectivity and the increasing popularity of game streamers, modders, or gamers who remaster games, and creators. Our products for the gaming market include GeForce RTX GPUs for gaming desktop and laptop PCs, GeForce NOW cloud gaming service, as well as SoCs and development services for game consoles. Our gaming platforms leverage our GPUs and sophisticated software to enhance the gaming experience with smoother, higher quality graphics. NVIDIA RTX features ray tracing technology for real-time, cinematic-quality rendering, and deep learning super sampling, or NVIDIA DLSS, our AI technology that boosts frame rates while generating high-quality images for games. RTX GPUs also feature NVIDIA tensor core technology making them well suited to accelerate a new generation of on-device AI applications. In fiscal year 2025, we announced the NVIDIA Blackwell GeForce RTX 50 Series family of desktop and laptop GPUs. The Blackwell architecture introduced neural graphics which combines AI models with traditional rendering to boost game performance, image quality, and interactivity, as well as the next generation of our DLSS technology powered by a new transformer model architecture. In fiscal year 2026, we launched and scaled Blackwell architecture for gaming and GeForce NOW."
+        }
+      ]
+    },
+    {
+      "id": "adbe-2018-multi-hop",
+      "answer_run_id": "20260923T125212753976Z-dev",
+      "ticker": "ADBE",
+      "filing_year": 2018,
+      "question_type": "multi_hop",
+      "question": "Which Adobe business area helps customers create and publish content, and which helps optimize marketing campaigns across channels?",
+      "generated_answer": "The Adobe Experience Management (AEM) business area that helps customers create and publish content is Adobe Experience Manager. The Adobe Analytics Cloud business area helps optimize marketing campaigns across channels.",
+      "reference_answer": "Digital Media supports creating and publishing content; Digital Experience supports optimizing multi-channel marketing campaigns.",
+      "reference_evidence": [
+        "Digital Media—providing products, services and solutions that enable individuals, teams and enterprises to create, publish and promote their content anywhere.",
+        "Digital Experience—providing solutions and services for creating, managing, executing, measuring and optimizing digital marketing and advertising campaigns across multiple channels."
+      ],
+      "section": "Item 1 - Business",
+      "reference_verification_note": null,
+      "answer_run_evidence_found": [
+        false,
+        false
+      ],
+      "review": {
+        "status": "needs_owner_confirmation",
+        "confidence": "medium",
+        "verdict": "incorrect",
+        "dimensions": {
+          "completeness": "fail",
+          "faithfulness": "fail",
+          "numeric_precision": "not_applicable",
+          "abstention": "pass",
+          "citations": "not_applicable"
+        },
+        "explanation": "Names products, not segment-role mappings; missing top-five evidence needs diagnosis."
+      },
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/796343/000079634318000015/0000796343-18-000015.txt",
+      "accession": "0000796343-18-000015",
+      "retrieved_context": [
+        {
+          "rank": 1,
+          "score": 0.7808742179793918,
+          "text": "Adobe Experience Manager Adobe Experience Manager is a leading digital experience management solution that helps customers organize, create, and manage the delivery of creative assets and other content across digital marketing channels, including web, mobile, email, communities and video. It enables customers to manage content on premise or host it in the cloud, delivering agile and rapid deployment. With this ultimate control of content and campaigns, our customers can deliver real-time and personalized experiences to their consumers that help build the customers’ brand, drive demand and extend reach. Adobe Experience Manager includes digital asset management, web content management, digital publishing, integrated mobile app development, enterprise-level forms management, and social capabilities, providing customers with tools enabling users to improve their market and brand perception and provide a personalized experience to their consumers. Adobe Campaign Adobe Campaign enables marketers to orchestrate personalized experiences determined by each consumer’s behaviors and preferences. As part of its feature set, Adobe Campaign provides visual campaign orchestration, allowing for intuitive design and automated consumer experiences across channels, from one-off campaigns to triggered messages, with a graphically rich interface. Marketers can also integrate consumer data from across marketing channels to develop and deliver more relevant marketing experiences to their consumers. Features also include targeted segmentation, multilingual email execution, real-time interaction, in-app messaging, and operational reporting to easily see how well campaigns are performing."
+        },
+        {
+          "rank": 2,
+          "score": 0.7806247499130565,
+          "text": "Effective in fiscal 2018, our business is organized into three reportable segments: Digital Media, Digital Experience (formerly Digital Marketing), and Publishing (formerly Print and Publishing). These segments provide Adobe’s senior management with a comprehensive financial view of our key businesses. Our segments are aligned around our two strategic growth opportunities described above, placing our Publishing business in a third segment that contains some of our mature products and solutions. This overview provides an explanation of our markets and a discussion of strategic opportunities in fiscal 2018 and beyond for each of our segments. MARKET OVERVIEW"
+        },
+        {
+          "rank": 3,
+          "score": 0.7719879970137119,
+          "text": "Adobe Primetime Adobe Primetime is a multiscreen TV platform that helps broadcasters, cable networks, and service providers create and monetize engaging, personalized viewing experiences. When integrated with Adobe Experience Cloud solutions, media sellers can optimize campaign and advertisement delivery in real time. Adobe Analytics Cloud Adobe Analytics Cloud provides a core intelligence engine for enterprises that allow customers to put real-time insights into action.  With Adobe Analytics Cloud, enterprise-level marketing analytics is made understandable and accessible to everyone in the organization; targeting is improved, as our customers can connect their analytics with real-time activation so the transition from insight to action is fast; users are provided with an objective view of their customers’ journeys across every device and channel that helps them achieve better understanding of their ROI; and segmentation is more precise as our customers can discover and create high-value audiences and understand the best way to reach them.  The following is a brief description of the solutions that comprise the Adobe Analytics Cloud. Adobe Analytics Adobe Analytics is our industry leading solution that helps our customers create a holistic view of their business by turning consumer interactions into actionable insights. With intuitive and interactive dashboards and reports, our customers can sift, sort, and share real-time information to provide insights that can be used to identify problems and opportunities and to drive conversion and relevant consumer experiences. Adobe Analytics enables web, social, video, mobile, attribution, and predictive analytics across online and offline channels to continuously improve the performance of marketing activities. It also provides the ability to perform advanced ad-hoc segmentation and to integrate data from offline and third-party sources.  Adobe Analytics is available in four plans that contain various features and add-ons to meet the needs of our customers’ businesses. Adobe Audience Manager Adobe Audience Manager is a data management platform that helps digital publishers build unique audience profiles to identify the most valuable segments and use them across any digital channel. Adobe Audience Manager consolidates audience information from all available sources. It then identifies, quantifies, and optimizes high-value target audiences, which can then be offered to advertisers via an integrated, secure, privacy-friendly management system that works across all advertising distribution platforms. Adobe Audience Manager provides access to multiple data sources, offering digital publishers the ability to use a wide variety of third-party data as well as Audience Manager’s private data co-op. Adobe Advertising Cloud Adobe Advertising Cloud is an end-to-end platform for managing advertising across traditional TV and digital formats.  With Adobe Advertising Cloud, customers can identify and amplify their high-value audiences for more personal and accurate targeting; seamlessly unite creative, data, and media buying across all screens and formats; protect their brand by preventing their campaigns from mixing with content and properties that do not align with their image; and use data insights that reveal customers’ interests and past behaviors to create relevant, targeted ads.  Adobe Advertising is comprised of the Adobe Media Optimizer offerings described below. Adobe Media Optimizer Search Adobe Media Optimizer Search allows customers to simulate and quickly act upon the best and most profitable options in their search marketing strategy.  Specifically, it provides customers with sophisticated models to test and visualize the expected traffic and conversion for keywords, ad placements, and product targets.  Adobe Media Optimizer Search also enables customers to run models to determine the highest performing mix of advertising at varied spend levels across portfolios and then validate assumptions with reports based on models and data. Adobe Media Optimizer Demand Side Platform (DSP) Adobe Media Optimizer DSP (formerly TubeMogul) is a unified cross-channel solution that allows customers to streamline global advertising from a single platform.  With Adobe Media Optimizer DSP, customers can intelligently target their most valuable"
+        },
+        {
+          "rank": 4,
+          "score": 0.7686341548568705,
+          "text": "audiences by optimizing display ad campaigns in real time.  Adobe Media Optimizer DSP’s programmatic TV buying solution extends many of the benefits digital buying offers - like targeting and reporting insights - to television advertising.  It helps advertisers plan campaigns holistically, across every screen, while providing more flexibility to shift spend and optimize reach and frequency. Adobe Media Optimizer DSP also provides users with the tools to create, manage, optimize and scale ads for Facebook and Instagram. Adobe Media Optimizer Dynamic Creative Optimization (DCO) Adobe Media Optimizer DCO enables advertisers to reach specific audiences with flexible creative content that’s personalized in real time based on site actions, customer and partner data, and third-party demographic data.  Adobe Media Optimizer DCO provides customers with robust campaign options, from retargeting and loyalty programs to prospecting and awareness campaigns; site visitor, partner, third-party and location data to improve audience targeting; flexibility to deliver the right content across device types; and reports and algorithms to help optimize creative elements."
+        },
+        {
+          "rank": 5,
+          "score": 0.768319600764983,
+          "text": "program provides system integrators, agencies, and regional partners the tools required to develop core capabilities for positioning and building with Adobe technology, as well as implementing and running customer platforms. We believe that through these programmatic services and support, our joint customers benefit greatly by the combination of Adobe technology and the deep customer context that our global partners represent."
+        }
+      ]
+    }
+  ]
+}
