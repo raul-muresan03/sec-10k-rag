@@ -2,10 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { fetchFilings, prepareFiling } from '../api'
 import type { FilingSummary } from '../api'
 import { PrimaryButton } from './PrimaryButton'
-import {
-  caseCount, eyebrow, inlineLink, loadErrorTitle, loadMessage, selectorContext,
-  selectorControl, selectorLabel, selectorPanel, selectorTopline,
-} from '../ui'
 
 interface Props {
   selectedId: string | null
@@ -87,11 +83,12 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
     }
   }
 
-  if (loading) return <div className={loadMessage} role="status">Loading verified filings…</div>
+  if (loading) return <div className="my-[74px] border border-[#d8deda] bg-white p-[34px] text-[#4b615f]"
+    role="status">Loading verified filings…</div>
   if (error || !filings) {
     return (
-      <div className={loadMessage} role="alert">
-        <h2 className={loadErrorTitle}>Filing catalog unavailable</h2>
+      <div className="my-[74px] border border-[#d8deda] bg-white p-[34px] text-[#4b615f]" role="alert">
+        <h2 className="font-display font-normal">Filing catalog unavailable</h2>
         <p>{error ?? 'The filing catalog is incomplete.'}</p>
         <PrimaryButton type="button" className="mt-[10px]"
           onClick={() => setRetry(value => value + 1)}>
@@ -104,19 +101,23 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
   const selected = filings.find(filing => filing.filing_id === selectedId) ?? filings[0]
 
   return (
-    <div className={selectorPanel}>
-      <div className={selectorTopline}>
-        <span className={eyebrow}>Filing</span>
-        <span className={caseCount}>
+    <div className="sticky top-5 min-w-0 rounded-[5px] border border-[#dce2dc] bg-white p-[23px]">
+      <div className="flex items-center justify-between gap-[10px]">
+        <span className="text-[.7rem] leading-[1.4] font-extrabold tracking-[.15em] text-[#55877b]
+          uppercase">Filing</span>
+        <span className="font-code text-[.72rem] text-[#687878]">
           {String(filings.findIndex(filing => filing.filing_id === selected.filing_id) + 1).padStart(2, '0')}
           {' / '}
           {String(filings.length).padStart(2, '0')}
         </span>
       </div>
-      <label className={selectorLabel} htmlFor="filing-select">Company / filing year</label>
+      <label className="mt-7 mb-[9px] block text-[.78rem] font-[760]" htmlFor="filing-select">
+        Company / filing year
+      </label>
       <select
         id="filing-select"
-        className={selectorControl}
+        className="min-h-[46px] w-full rounded-[3px] border border-[#bfcac4] bg-[#f9faf7]
+          py-[9px] pr-[31px] pl-[11px] text-[.77rem] text-[#1d3032]"
         value={selected.filing_id}
         onChange={event => {
           const filing = filings.find(candidate => candidate.filing_id === event.target.value)
@@ -132,11 +133,14 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
           </option>
         ))}
       </select>
-      <p className={selectorContext}>
+      <p className="mt-[14px] mb-0 font-code text-[.65rem] leading-[1.6] text-[#8b9794]
+        [overflow-wrap:anywhere]">
         {selected.filing_id} · SEC filing year {selected.filing_year}
       </p>
-      <p className={selectorContext}>
-        <a className={inlineLink} href={selected.sec_url} target="_blank" rel="noopener noreferrer">
+      <p className="mt-[14px] mb-0 font-code text-[.65rem] leading-[1.6] text-[#8b9794]
+        [overflow-wrap:anywhere]">
+        <a className="text-[.84rem] font-[750] text-[#246a61] decoration-[1px]"
+          href={selected.sec_url} target="_blank" rel="noopener noreferrer">
           Official SEC source ↗
         </a>
       </p>

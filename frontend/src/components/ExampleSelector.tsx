@@ -1,8 +1,5 @@
 import { exampleLabel, reviewLabel } from '../labels'
 import type { Example } from '../types'
-import {
-  caseCount, eyebrow, selectorContext, selectorControl, selectorLabel, selectorPanel, selectorTopline,
-} from '../ui'
 import { VerdictBadge } from './VerdictBadge'
 
 interface Props {
@@ -14,15 +11,19 @@ interface Props {
 export function ExampleSelector({ examples, selected, onSelect }: Props) {
   const index = examples.findIndex(example => example.id === selected.id)
   return (
-    <div className={selectorPanel}>
-      <div className={selectorTopline}>
-        <span className={eyebrow}>Case file</span>
-        <span className={caseCount}>
+    <div className="sticky top-5 min-w-0 rounded-[5px] border border-[#dce2dc] bg-white p-[23px]">
+      <div className="flex items-center justify-between gap-[10px]">
+        <span className="text-[.7rem] leading-[1.4] font-extrabold tracking-[.15em] text-[#55877b]
+          uppercase">Case file</span>
+        <span className="font-code text-[.72rem] text-[#687878]">
           {String(index + 1).padStart(2, '0')} / {String(examples.length).padStart(2, '0')}
         </span>
       </div>
-      <label className={selectorLabel} htmlFor="case-select">Choose a saved question</label>
-      <select className={selectorControl} id="case-select" value={selected.id}
+      <label className="mt-7 mb-[9px] block text-[.78rem] font-[760]" htmlFor="case-select">
+        Choose a saved question
+      </label>
+      <select className="min-h-[46px] w-full rounded-[3px] border border-[#bfcac4] bg-[#f9faf7]
+        py-[9px] pr-[31px] pl-[11px] text-[.77rem] text-[#1d3032]" id="case-select" value={selected.id}
         onChange={event => onSelect(event.target.value)}>
         {examples.map(example => (
           <option key={example.id} value={example.id}>{exampleLabel(example)}</option>
@@ -45,7 +46,8 @@ export function ExampleSelector({ examples, selected, onSelect }: Props) {
         <VerdictBadge review={selected.review} />
         <span>{reviewLabel(selected.review)}</span>
       </div>
-      <p className={selectorContext}>
+      <p className="mt-[14px] mb-0 font-code text-[.65rem] leading-[1.6] text-[#8b9794]
+        [overflow-wrap:anywhere]">
         {selected.id} · Filing {selected.filing_year} · {selected.question_type.replace('_', '-')}
       </p>
     </div>

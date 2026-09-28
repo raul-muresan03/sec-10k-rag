@@ -15,17 +15,6 @@ export const answerPanel = `${panel} p-8`
 export const selectorContext = 'mt-[14px] mb-0 font-code text-[.65rem] leading-[1.6] ' +
   'text-[#8b9794] [overflow-wrap:anywhere]'
 
-export const selectorPanel = `${panel} sticky top-5 p-[23px]`
-
-export const selectorTopline = 'flex items-center justify-between gap-[10px]'
-
-export const selectorLabel = 'mt-7 mb-[9px] block text-[.78rem] font-[760]'
-
-export const selectorControl = 'min-h-[46px] w-full rounded-[3px] border border-[#bfcac4] bg-[#f9faf7] ' +
-  'py-[9px] pr-[31px] pl-[11px] text-[.77rem] text-[#1d3032]'
-
-export const caseCount = 'font-code text-[.72rem] text-[#687878]'
-
 export const loadMessage = 'my-[74px] border border-[#d8deda] bg-white p-[34px] text-[#4b615f]'
 
 export const loadErrorTitle = 'font-display font-normal'
