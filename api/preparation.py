@@ -31,7 +31,7 @@ class PreparationService:
             states = dict(self._states)
         try:
             prepared = {item.filing_id for item in self.store.prepared()}
-        except (OllamaUnavailable, OllamaTimeout, OllamaInvalidResponse):
+        except (OllamaUnavailable, OllamaTimeout, OllamaInvalidResponse, RuntimeError):
             prepared = set()
         result = {}
         for selected_id in catalog:

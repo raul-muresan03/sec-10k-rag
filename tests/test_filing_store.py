@@ -56,6 +56,19 @@ def test_catalog_lists_only_verified_dev_indexes(store):
         store.resolve("AAPL", 2024)
 
 
+def test_catalog_remains_available_with_missing_sources_and_preserves_ready_filing(store):
+    _, filings = store.dev_filings()
+    nvda = filings[("NVDA", 2026)]
+    filings[("AMZN", 2021)].path.unlink()
+    write_prepared(store, nvda, filing_store._configuration())
+
+    assert {filing.ticker for filing in store.catalog().values()} == {"NVDA", "AMZN"}
+    assert [filing.ticker for filing in store.prepared()] == ["NVDA"]
+    assert store.resolve_id(filing_id(nvda)).ticker == "NVDA"
+    with pytest.raises(ValueError, match="Filing missing"):
+        store.resolve("AMZN", 2021)
+
+
 def test_resolve_id_selects_only_a_prepared_dev_filing(store):
     _, filings = store.dev_filings()
     filing = filings[("NVDA", 2026)]

@@ -84,3 +84,19 @@ def test_failed_preparation_can_be_retried(tmp_path, monkeypatch):
             assert status["status"] == "failed"
             assert "SHA-256" in status["detail"]
             assert len(attempts) == expected
+
+
+def test_catalog_is_available_while_models_download(tmp_path):
+    filing = VerifiedFiling("NVDA", 2026, "dev", "0001045810-26-000021", tmp_path / "source", "a" * 64)
+
+    class Catalog:
+        def catalog(self):
+            return {"known": filing}
+
+        def prepared(self):
+            raise RuntimeError("Ollama embedding model not installed")
+
+    with TestClient(create_app(store=Catalog())) as client:
+        response = client.get("/api/filings")
+    assert response.status_code == 200
+    assert response.json()[0]["status"] == "unprepared"
