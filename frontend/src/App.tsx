@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ChatView } from './components/ChatView'
 import { EvaluationView } from './views/EvaluationView'
+import { primaryButton, quietButton } from './ui'
 
 const REPO_URL = 'https://github.com/raul-muresan03/sec-rag-tool'
 
@@ -71,10 +72,10 @@ function App() {
               retrieved passages. The saved evaluation replay lives under Evaluation.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <a className="button button-primary max-[460px]:w-full" href="#chat" onClick={select('chat')}>
+              <a className={`${primaryButton} max-[460px]:w-full`} href="#chat" onClick={select('chat')}>
                 Ask a question <span aria-hidden="true">↗</span>
               </a>
-              <a className="button button-quiet max-[460px]:w-full" href="#evaluation" onClick={select('evaluation')}>
+              <a className={`${quietButton} max-[460px]:w-full`} href="#evaluation" onClick={select('evaluation')}>
                 Inspect saved evaluation <span aria-hidden="true">↗</span>
               </a>
             </div>

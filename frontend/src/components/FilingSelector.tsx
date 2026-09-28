@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { fetchFilings, prepareFiling } from '../api'
 import type { FilingSummary } from '../api'
+import { eyebrow, inlineLink, loadErrorTitle, loadMessage, primaryButton, selectorContext } from '../ui'
 
 interface Props {
   selectedId: string | null
@@ -82,13 +83,14 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
     }
   }
 
-  if (loading) return <div className="load-message" role="status">Loading verified filings…</div>
+  if (loading) return <div className={loadMessage} role="status">Loading verified filings…</div>
   if (error || !filings) {
     return (
-      <div className="load-message load-error" role="alert">
-        <h2>Filing catalog unavailable</h2>
+      <div className={loadMessage} role="alert">
+        <h2 className={loadErrorTitle}>Filing catalog unavailable</h2>
         <p>{error ?? 'The filing catalog is incomplete.'}</p>
-        <button type="button" className="button button-primary" onClick={() => setRetry(value => value + 1)}>
+        <button type="button" className={`${primaryButton} mt-[10px]`}
+          onClick={() => setRetry(value => value + 1)}>
           Try again
         </button>
       </div>
@@ -100,7 +102,7 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
   return (
     <div className="selector-panel">
       <div className="selector-topline">
-        <span className="eyebrow">Filing</span>
+        <span className={eyebrow}>Filing</span>
         <span className="case-count">
           {String(filings.findIndex(filing => filing.filing_id === selected.filing_id) + 1).padStart(2, '0')}
           {' / '}
@@ -125,11 +127,11 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
           </option>
         ))}
       </select>
-      <p className="selector-context">
+      <p className={selectorContext}>
         {selected.filing_id} · SEC filing year {selected.filing_year}
       </p>
-      <p className="selector-context">
-        <a className="inline-link" href={selected.sec_url} target="_blank" rel="noopener noreferrer">
+      <p className={selectorContext}>
+        <a className={inlineLink} href={selected.sec_url} target="_blank" rel="noopener noreferrer">
           Official SEC source ↗
         </a>
       </p>
@@ -139,7 +141,8 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
         ) : selected.status === 'unprepared' || selected.status === 'failed' ? (
           <>
             <p>{selected.status === 'failed' ? selected.detail : 'This filing has not been prepared yet.'}</p>
-            <button type="button" className="button button-primary" disabled={starting !== null}
+            <button type="button" className={`${primaryButton} w-full justify-center disabled:cursor-not-allowed
+              disabled:opacity-60`} disabled={starting !== null}
               onClick={() => void prepare(selected)}>
               {starting === selected.filing_id ? 'Starting…'
                 : selected.status === 'failed' ? 'Retry preparation' : 'Prepare filing'}

@@ -1,4 +1,5 @@
 import type { Snapshot } from '../types'
+import { eyebrow, sectionCaption, sectionHeading, sectionTitle } from '../ui'
 
 interface Props {
   snapshot: Snapshot
@@ -12,12 +13,12 @@ export function MetricsPanel({ snapshot }: Props) {
 
   return (
     <section className="metrics-section" aria-labelledby="metrics-heading" id="results">
-      <div className="section-heading">
+      <div className={sectionHeading}>
         <div>
-          <p className="eyebrow">01 / Measured behavior</p>
-          <h2 id="metrics-heading">What the evaluation found</h2>
+          <p className={`${eyebrow} mb-2`}>01 / Measured behavior</p>
+          <h2 id="metrics-heading" className={sectionTitle}>What the evaluation found</h2>
         </div>
-        <p className="section-caption">
+        <p className={sectionCaption}>
           {dataset.questions} dev questions · {dataset.answerable} answerable · {dataset.no_answer} no-answer ·{' '}
           {dataset.filings} filings
         </p>
@@ -45,7 +46,7 @@ export function MetricsPanel({ snapshot }: Props) {
 
       <div className="review-summary">
         <div>
-          <p className="eyebrow">Separate answer review · top 5</p>
+            <p className={`${eyebrow} mb-[5px]`}>Separate answer review · top 5</p>
           <h3>Generated answers need their own assessment.</h3>
           <p>
             AI-assisted review of {reviews.summary.reviewed} saved answers: {reviews.summary.verdicts.pass} pass,{' '}

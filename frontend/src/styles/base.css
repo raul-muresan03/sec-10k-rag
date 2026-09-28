@@ -28,38 +28,6 @@ h1, h2, h3, h4, p { margin-top: 0; }
 
 h1, h2, h3 { letter-spacing: -0.035em; }
 
-.eyebrow {
-  color: #55877b;
-  font-size: .7rem;
-  font-weight: 800;
-  letter-spacing: .15em;
-  line-height: 1.4;
-  text-transform: uppercase;
-}
-
-.inline-link { color: #246a61; font-size: .84rem; font-weight: 750; text-decoration-thickness: 1px; }
-
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 28px;
-  min-height: 48px;
-  padding: 12px 18px;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  font-size: .83rem;
-  font-weight: 750;
-  text-decoration: none;
-  transition: background .2s ease, transform .2s ease;
-}
-
-.button:hover { transform: translateY(-2px); }
-.button-primary { color: #142436; background: #d8c29f; }
-.button-primary:hover { background: #f0d5ab; }
-.button-quiet { color: #f5f2ea; border-color: #60727c; background: transparent; }
-.button-quiet:hover { background: #27394a; }
-
 .status-pill, .verdict-chip {
   display: inline-flex;
   align-items: center;

@@ -5,15 +5,12 @@
 }
 
 @media (max-width: 760px) {
-  .section-heading { display: block; }
-  .section-caption { margin-top: 12px; text-align: left; }
   .metrics-section, .explorer-section, .method-section { padding-block: 60px; }
   .metric-grid { grid-template-columns: repeat(2, 1fr); }
   .review-summary { align-items: flex-start; flex-direction: column; }
   .insight-banner { align-items: flex-start; flex-wrap: wrap; gap: 12px; }
   .insight-banner p { flex-basis: calc(100% - 58px); }
   .insight-banner button { margin-left: 37px; }
-  .explorer-grid { grid-template-columns: 1fr; }
   .selector-panel { position: static; }
   .method-grid { grid-template-columns: 1fr; gap: 26px; }
 }
@@ -23,7 +20,7 @@
   .metric-card { min-height: 150px; padding: 15px; }
   .metric-label, .metric-detail { font-size: .67rem; }
   .metric-value { font-size: 2.3rem; }
-  .review-summary, .answer-panel, .evidence-panel { padding: 19px; }
+  .review-summary, .evidence-panel { padding: 19px; }
   .panel-heading { flex-direction: column; }
   .chunk-preview, .chunk-score { display: none; }
   .dimensions dl { grid-template-columns: 1fr; }
@@ -31,5 +28,4 @@
 
 @media (prefers-reduced-motion: reduce) {
   :root { scroll-behavior: auto; }
-  .button { transition: none; }
 }

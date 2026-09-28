@@ -1,5 +1,6 @@
 import { reviewLabel, verdictLabel } from '../labels'
 import type { Example } from '../types'
+import { answerPanel, eyebrow } from '../ui'
 
 interface Props {
   example: Example
@@ -8,10 +9,10 @@ interface Props {
 export function AnswerPanel({ example }: Props) {
   const { review } = example
   return (
-    <section className="answer-panel" aria-labelledby="answer-heading">
+    <section className={answerPanel} aria-labelledby="answer-heading">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Question / {example.id}</p>
+          <p className={eyebrow}>Question / {example.id}</p>
           <h3 id="answer-heading" aria-live="polite">{example.question}</h3>
         </div>
         <span className={`verdict-chip ${review.verdict ?? 'unreviewed'}`}>
@@ -37,7 +38,7 @@ export function AnswerPanel({ example }: Props) {
 
       <div className="review-box">
         <div className="review-title-row">
-          <p className="eyebrow">Answer assessment</p>
+          <p className={eyebrow}>Answer assessment</p>
           <span className="review-source">{reviewLabel(review)}
             {review.confidence && ` · ${review.confidence} confidence`}</span>
         </div>

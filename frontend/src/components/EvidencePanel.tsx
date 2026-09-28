@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ChunkText } from './ChunkText'
 import type { Example } from '../types'
+import { eyebrow, inlineLink } from '../ui'
 
 interface Props {
   example: Example
@@ -13,10 +14,10 @@ export function EvidencePanel({ example }: Props) {
     <section className="evidence-panel" aria-labelledby="evidence-heading">
       <div className="evidence-header">
         <div>
-          <p className="eyebrow">Trace the evidence</p>
+          <p className={eyebrow}>Trace the evidence</p>
           <h3 id="evidence-heading">What did the system see?</h3>
         </div>
-        <a href={example.sec_url} target="_blank" rel="noopener noreferrer" className="inline-link">
+        <a href={example.sec_url} target="_blank" rel="noopener noreferrer" className={inlineLink}>
           SEC filing <span aria-hidden="true">↗</span>
         </a>
       </div>

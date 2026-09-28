@@ -5,6 +5,10 @@ import { ExampleSelector } from '../components/ExampleSelector'
 import { MetricsPanel } from '../components/MetricsPanel'
 import { loadSnapshot } from '../data'
 import type { Snapshot } from '../types'
+import {
+  caseContent, eyebrow, explorerGrid, inlineLink, loadErrorTitle, loadMessage, primaryButton,
+  sectionCaption, sectionHeading, sectionTitle,
+} from '../ui'
 
 const REPO_URL = 'https://github.com/raul-muresan03/sec-rag-tool'
 const REPORT_URL = `${REPO_URL}/blob/main/eval/experiment_log.md`
@@ -36,13 +40,14 @@ export function EvaluationView() {
   const selected = snapshot?.examples.find(example => example.id === selectedId) ?? snapshot?.examples[0]
   const pendingReviews = snapshot?.answer_review.summary.pending_owner_confirmation ?? 0
 
-  if (loading) return <div className="load-message" role="status">Loading saved evaluation data…</div>
+  if (loading) return <div className={loadMessage} role="status">Loading saved evaluation data…</div>
   if (error || !snapshot || !selected) {
     return (
-      <div className="load-message load-error" role="alert">
-        <h2>Evaluation replay unavailable</h2>
+      <div className={loadMessage} role="alert">
+        <h2 className={loadErrorTitle}>Evaluation replay unavailable</h2>
         <p>{error ?? 'The evaluation data is incomplete.'}</p>
-        <button type="button" className="button button-primary" onClick={() => setRetry(value => value + 1)}>
+        <button type="button" className={`${primaryButton} mt-[10px]`}
+          onClick={() => setRetry(value => value + 1)}>
           Try again
         </button>
       </div>
@@ -53,12 +58,12 @@ export function EvaluationView() {
     <>
       <MetricsPanel snapshot={snapshot} />
       <section className="explorer-section" id="evaluation-cases" aria-labelledby="explorer-heading">
-        <div className="section-heading">
+        <div className={sectionHeading}>
           <div>
-            <p className="eyebrow">02 / Saved replay — not live answers</p>
-            <h2 id="explorer-heading">Look past the score.</h2>
+            <p className={`${eyebrow} mb-2`}>02 / Saved replay — not live answers</p>
+            <h2 id="explorer-heading" className={sectionTitle}>Look past the score.</h2>
           </div>
-          <p className="section-caption">
+          <p className={sectionCaption}>
             {snapshot.examples.length} selected dev cases · Successes, refusals and failures
           </p>
         </div>
@@ -70,17 +75,17 @@ export function EvaluationView() {
             Inspect Ford case →
           </button>
         </div>
-        <div className="explorer-grid">
+        <div className={explorerGrid}>
           <ExampleSelector examples={snapshot.examples} selected={selected} onSelect={setSelectedId} />
-          <div className="case-content">
+          <div className={caseContent}>
             <AnswerPanel example={selected} />
             <EvidencePanel example={selected} />
           </div>
         </div>
       </section>
       <section className="method-section" aria-labelledby="method-heading">
-        <p className="eyebrow">03 / Read the fine print</p>
-        <h2 id="method-heading">Two runs. Different claims.</h2>
+        <p className={`${eyebrow} mb-3`}>03 / Read the fine print</p>
+        <h2 id="method-heading" className={sectionTitle}>Two runs. Different claims.</h2>
         <div className="method-grid">
           <div><span className="method-number">01</span><h3>Answer run</h3>
             <p>Saved responses use {snapshot.runs.answers.generation_model_tag} with the top{' '}
@@ -99,7 +104,7 @@ export function EvaluationView() {
           <div><span className="method-number">03</span><h3>Held-out check</h3>
             <p>Metrics above use 24 dev questions. Another 16 test questions are reserved for a final
               check, rather than tuning this demo.</p>
-            <a className="inline-link" href={REPORT_URL} target="_blank" rel="noopener noreferrer">
+            <a className={inlineLink} href={REPORT_URL} target="_blank" rel="noopener noreferrer">
               Full methodology <span aria-hidden="true">↗</span>
             </a>
           </div>

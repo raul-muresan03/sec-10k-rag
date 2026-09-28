@@ -2,7 +2,6 @@
   background: #fff; }
 .selector-topline, .selector-nav, .selector-status { display: flex; align-items: center;
   justify-content: space-between; gap: 10px; }
-.selector-topline .eyebrow { margin: 0; }
 .case-count { color: #687878; font-family: ui-monospace, monospace; font-size: .72rem; }
 .selector-panel label { display: block; margin: 28px 0 9px; font-size: .78rem; font-weight: 760; }
 .selector-panel select { width: 100%; min-height: 46px; padding: 9px 31px 9px 11px; border: 1px solid #bfcac4;
@@ -13,8 +12,6 @@
 .selector-nav button:hover { text-decoration: underline; text-underline-offset: 4px; }
 .selector-status { justify-content: flex-start; flex-wrap: wrap; padding-top: 21px; border-top: 1px solid #e4e9e5;
   color: #637273; font-size: .7rem; }
-.selector-context { margin: 14px 0 0; color: #8b9794; font-family: ui-monospace, monospace; font-size: .65rem;
-  line-height: 1.6; overflow-wrap: anywhere; }
 .filing-preparation { margin-top: 22px; padding-top: 16px; border-top: 1px solid #e4e9e5; }
 .filing-preparation p { margin: 0 0 12px; color: #49665d; font-size: .78rem; line-height: 1.5;
   overflow-wrap: anywhere; }
@@ -22,8 +19,7 @@
 .filing-preparation button:disabled { cursor: not-allowed; opacity: .6; }
 .filing-preparation .load-error { color: #9b583e; }
 
-.answer-panel, .evidence-panel { min-width: 0; border: 1px solid #dce2dc; border-radius: 5px; background: #fff; }
-.answer-panel { padding: 32px; }
+.evidence-panel { min-width: 0; border: 1px solid #dce2dc; border-radius: 5px; background: #fff; }
 .chat-form label { display: block; margin-bottom: 12px; color: #385450; font-size: .82rem; font-weight: 750; }
 .chat-form textarea { display: block; width: 100%; min-height: 120px; padding: 14px; border: 1px solid #bfcac4;
   border-radius: 3px; background: #f9faf7; color: #1d3032; font: inherit; line-height: 1.6; resize: vertical; }
@@ -34,7 +30,6 @@
 .chat-form .selector-nav button:disabled { cursor: not-allowed; opacity: .55; }
 .panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 25px;
   margin-bottom: 30px; }
-.panel-heading .eyebrow { margin-bottom: 13px; }
 .panel-heading h3 { max-width: 650px; margin: 0; font-family: Georgia, serif;
   font-size: clamp(1.45rem, 2.4vw, 2rem); font-weight: 400; line-height: 1.3; }
 .panel-heading .verdict-chip { flex: none; margin-top: 3px; }

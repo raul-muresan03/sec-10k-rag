@@ -1,5 +1,6 @@
 import { exampleLabel, reviewLabel, verdictLabel } from '../labels'
 import type { Example } from '../types'
+import { eyebrow, selectorContext } from '../ui'
 
 interface Props {
   examples: Example[]
@@ -12,7 +13,7 @@ export function ExampleSelector({ examples, selected, onSelect }: Props) {
   return (
     <div className="selector-panel">
       <div className="selector-topline">
-        <span className="eyebrow">Case file</span>
+        <span className={eyebrow}>Case file</span>
         <span className="case-count">
           {String(index + 1).padStart(2, '0')} / {String(examples.length).padStart(2, '0')}
         </span>
@@ -37,7 +38,7 @@ export function ExampleSelector({ examples, selected, onSelect }: Props) {
         </span>
         <span>{reviewLabel(selected.review)}</span>
       </div>
-      <p className="selector-context">
+      <p className={selectorContext}>
         {selected.id} · Filing {selected.filing_year} · {selected.question_type.replace('_', '-')}
       </p>
     </div>
