@@ -1,59 +1,3 @@
-.site-shell { overflow: hidden; }
-
-.site-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 78px;
-  border-bottom: 1px solid #314151;
-  color: #eeeae1;
-}
-
-.brand { display: inline-flex; align-items: center; gap: 14px; font-size: .88rem; font-weight: 750;
-  text-decoration: none; }
-.brand em { color: #9aadaf; font-style: normal; }
-.brand-mark {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border: 1px solid #bca983;
-  border-radius: 5px;
-  color: #d9c5a1;
-  font-family: Georgia, serif;
-  font-size: .96rem;
-}
-.brand-mark span { margin-inline: -2px; color: #78aa9d; }
-.site-header nav { display: flex; align-items: center; gap: 29px; font-size: .79rem; font-weight: 650; }
-.site-header nav a { color: #ced7d6; text-decoration: none; }
-.site-header nav a:hover { color: #fff; }
-
-.hero { display: grid; grid-template-columns: 1.3fr .7fr; align-items: center; gap: 80px; padding-block: 96px 110px; }
-.hero-copy { max-width: 660px; }
-.hero-kicker { display: flex; align-items: center; gap: 11px; color: #bad0c9; font-size: .75rem;
-  letter-spacing: .12em; text-transform: uppercase; }
-.hero-kicker > span:last-child { color: #8c9fa6; }
-.live-dot { display: inline-block; flex: none; width: 7px; height: 7px; border-radius: 50%; background: #8dc2a8;
-  box-shadow: 0 0 0 4px #8dc2a822; }
-.hero h1 { margin: 24px 0 20px; color: #f6f4ed; font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(3.8rem, 6.7vw, 6.9rem); font-weight: 400; line-height: 1.04; }
-.hero h1 i { color: #d5bc90; font-weight: 400; }
-.hero-description { max-width: 560px; color: #bfcbd0; font-size: 1.02rem; line-height: 1.8; }
-.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
-
-.hero-card { padding: 26px; border: 1px solid #42545e; border-radius: 8px; background: #192b3b;
-  box-shadow: 14px 18px 0 #ffffff08; transform: rotate(1.3deg); }
-.card-topline, .card-foot { display: flex; justify-content: space-between; color: #a6b7ba;
-  font-family: ui-monospace, monospace; font-size: .68rem; letter-spacing: .08em; }
-.hero-card-icon { display: flex; align-items: center; gap: 12px; margin: 54px 0 38px; color: #dbccad;
-  font-family: Georgia, serif; font-size: 2.3rem; }
-.hero-card-icon span:nth-child(even) { color: #70a595; font-family: ui-monospace, monospace; font-size: 1.4rem; }
-.hero-card h2 { color: #f5f1e7; font-family: Georgia, serif; font-size: 1.65rem; font-weight: 400; }
-.hero-card p { color: #b8c6c9; font-size: .86rem; line-height: 1.7; }
-.card-divider { height: 1px; margin: 25px 0 21px; background: #40535d; }
-.card-foot { align-items: center; justify-content: flex-start; gap: 14px; font-size: .65rem; }
-
-.content-surface { padding: 1px 0 90px; background: #f6f5f1; }
 .section-heading { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 24px; }
 .section-heading .eyebrow { margin-bottom: 8px; }
 .section-heading h2, .method-section h2 { margin: 0; font-family: Georgia, serif;
@@ -99,9 +43,6 @@
 .method-grid p { color: #5e6a70; font-size: .8rem; line-height: 1.7; }
 .method-grid code { display: block; overflow-wrap: anywhere; color: #52676a; font-size: .66rem; }
 
-.site-footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 95px;
-  color: #adbfc2; font-size: .74rem; }
-.site-footer a { color: #e3d0ac; text-underline-offset: 4px; }
 .load-message { margin: 74px 0; padding: 34px; border: 1px solid #d8deda; background: #fff; color: #4b615f; }
 .load-error h2 { font-family: Georgia, serif; font-weight: 400; }
 .load-error .button-primary { margin-top: 10px; }
