@@ -1,4 +1,4 @@
-"""Build a deterministic, provenance-bound snapshot for the static demo."""
+"""Build a deterministic, provenance-bound snapshot for internal evaluation."""
 
 import json
 from pathlib import Path

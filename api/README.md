@@ -1,8 +1,8 @@
 # Local live API
 
 The FastAPI service answers independent questions about one of the six manifest-verified dev filings. It reads
-complete, filing-scoped indexes and calls Ollama for the question embedding and answer. The evaluation replay in
-`frontend/` is separate from these live responses.
+complete, filing-scoped indexes and calls Ollama for the question embedding and answer. Saved evaluation artifacts
+under `demo/` and `eval/` are separate from these live responses and are not served by the frontend.
 
 For the Docker Compose workflow (including the Prepare filing button), see the [root README](../README.md).
 
