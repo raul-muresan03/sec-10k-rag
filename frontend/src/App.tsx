@@ -22,13 +22,6 @@ function App() {
         <ChatView />
       </main>
 
-      <footer className="border-t border-[#dce2dc] bg-white">
-        <div className="mx-auto flex min-h-[58px] w-full max-w-[1440px] items-center justify-between px-8
-          text-[.7rem] text-[#73817d]">
-          <span>Built by Raul Mureșan</span>
-          <span>Check important details in the original SEC filing.</span>
-        </div>
-      </footer>
     </div>
   )
 }

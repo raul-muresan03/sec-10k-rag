@@ -114,7 +114,7 @@ export function ChatView() {
   const canSend = ready && !pending && draft.trim() !== ''
 
   return (
-    <section className="grid h-[calc(100vh-132px)] min-h-[650px] grid-cols-[282px_minmax(0,1fr)]
+    <section className="grid h-[calc(100vh-73px)] min-h-[650px] grid-cols-[282px_minmax(0,1fr)]
       border-x border-[#dce2dc]" aria-label="Filing chat">
       <aside className="flex min-w-0 flex-col border-r border-[#dce2dc] bg-[#f0f3ef] px-5 py-7">
         <div className="mb-7">
