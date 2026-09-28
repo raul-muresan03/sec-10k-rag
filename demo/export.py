@@ -1,4 +1,4 @@
-"""Build a deterministic, provenance-bound snapshot for the static demo."""
+"""Build a deterministic, provenance-bound snapshot for internal evaluation."""
 
 import json
 from pathlib import Path
@@ -13,7 +13,7 @@ from demo.sources import load_sources, read_json
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SELECTION = ROOT / "demo" / "selection.v1.json"
-DEFAULT_OUTPUT = ROOT / "frontend" / "public" / "demo.v1.json"
+DEFAULT_OUTPUT = ROOT / "demo" / "snapshot.v1.json"
 
 
 def source_paths(root: Path, selection: dict) -> dict[str, Path]:

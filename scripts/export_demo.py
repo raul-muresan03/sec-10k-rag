@@ -1,4 +1,4 @@
-"""Regenerate or validate the committed dev evaluation replay snapshot."""
+"""Regenerate or validate the committed internal dev evaluation snapshot."""
 
 import argparse
 import json

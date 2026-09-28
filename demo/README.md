@@ -1,7 +1,7 @@
-# Public evaluation replay data
+# Internal evaluation replay data
 
-`frontend/public/demo.v1.json` is a committed, static snapshot of **eight selected
-dev examples**, not a live chat backend. It includes saved answers and their
+`demo/snapshot.v1.json` is a committed, static snapshot of **eight selected
+dev examples**, kept outside the frontend and not served to users. It includes saved answers and their
 original ranked top-five context without truncation, gold reference answers
 and quoted reference evidence, SEC submission URLs, and run-bound AI-assisted
 answer reviews. A SEC URL points to the submission, **not** to an exact

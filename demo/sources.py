@@ -1,4 +1,4 @@
-"""Validate saved evaluation artifacts before making any excerpt public."""
+"""Validate saved evaluation artifacts before any public release."""
 
 import json
 from pathlib import Path

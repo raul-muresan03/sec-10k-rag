@@ -1,8 +1,8 @@
-# SEC RAG Tool
+# SEC 10-K RAG
 
 A local SEC 10-K RAG pipeline with a live FastAPI endpoint. It verifies manifest-listed filings, persists separate
 indexes per filing, retrieves relevant chunks with cosine similarity, and generates answers through Ollama. The
-frontend asks live filing-scoped questions by default and keeps the saved evaluation replay in an Evaluation view.
+frontend is a filing-scoped chat; saved evaluation results remain internal to the repository.
 
 The backend uses local files without a vector database or orchestration framework.
 
@@ -18,15 +18,15 @@ Implemented:
 - Store verified, versioned filing-scoped indexes locally in JSON
 - Retrieve chunks with brute-force cosine similarity
 - Generate an answer with a local Ollama model
-- Answer filing-scoped questions through the [live API](api/README.md) or the default Chat view
-- Inspect saved dev answers, evidence, and retrieval metrics in the frontend Evaluation replay
+- Answer filing-scoped questions through the [live API](api/README.md) or the chat interface
+- Validate saved dev answers, evidence, and retrieval metrics in internal evaluation artifacts
 - Prepare the six dev filings with `python3 -m etl_pipeline.filing_store` or prepare one through `ask.py`
 - Log questions, answers, retrieved chunks, latency, and Ollama metrics as JSONL
-- Run the frontend, API and Ollama together with Docker Compose; prepare a dev filing from the Chat view
+- Run the frontend, API and Ollama together with Docker Compose; open a dev filing from the chat interface
 
 Not implemented:
 
-- Source citations or filing metadata in answers
+- Claim-level citations to exact locations in a filing (the interface shows source passages and a link to the full filing)
 - Confidence scores or similarity thresholds
 - Cross-filing, multi-company, or year-over-year answers; each query selects one filing
 - Pinecone, LangChain, cloud LLM providers, or hybrid search
@@ -55,29 +55,29 @@ Index preparation keeps intermediate artifacts in a temporary directory rather t
 
 ## Docker Compose (simplest local start)
 
-Install Docker with the Compose plugin. From a clone of this repository:
+Install Docker with the Compose plugin. Set your SEC contact address in `.env` before first use:
+
+```bash
+cp .env.example .env
+# Edit SEC_API_EMAIL in .env.
+```
+
+From a clone of this repository:
 
 ```bash
 docker compose up
 ```
 
-Open **http://localhost:8080**. Chat lists the six manifest-pinned *dev* filings even on a clean install. Select
-one and press **Prepare filing** to download the exact SEC submission, verify its checksum and identity, and build
-its index. The UI shows download/model/indexing progress; on CPU, the first index can take a while. Two Ollama
+Open **http://localhost:8080**. The app lists the six manifest-pinned *dev* filings even on a clean install. Choosing
+one starts preparation automatically: the API downloads the exact SEC submission, verifies its checksum and identity,
+and builds its index. The UI displays a simple loading state; on CPU, the first index can take a while. Two Ollama
 models (`nomic-embed-text` and `gemma3:1b`) are downloaded automatically in the background on the first start.
-They require internet access and several gigabytes of disk space. You can browse the app and Evaluation while they
-download. Chat becomes available for each filing as soon as its index is ready.
-
-Before pressing **Prepare filing**, set your real SEC contact address once (do not commit `.env`):
-
-```bash
-cp .env.example .env
-# Edit SEC_API_EMAIL in .env, then restart Compose if it was already running.
-```
+They require internet access and several gigabytes of disk space. Chat becomes available for each filing as soon as
+its index is ready. Do not commit `.env`.
 
 If you edit `.env` after starting, apply it with `docker compose up -d --force-recreate api`. The API only downloads
 the six pinned dev filings; it rejects a mismatched SHA-256 or SEC header. The 16 test questions and their filings
-are not part of this flow. Retry from the same button if a download or index build fails. Only the web port is
+are not part of this flow. Use **Try again** if a download or index build fails. Only the web port is
 exposed, bound to localhost by default; the API and Ollama are internal Compose services.
 
 Subsequent starts use the same `docker compose up` (add `-d` for background, or `--build` after code changes)
@@ -91,7 +91,7 @@ The `filings` and `ollama_models` named volumes persist across `down` and image 
 you intend to delete downloaded filings, indexes and models. Configure `WEB_PORT` in `.env` if port 8080 is taken.
 `GET http://localhost:8080/api/health` checks the API process; `/api/ready` reports when both Ollama models are
 available. `/api/filings` shows each filing's preparation status. To see model-pull or API errors, run
-`docker compose logs models api ollama`. The saved Evaluation replay remains independent of live preparation.
+`docker compose logs models api ollama`. Internal evaluation artifacts remain independent of live preparation.
 
 Local CPU smoke on a 16-thread Ryzen 7 7435HS with 23 GiB RAM (2026-09-28): an NVDA index took about 131 seconds
 once model downloads finished; a live NVDA question took 5.18 seconds and returned five passages. During indexing,
@@ -179,8 +179,9 @@ npm --prefix frontend ci
 npm --prefix frontend run dev -- --port 5173
 ```
 
-Chat is the default view; the saved evaluation replay stays under Evaluation. Each question selects one filing,
-is independent, and clears on refresh. In production the same origin serves the UI and reverse-proxies `/api`.
+The frontend presents only the live chat. Changing filings starts a new conversation; questions in the same filing
+appear together, but each answer is generated independently and the conversation clears on refresh. In production the
+same origin serves the UI and reverse-proxies `/api`. The dev replay snapshot lives under `demo/`, not `frontend/public/`.
 The React/TypeScript UI uses Tailwind CSS v4 through the Vite plugin. Utility classes live alongside JSX in
 `frontend/src/components` and `frontend/src/App.tsx`; shared presentation is extracted into components there.
 `frontend/src/styles/tailwind.css` is only the Tailwind entrypoint and font theme. Preflight is omitted to preserve
