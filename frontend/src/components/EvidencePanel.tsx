@@ -1,8 +1,5 @@
 import { RetrievedChunks } from './RetrievedChunks'
 import type { Example } from '../types'
-import {
-  eyebrow, evidenceLabelRow, evidencePanel, evidenceTitle, inlineLink,
-} from '../ui'
 
 interface Props {
   example: Example
@@ -10,22 +7,25 @@ interface Props {
 
 export function EvidencePanel({ example }: Props) {
   return (
-    <section className={evidencePanel} aria-labelledby="evidence-heading">
+    <section className="min-w-0 rounded-[5px] border border-[#dce2dc] bg-white p-8"
+      aria-labelledby="evidence-heading">
       <div className="flex flex-wrap items-start justify-between gap-[15px]">
         <div>
-          <p className={`${eyebrow} mb-2`}>Trace the evidence</p>
+          <p className="mb-2 text-[.7rem] leading-[1.4] font-extrabold tracking-[.15em]
+            text-[#55877b] uppercase">Trace the evidence</p>
           <h3 id="evidence-heading" className="mb-0 font-display text-[1.5rem] font-normal">
             What did the system see?
           </h3>
         </div>
-        <a href={example.sec_url} target="_blank" rel="noopener noreferrer" className={`${inlineLink} mt-3`}>
+        <a href={example.sec_url} target="_blank" rel="noopener noreferrer"
+          className="mt-3 text-[.84rem] font-[750] text-[#246a61] decoration-[1px]">
           SEC filing <span aria-hidden="true">↗</span>
         </a>
       </div>
 
       <div className="mt-[27px] rounded-[3px] border border-[#e5e4d9] bg-[#fcfbf6] p-5">
-        <div className={evidenceLabelRow}>
-          <h4 className={evidenceTitle}>Gold reference evidence</h4>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-[18px] gap-y-[6px]">
+          <h4 className="m-0 text-[.82rem] tracking-[-.015em]">Gold reference evidence</h4>
           <span className="text-[.68rem] text-[#879189]">Quoted passages from the evaluation set</span>
         </div>
         {example.reference_evidence.length ? (

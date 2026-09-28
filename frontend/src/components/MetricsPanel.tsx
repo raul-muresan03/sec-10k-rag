@@ -1,5 +1,4 @@
 import type { Snapshot } from '../types'
-import { badge, eyebrow } from '../ui'
 import { SectionHeading } from './SectionHeading'
 
 interface Props {
@@ -43,7 +42,8 @@ export function MetricsPanel({ snapshot }: Props) {
       <div className="mt-8 flex items-center justify-between gap-[26px] border-l-[3px] border-[#8caf9f]
         bg-[#ebece6] px-[30px] py-[25px]">
         <div>
-          <p className={`${eyebrow} mb-[5px]`}>Separate answer review · top 5</p>
+          <p className="mb-[5px] text-[.7rem] leading-[1.4] font-extrabold tracking-[.15em]
+            text-[#55877b] uppercase">Separate answer review · top 5</p>
           <h3 className="mb-[7px] font-display text-[1.3rem] font-normal">
             Generated answers need their own assessment.
           </h3>
@@ -53,7 +53,8 @@ export function MetricsPanel({ snapshot }: Props) {
             {reviews.summary.unreviewed > 0 && ` ${reviews.summary.unreviewed} unreviewed.`}
           </p>
         </div>
-        <span className={`${badge} bg-[#fcf0d9] text-[#845924]`}>
+        <span className="inline-flex w-max max-w-full items-center rounded-[3px] bg-[#fcf0d9]
+          px-[10px] py-[7px] text-[.7rem] font-extrabold tracking-[.035em] text-[#845924] uppercase">
           {reviews.summary.pending_owner_confirmation > 0
             ? `Provisional · ${reviews.summary.pending_owner_confirmation} awaiting owner review`
             : reviews.summary.publication_status === 'owner_checkpoint_complete'

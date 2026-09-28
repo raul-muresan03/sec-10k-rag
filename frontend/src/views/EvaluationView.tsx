@@ -8,10 +8,6 @@ import { PrimaryButton } from '../components/PrimaryButton'
 import { SectionHeading } from '../components/SectionHeading'
 import { loadSnapshot } from '../data'
 import type { Snapshot } from '../types'
-import {
-  caseContent, eyebrow, explorerGrid, inlineLink, loadErrorTitle,
-  sectionTitle,
-} from '../ui'
 
 const REPO_URL = 'https://github.com/raul-muresan03/sec-rag-tool'
 const REPORT_URL = `${REPO_URL}/blob/main/eval/experiment_log.md`
@@ -47,7 +43,7 @@ export function EvaluationView() {
   if (error || !snapshot || !selected) {
     return (
       <Notice role="alert">
-        <h2 className={loadErrorTitle}>Evaluation replay unavailable</h2>
+        <h2 className="font-display font-normal">Evaluation replay unavailable</h2>
         <p>{error ?? 'The evaluation data is incomplete.'}</p>
         <PrimaryButton type="button" className="mt-[10px]"
           onClick={() => setRetry(value => value + 1)}>
@@ -77,9 +73,9 @@ export function EvaluationView() {
             Inspect Ford case →
           </button>
         </div>
-        <div className={explorerGrid}>
+        <div className="grid grid-cols-[260px_minmax(0,1fr)] items-start gap-[18px]">
           <ExampleSelector examples={snapshot.examples} selected={selected} onSelect={setSelectedId} />
-          <div className={caseContent}>
+          <div className="grid min-w-0 gap-[18px]">
             <AnswerPanel example={selected} />
             <EvidencePanel example={selected} />
           </div>
@@ -87,8 +83,11 @@ export function EvaluationView() {
       </section>
       <section className="border-t border-[#d8deda] pt-[76px] pb-[88px]"
         aria-labelledby="method-heading">
-        <p className={`${eyebrow} mb-3`}>03 / Read the fine print</p>
-        <h2 id="method-heading" className={sectionTitle}>Two runs. Different claims.</h2>
+        <p className="mb-3 text-[.7rem] leading-[1.4] font-extrabold tracking-[.15em]
+          text-[#55877b] uppercase">03 / Read the fine print</p>
+        <h2 id="method-heading" className="m-0 font-display text-[clamp(2rem,3.4vw,2.7rem)] font-normal">
+          Two runs. Different claims.
+        </h2>
         <div className="mt-[35px] grid grid-cols-3 gap-[38px]">
           <div className="min-w-0 border-t border-[#bfc9c5] pt-[19px]">
             <span className="font-code text-[.73rem] text-[#629082]">01</span>
@@ -120,7 +119,8 @@ export function EvaluationView() {
             <p className="text-[.8rem] leading-[1.7] text-[#5e6a70]">
               Metrics above use 24 dev questions. Another 16 test questions are reserved for a final
               check, rather than tuning this demo.</p>
-            <a className={inlineLink} href={REPORT_URL} target="_blank" rel="noopener noreferrer">
+            <a className="text-[.84rem] font-[750] text-[#246a61] decoration-[1px]"
+              href={REPORT_URL} target="_blank" rel="noopener noreferrer">
               Full methodology <span aria-hidden="true">↗</span>
             </a>
           </div>

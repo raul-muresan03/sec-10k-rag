@@ -1,10 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { postChat } from '../api'
 import type { ChatResponse, FilingSummary } from '../api'
-import {
-  answerPanel, caseContent, eyebrow, explorerGrid, loadErrorTitle, panelHeading,
-  panelTitle, selectorContext,
-} from '../ui'
 import { FilingSelector } from './FilingSelector'
 import { LiveAnswer } from './LiveAnswer'
 import { Notice } from './Notice'
@@ -107,15 +103,16 @@ export function ChatView() {
     <section aria-labelledby="chat-heading">
       <SectionHeading id="chat-heading" eyebrow="01 / Live filing chat" title="Ask a verified filing."
         caption="Each question is independent. Refreshing the page clears these messages." />
-      <div className={explorerGrid}>
+      <div className="grid grid-cols-[260px_minmax(0,1fr)] items-start gap-[18px]">
         <div>
           <FilingSelector
             selectedId={filing?.filing_id ?? null}
             onSelect={handleSelect}
           />
         </div>
-        <div className={caseContent}>
-          <form className={answerPanel} aria-label="Ask the selected filing" onSubmit={onSubmit}>
+        <div className="grid min-w-0 gap-[18px]">
+          <form className="min-w-0 rounded-[5px] border border-[#dce2dc] bg-white p-8"
+            aria-label="Ask the selected filing" onSubmit={onSubmit}>
             <label className="mb-3 block text-[.82rem] font-[750] text-[#385450]" htmlFor="chat-question">
               {filing === null
                 ? 'Question'
@@ -133,7 +130,8 @@ export function ChatView() {
               onChange={event => setDraft(event.target.value)}
             />
             {filing && filing.status !== 'ready' && (
-              <p className={selectorContext} role="status">
+              <p className="mt-[14px] mb-0 font-code text-[.65rem] leading-[1.6]
+                text-[#8b9794] [overflow-wrap:anywhere]" role="status">
                 Prepare {filing.company} from the filing selector before asking questions.
               </p>
             )}
@@ -150,13 +148,16 @@ export function ChatView() {
           </form>
           <div aria-live="polite">
             {messages.map(message => (
-              <article className={answerPanel} key={message.id} aria-label={`Answer to ${message.question}`}>
-                <div className={panelHeading}>
+              <article className="min-w-0 rounded-[5px] border border-[#dce2dc] bg-white p-8"
+                key={message.id} aria-label={`Answer to ${message.question}`}>
+                <div className="mb-[30px] flex items-start justify-between gap-[25px]">
                   <div>
-                    <p className={`${eyebrow} mb-[13px]`}>
+                    <p className="mb-[13px] text-[.7rem] leading-[1.4] font-extrabold tracking-[.15em]
+                      text-[#55877b] uppercase">
                       {message.filing.company} · {message.filing.filing_year}
                     </p>
-                    <h3 className={panelTitle}>{message.question}</h3>
+                    <h3 className="m-0 max-w-[650px] font-display text-[clamp(1.45rem,2.4vw,2rem)]
+                      leading-[1.3] font-normal">{message.question}</h3>
                   </div>
                 </div>
                 {message.status === 'pending' && (
@@ -164,7 +165,7 @@ export function ChatView() {
                 )}
                 {message.status === 'error' && (
                   <Notice role="alert">
-                    <h2 className={loadErrorTitle}>Live answer unavailable</h2>
+                    <h2 className="font-display font-normal">Live answer unavailable</h2>
                     <p>{message.error ?? 'The question could not be answered.'}</p>
                     <PrimaryButton
                       type="button"

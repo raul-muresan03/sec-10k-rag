@@ -1,6 +1,5 @@
 import { RetrievedChunks } from './RetrievedChunks'
 import type { ChatResponse } from '../api'
-import { answerText, inlineLink, selectorContext } from '../ui'
 
 interface Props {
   answer: ChatResponse
@@ -11,14 +10,18 @@ export function LiveAnswer({ answer }: Props) {
 
   return (
     <>
-      <p className={answerText}>{answer.answer}</p>
-      <p className={selectorContext}>
+      <p className="m-0 text-[.86rem] leading-[1.75] whitespace-pre-wrap [overflow-wrap:anywhere]">
+        {answer.answer}
+      </p>
+      <p className="mt-[14px] mb-0 font-code text-[.65rem] leading-[1.6] text-[#8b9794]
+        [overflow-wrap:anywhere]">
         Filing ID: {answer.filing_id}
         {' · '}{answer.model} · retrieval {times.retrieval.toFixed(2)}s
         {' · '}generation {times.generation.toFixed(2)}s
         {' · '}total {times.total.toFixed(2)}s
         {' · '}Request ID: {answer.request_id}
-        {' · '}<a className={inlineLink} href={answer.sec_url} target="_blank" rel="noopener noreferrer">
+        {' · '}<a className="text-[.84rem] font-[750] text-[#246a61] decoration-[1px]"
+          href={answer.sec_url} target="_blank" rel="noopener noreferrer">
           SEC filing ↗
         </a>
       </p>
