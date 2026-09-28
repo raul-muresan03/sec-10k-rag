@@ -9,6 +9,13 @@ class FilingSummary(BaseModel):
     company: str
     filing_year: int
     sec_url: str
+    status: str = "ready"
+    detail: str | None = None
+
+
+class PreparationResult(BaseModel):
+    status: str
+    detail: str | None = None
 
 
 class ChatRequest(BaseModel):

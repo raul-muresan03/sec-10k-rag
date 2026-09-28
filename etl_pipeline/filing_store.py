@@ -110,12 +110,15 @@ class FilingIndexStore:
 
     def prepared(self) -> list[PreparedFiling]:
         available = []
+        config = None
         for filing in self.catalog().values():
             if not filing.path.is_file():
                 continue
             try:
                 _, verified = self.verified(filing.ticker, filing.year)
-                ready = self._load(verified, _configuration())
+                if config is None:
+                    config = _configuration()
+                ready = self._load(verified, config)
             except (OSError, ValueError):
                 continue
             if ready is not None:

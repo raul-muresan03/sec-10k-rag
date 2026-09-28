@@ -33,8 +33,8 @@ def test_chat_and_filings_report_missing_indexes_as_unavailable():
         def resolve_id(self, filing_id):
             raise RuntimeError("Index not prepared at /private/data/indexes")
 
-        def prepared(self):
-            raise RuntimeError("Index corrupted at /private/data/indexes")
+        def catalog(self):
+            raise RuntimeError("Manifest corrupted at /private/data/eval")
 
     with TestClient(create_app(store=MissingCatalog())) as client:
         chat = client.post("/api/chat", json={"filing_id": "known", "question": "Question?"})

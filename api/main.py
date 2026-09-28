@@ -4,7 +4,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 
-from api.models import ChatRequest, ChatResponse, FilingSummary
+from api.models import ChatRequest, ChatResponse, FilingSummary, PreparationResult
+from api.preparation import PreparationService
 from api.query import AtCapacity, QueryService
 from api.settings import Settings
 from etl_pipeline.chunker import EMBEDDING_MODEL
@@ -31,11 +32,9 @@ def _register_status_routes(app: FastAPI, index_store: FilingIndexStore, config:
     @app.get("/api/ready")
     def ready():
         try:
-            prepared = index_store.prepared()
+            index_store.catalog()
         except (OSError, ValueError, RuntimeError) as error:
-            return _not_ready(f"Filing indexes unavailable: {type(error).__name__}")
-        if len(prepared) != 6:
-            return _not_ready("Six verified dev filing indexes are required")
+            return _not_ready(f"Filing catalog unavailable: {type(error).__name__}")
         try:
             models = installed_models()
         except (OllamaUnavailable, OllamaTimeout, OllamaInvalidResponse) as error:
@@ -47,20 +46,32 @@ def _register_status_routes(app: FastAPI, index_store: FilingIndexStore, config:
         return {"status": "ready"}
 
 
-def _register_filing_route(app: FastAPI, index_store: FilingIndexStore) -> None:
+def _register_filing_route(app: FastAPI, index_store: FilingIndexStore, preparation: PreparationService) -> None:
     @app.get("/api/filings", response_model=list[FilingSummary])
     def filings() -> list[FilingSummary]:
         try:
+            statuses = preparation.statuses()
             return [
                 FilingSummary(
-                    filing_id=item.filing_id, ticker=item.ticker,
+                    filing_id=selected_id, ticker=item.ticker,
                     company=COMPANY_NAMES.get(item.ticker, item.ticker),
-                    filing_year=item.year, sec_url=item.sec_url,
+                    filing_year=item.year, sec_url=item.sec_url or "",
+                    status=statuses[selected_id].status, detail=statuses[selected_id].detail,
                 )
-                for item in index_store.prepared()
+                for selected_id, item in index_store.catalog().items()
             ]
         except (OSError, ValueError, RuntimeError) as error:
-            raise HTTPException(status_code=503, detail="Filing indexes unavailable") from error
+            raise HTTPException(status_code=503, detail="Filing catalog unavailable") from error
+
+    @app.post("/api/filings/{filing_id}/prepare", response_model=PreparationResult, status_code=202)
+    def prepare(filing_id: str) -> PreparationResult:
+        try:
+            state = preparation.start(filing_id)
+            return PreparationResult(status=state.status, detail=state.detail)
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail="Unknown dev filing_id") from error
+        except (OSError, ValueError, RuntimeError) as error:
+            raise HTTPException(status_code=503, detail="Filing catalog unavailable") from error
 
 
 def _register_chat_route(app: FastAPI, query_service: QueryService) -> None:
@@ -88,7 +99,7 @@ def create_app(store: FilingIndexStore | None = None, settings: Settings | None 
     index_store = store if store is not None else FilingIndexStore()
     config = settings if settings is not None else Settings.from_env()
     _register_status_routes(app, index_store, config)
-    _register_filing_route(app, index_store)
+    _register_filing_route(app, index_store, PreparationService(index_store))
     _register_chat_route(app, QueryService(index_store, config))
     return app
 
