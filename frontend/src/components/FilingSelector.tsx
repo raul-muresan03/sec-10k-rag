@@ -15,6 +15,7 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
   const [starting, setStarting] = useState<string | null>(null)
   const [prepareError, setPrepareError] = useState<string | null>(null)
   const attemptedRef = useRef(new Set<string>())
+  const preparingRef = useRef(new Set<string>())
   const selectionRef = useRef({ selectedId, onSelect })
   selectionRef.current = { selectedId, onSelect }
 
@@ -32,6 +33,7 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
     fetchFilings(controller.signal)
       .then(data => {
         if (controller.signal.aborted) return
+        setPrepareError(null)
         update(data)
       })
       .catch(reason => {
@@ -54,7 +56,11 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
     if (!active) return
     const controller = new AbortController()
     const timer = setInterval(() => {
-      void fetchFilings(controller.signal).then(update).catch(() => {
+      void fetchFilings(controller.signal).then(data => {
+        if (controller.signal.aborted) return
+        setPrepareError(null)
+        update(data)
+      }).catch(() => {
         if (controller.signal.aborted) return
         setPrepareError('We couldn’t refresh this filing. Please try again.')
       })
@@ -65,7 +71,8 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
   }, [active])
 
   const prepare = async (selected: FilingSummary) => {
-    if (starting === selected.filing_id) return
+    if (preparingRef.current.has(selected.filing_id)) return
+    preparingRef.current.add(selected.filing_id)
     setStarting(selected.filing_id)
     setPrepareError(null)
     try {
@@ -81,6 +88,7 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
         setPrepareError('We couldn’t open this filing. Please try again.')
       }
     } finally {
+      preparingRef.current.delete(selected.filing_id)
       setStarting(previous => previous === selected.filing_id ? null : previous)
     }
   }
@@ -157,7 +165,11 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
             </p>
             <button type="button" className="rounded-md border border-[#c7d9ca] bg-white px-3 py-2
               font-sans text-[.75rem] font-semibold text-[#2e6956] hover:bg-[#edf5ee]"
-              disabled={starting !== null} onClick={() => void prepare(selected)}>Try again</button>
+              disabled={starting === selected.filing_id}
+              onClick={() => {
+                if (selected.status === 'unprepared' || selected.status === 'failed') void prepare(selected)
+                else setRetry(value => value + 1)
+              }}>Try again</button>
           </>
         ) : (
           <p className="mt-0" role="status">Opening this filing… This can take a few minutes.</p>
