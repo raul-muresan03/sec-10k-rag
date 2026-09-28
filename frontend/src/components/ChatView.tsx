@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { postChat } from '../api'
+import { ApiError, postChat } from '../api'
 import type { ChatResponse, FilingSummary } from '../api'
 import { FilingSelector } from './FilingSelector'
 import { LiveAnswer } from './LiveAnswer'
@@ -88,10 +88,10 @@ export function ChatView() {
     } catch (reason) {
       if (sessionRef.current !== session) return
       const message = reason instanceof Error && reason.name === 'AbortError' && timedOut
-        ? 'The request timed out. Try a shorter question.'
-        : reason instanceof Error
+        ? 'This is taking longer than expected. Please try again.'
+        : reason instanceof ApiError
           ? reason.message
-          : 'The question could not be answered.'
+          : 'We couldn’t answer that right now. Please try again.'
       setMessages(previous => previous.map(item =>
         item.id === id ? { ...item, status: 'error', error: message } : item,
       ))

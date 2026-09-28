@@ -48,22 +48,11 @@ export class ApiError extends Error {
   }
 }
 
-async function readDetail(response: Response): Promise<string> {
-  try {
-    const data: unknown = await response.json()
-    if (data !== null && typeof data === 'object' && 'detail' in data) {
-      const detail = (data as { detail: unknown }).detail
-      if (typeof detail === 'string' && detail.trim()) return detail
-    }
-  } catch {
-    // Fall through to a status-based message below.
-  }
-  if (response.status === 404) return 'Unknown filing. Pick another filing and try again.'
-  if (response.status === 422) return 'Type a question between 1 and 2000 characters.'
-  if (response.status === 502) return 'The model service returned an invalid response.'
-  if (response.status === 503) return 'The service is unavailable. Try again shortly.'
-  if (response.status === 504) return 'The request timed out. Try a shorter question.'
-  return `The request failed (HTTP ${response.status}).`
+function errorMessage(status: number): string {
+  if (status === 404) return 'This filing is no longer available. Choose another and try again.'
+  if (status === 422) return 'Please enter a shorter question and try again.'
+  if (status === 504) return 'This is taking longer than expected. Please try again.'
+  return 'We couldn’t complete your request right now. Please try again.'
 }
 
 function isFiling(value: unknown): value is FilingSummary {
@@ -105,28 +94,28 @@ function isChat(value: unknown): value is ChatResponse {
 
 export async function fetchFilings(signal: AbortSignal): Promise<FilingSummary[]> {
   const response = await fetch('/api/filings', { signal })
-  if (!response.ok) throw new ApiError(response.status, await readDetail(response))
+  if (!response.ok) throw new ApiError(response.status, errorMessage(response.status))
   const data: unknown = await response.json()
   if (!Array.isArray(data) || !data.every(isFiling)) {
-    throw new ApiError(response.status, 'The filing catalog is incomplete or uses an unsupported format.')
+    throw new ApiError(response.status, 'We couldn’t load the available filings. Please try again.')
   }
   if (data.length === 0) {
-    throw new ApiError(response.status, 'No dev filings are listed in the catalog.')
+    throw new ApiError(response.status, 'No filings are available right now.')
   }
   return data
 }
 
 export async function prepareFiling(filingId: string): Promise<PreparationResult> {
   const response = await fetch(`/api/filings/${encodeURIComponent(filingId)}/prepare`, { method: 'POST' })
-  if (!response.ok) throw new ApiError(response.status, await readDetail(response))
+  if (!response.ok) throw new ApiError(response.status, errorMessage(response.status))
   const data: unknown = await response.json()
   if (data === null || typeof data !== 'object' || Array.isArray(data)) {
-    throw new ApiError(response.status, 'The preparation status is invalid.')
+    throw new ApiError(response.status, 'We couldn’t open this filing. Please try again.')
   }
   const result = data as Record<string, unknown>
   if (typeof result.status !== 'string' || !filingStatuses.includes(result.status as FilingSummary['status'])
     || (result.detail !== null && typeof result.detail !== 'string')) {
-    throw new ApiError(response.status, 'The preparation status is invalid.')
+    throw new ApiError(response.status, 'We couldn’t open this filing. Please try again.')
   }
   return result as unknown as PreparationResult
 }
@@ -138,13 +127,13 @@ export async function postChat(filingId: string, question: string, signal: Abort
     body: JSON.stringify({ filing_id: filingId, question }),
     signal,
   })
-  if (!response.ok) throw new ApiError(response.status, await readDetail(response))
+  if (!response.ok) throw new ApiError(response.status, errorMessage(response.status))
   const data: unknown = await response.json()
   if (!isChat(data)) {
-    throw new ApiError(response.status, 'The answer is incomplete or uses an unsupported format.')
+    throw new ApiError(response.status, 'We couldn’t complete your request right now. Please try again.')
   }
   if (data.filing_id !== filingId) {
-    throw new ApiError(response.status, 'The answer belongs to a different filing. Please try again.')
+    throw new ApiError(response.status, 'We couldn’t complete your request right now. Please try again.')
   }
   return data
 }
