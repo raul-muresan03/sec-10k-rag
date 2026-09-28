@@ -37,7 +37,9 @@ export function EvidencePanel({ example }: Props) {
           <ol className="mt-[14px] mb-0 pl-[18px]">
             {example.reference_evidence.map((quote, index) => (
               <li className="mt-[10px] pl-1" key={index}>
-                <blockquote className="mt-0 mb-2 text-[.81rem] leading-[1.65] text-[#41544f]">{quote}</blockquote>
+                <blockquote className="mx-0 mt-0 mb-2 text-[.81rem] leading-[1.65] text-[#41544f]">
+                  {quote}
+                </blockquote>
                 <span className={`text-[.69rem] font-[750] ${example.answer_run_evidence_found[index]
                   ? 'text-[#277260]' : 'text-[#9b583e]'}`}>
                   {example.answer_run_evidence_found[index]

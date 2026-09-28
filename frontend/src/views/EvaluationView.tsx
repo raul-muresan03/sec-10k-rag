@@ -57,7 +57,7 @@ export function EvaluationView() {
   return (
     <>
       <MetricsPanel snapshot={snapshot} />
-      <section className="pt-[78px] pb-[90px] max-[760px]:py-[60px]" id="evaluation-cases"
+      <section className="pt-[78px] pb-[90px] max-[760.01px]:py-[60px]" id="evaluation-cases"
         aria-labelledby="explorer-heading">
         <div className={sectionHeading}>
           <div>
@@ -69,14 +69,14 @@ export function EvaluationView() {
           </p>
         </div>
         <div className="mb-5 flex items-center gap-5 rounded border border-[#c9d6cb] bg-[#e6eee6]
-          px-6 py-[18px] max-[760px]:flex-wrap max-[760px]:items-start max-[760px]:gap-3">
+          px-6 py-[18px] max-[760.01px]:flex-wrap max-[760.01px]:items-start max-[760.01px]:gap-3">
           <span className="font-display text-[2.4rem] leading-none text-[#357b65]" aria-hidden="true">≠</span>
           <p className="m-0 flex-1 text-[.8rem] leading-[1.6] text-[#385450]
-            max-[760px]:basis-[calc(100%-58px)]">
+            max-[760.01px]:basis-[calc(100%-58px)]">
             <strong>A retrieval hit is not a correct answer.</strong> Ford’s gold passage was found in the
             saved context, yet the model answered the wrong fact.</p>
           <button type="button" className="shrink-0 border-0 bg-transparent text-[.77rem]
-            font-extrabold text-[#205f50] underline underline-offset-4 max-[760px]:ml-[37px]"
+            font-extrabold text-[#205f50] underline underline-offset-4 max-[760.01px]:ml-[37px]"
             onClick={() => setSelectedId('f-2014-numeric')}>
             Inspect Ford case →
           </button>
@@ -89,12 +89,12 @@ export function EvaluationView() {
           </div>
         </div>
       </section>
-      <section className="border-t border-[#d8deda] pt-[76px] pb-[88px] max-[760px]:py-[60px]"
+      <section className="border-t border-[#d8deda] pt-[76px] pb-[88px] max-[760.01px]:py-[60px]"
         aria-labelledby="method-heading">
         <p className={`${eyebrow} mb-3`}>03 / Read the fine print</p>
         <h2 id="method-heading" className={sectionTitle}>Two runs. Different claims.</h2>
-        <div className="mt-[35px] grid grid-cols-3 gap-[38px] max-[760px]:grid-cols-1
-          max-[760px]:gap-[26px]">
+        <div className="mt-[35px] grid grid-cols-3 gap-[38px] max-[760.01px]:grid-cols-1
+          max-[760.01px]:gap-[26px]">
           <div className="min-w-0 border-t border-[#bfc9c5] pt-[19px]">
             <span className="font-code text-[.73rem] text-[#629082]">01</span>
             <h3 className="my-3 font-display text-[1.3rem] font-normal">Answer run</h3>
