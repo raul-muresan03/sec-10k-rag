@@ -20,7 +20,7 @@ export function AnswerPanel({ example }: Props) {
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 max-[1000.01px]:grid-cols-1">
+      <div className="grid grid-cols-2 gap-3">
         <div className="min-h-[163px] min-w-0 rounded bg-[#f0f5f1] p-[21px]">
           <div className="mb-[15px] flex items-center gap-2 text-[.7rem] font-[820] tracking-[.06em]
             text-[#506d66] uppercase">
@@ -56,8 +56,7 @@ export function AnswerPanel({ example }: Props) {
           <summary className="cursor-pointer pt-[13px] text-[.73rem] font-[750] text-[#367063]">
             Review dimensions <span className="ml-1" aria-hidden="true">↗</span>
           </summary>
-          <dl className="mt-[15px] mb-0 grid grid-cols-2 gap-x-[22px] gap-y-[10px]
-            max-[460.01px]:grid-cols-1">
+          <dl className="mt-[15px] mb-0 grid grid-cols-2 gap-x-[22px] gap-y-[10px]">
             {Object.entries(review.dimensions).map(([name, value]) => (
               <div className="flex justify-between gap-[10px] border-b border-[#e9eee9] pb-2 text-[.73rem]"
                 key={name}>

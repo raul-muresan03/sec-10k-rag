@@ -12,7 +12,7 @@ export function MetricsPanel({ snapshot }: Props) {
   const multiHopAtTen = values.multi_hop_all_evidence_at_10
 
   return (
-    <section className="border-b border-[#d8deda] pt-[75px] pb-[82px] max-[760.01px]:py-[60px]"
+    <section className="border-b border-[#d8deda] pt-[75px] pb-[82px]"
       aria-labelledby="metrics-heading" id="results">
       <div className={sectionHeading}>
         <div>
@@ -25,7 +25,7 @@ export function MetricsPanel({ snapshot }: Props) {
         </p>
       </div>
 
-      <div className="grid grid-cols-4 gap-3 max-[760.01px]:grid-cols-2 max-[460.01px]:gap-2"
+      <div className="grid grid-cols-4 gap-3"
         aria-label="Strict retrieval metrics">
         <Metric value={`${values.hit_at_5.hits}/${values.hit_at_5.questions}`} label="Evidence hit @ 5"
           detail="At least one gold quote found" />
@@ -48,8 +48,7 @@ export function MetricsPanel({ snapshot }: Props) {
       </div>
 
       <div className="mt-8 flex items-center justify-between gap-[26px] border-l-[3px] border-[#8caf9f]
-        bg-[#ebece6] px-[30px] py-[25px] max-[760.01px]:flex-col max-[760.01px]:items-start
-        max-[460.01px]:p-[19px]">
+        bg-[#ebece6] px-[30px] py-[25px]">
         <div>
           <p className={`${eyebrow} mb-[5px]`}>Separate answer review · top 5</p>
           <h3 className="mb-[7px] font-display text-[1.3rem] font-normal">
@@ -77,12 +76,12 @@ function Metric({ value, label, detail, featured = false }: {
 }) {
   return (
     <div className={`flex min-h-[184px] flex-col items-start rounded-[5px] border
-      p-6 max-[1000.01px]:p-5 max-[460.01px]:min-h-[150px] max-[460.01px]:p-[15px]
+      p-6
       ${featured ? 'border-[#c8dfd3] bg-[#e9f2ed]' : 'border-[#dee3df] bg-white'}`}>
-      <span className="text-[.77rem] font-bold text-[#5a696d] max-[460.01px]:text-[.67rem]">{label}</span>
+      <span className="text-[.77rem] font-bold text-[#5a696d]">{label}</span>
       <strong className="mt-[17px] font-display text-[clamp(2.35rem,4vw,3.5rem)] font-normal
-        tracking-[-.055em] max-[460.01px]:text-[2.3rem]">{value}</strong>
-      <span className="mt-auto pt-3 text-[.72rem] text-[#68777a] max-[460.01px]:text-[.67rem]">{detail}</span>
+        tracking-[-.055em]">{value}</strong>
+      <span className="mt-auto pt-3 text-[.72rem] text-[#68777a]">{detail}</span>
     </div>
   )
 }

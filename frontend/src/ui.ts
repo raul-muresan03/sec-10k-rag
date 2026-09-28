@@ -12,26 +12,24 @@ export const primaryButton = `${button} border-transparent bg-[#d8c29f] text-[#1
 
 export const quietButton = `${button} border-[#60727c] bg-transparent text-[#f5f2ea] hover:bg-[#27394a]`
 
-export const sectionHeading = 'mb-6 flex items-end justify-between gap-6 max-[760.01px]:block'
+export const sectionHeading = 'mb-6 flex items-end justify-between gap-6'
 
 export const sectionTitle = 'm-0 font-display text-[clamp(2rem,3.4vw,2.7rem)] font-normal'
 
-export const sectionCaption = 'm-0 max-w-[330px] text-right text-[.8rem] leading-[1.6] text-[#65737b] ' +
-  'max-[760.01px]:mt-3 max-[760.01px]:text-left'
+export const sectionCaption = 'm-0 max-w-[330px] text-right text-[.8rem] leading-[1.6] text-[#65737b]'
 
-export const explorerGrid = 'grid grid-cols-[260px_minmax(0,1fr)] items-start gap-[18px] ' +
-  'max-[1000.01px]:grid-cols-[220px_minmax(0,1fr)] max-[760.01px]:grid-cols-1'
+export const explorerGrid = 'grid grid-cols-[260px_minmax(0,1fr)] items-start gap-[18px]'
 
 export const caseContent = 'grid min-w-0 gap-[18px]'
 
 export const panel = 'min-w-0 rounded-[5px] border border-[#dce2dc] bg-white'
 
-export const answerPanel = `${panel} p-8 max-[460.01px]:p-[19px]`
+export const answerPanel = `${panel} p-8`
 
 export const selectorContext = 'mt-[14px] mb-0 font-code text-[.65rem] leading-[1.6] ' +
   'text-[#8b9794] [overflow-wrap:anywhere]'
 
-export const selectorPanel = `${panel} sticky top-5 p-[23px] max-[760.01px]:static`
+export const selectorPanel = `${panel} sticky top-5 p-[23px]`
 
 export const selectorTopline = 'flex items-center justify-between gap-[10px]'
 
@@ -60,14 +58,14 @@ export function verdictBadge(verdict: Verdict): string {
   return `${badge} ${verdictColors[verdict ?? 'unreviewed']}`
 }
 
-export const panelHeading = 'mb-[30px] flex items-start justify-between gap-[25px] max-[460.01px]:flex-col'
+export const panelHeading = 'mb-[30px] flex items-start justify-between gap-[25px]'
 
 export const panelTitle = 'm-0 max-w-[650px] font-display text-[clamp(1.45rem,2.4vw,2rem)] ' +
   'leading-[1.3] font-normal'
 
 export const answerText = 'm-0 text-[.86rem] leading-[1.75] whitespace-pre-wrap [overflow-wrap:anywhere]'
 
-export const evidencePanel = `${panel} p-8 max-[460.01px]:p-[19px]`
+export const evidencePanel = `${panel} p-8`
 
 export const evidenceLabelRow = 'flex flex-wrap items-baseline justify-between gap-x-[18px] gap-y-[6px]'
 
@@ -87,9 +85,9 @@ export const chunkSummary = 'flex cursor-pointer list-none items-center gap-3 px
 export const chunkRank = 'grid h-[27px] w-8 shrink-0 place-items-center rounded-[3px] ' +
   'bg-[#eaf3ec] font-code font-extrabold text-[#29705f]'
 
-export const chunkPreview = 'font-normal text-[#83908c] max-[460.01px]:hidden'
+export const chunkPreview = 'font-normal text-[#83908c]'
 
-export const chunkScore = 'shrink-0 font-code text-[.68rem] text-[#82908a] max-[460.01px]:hidden'
+export const chunkScore = 'shrink-0 font-code text-[.68rem] text-[#82908a]'
 
 export const chunkViewOptions = 'flex justify-end px-[14px] pb-[9px]'
 
