@@ -43,8 +43,8 @@ export function EvaluationView() {
   if (error || !snapshot || !selected) {
     return (
       <Notice role="alert">
-        <h2 className="font-display font-normal">Evaluation replay unavailable</h2>
-        <p>{error ?? 'The evaluation data is incomplete.'}</p>
+        <h2 className="mt-0 font-display font-normal">Evaluation replay unavailable</h2>
+        <p className="mt-0">{error ?? 'The evaluation data is incomplete.'}</p>
         <PrimaryButton type="button" className="mt-[10px]"
           onClick={() => setRetry(value => value + 1)}>
           Try again
@@ -67,7 +67,7 @@ export function EvaluationView() {
           <p className="m-0 flex-1 text-[.8rem] leading-[1.6] text-[#385450]">
             <strong>A retrieval hit is not a correct answer.</strong> Ford’s gold passage was found in the
             saved context, yet the model answered the wrong fact.</p>
-          <button type="button" className="shrink-0 border-0 bg-transparent text-[.77rem]
+          <button type="button" className="shrink-0 border-0 bg-transparent font-sans text-[.77rem]
             font-extrabold text-[#205f50] underline underline-offset-4"
             onClick={() => setSelectedId('f-2014-numeric')}>
             Inspect Ford case →
@@ -83,7 +83,7 @@ export function EvaluationView() {
       </section>
       <section className="border-t border-[#d8deda] pt-[76px] pb-[88px]"
         aria-labelledby="method-heading">
-        <p className="mb-3 text-[.7rem] leading-[1.4] font-extrabold tracking-[.15em]
+        <p className="mt-0 mb-3 text-[.7rem] leading-[1.4] font-extrabold tracking-[.15em]
           text-[#55877b] uppercase">03 / Read the fine print</p>
         <h2 id="method-heading" className="m-0 font-display text-[clamp(2rem,3.4vw,2.7rem)] font-normal">
           Two runs. Different claims.
@@ -92,7 +92,7 @@ export function EvaluationView() {
           <div className="min-w-0 border-t border-[#bfc9c5] pt-[19px]">
             <span className="font-code text-[.73rem] text-[#629082]">01</span>
             <h3 className="my-3 font-display text-[1.3rem] font-normal">Answer run</h3>
-            <p className="text-[.8rem] leading-[1.7] text-[#5e6a70]">
+            <p className="mt-0 text-[.8rem] leading-[1.7] text-[#5e6a70]">
               Saved responses use {snapshot.runs.answers.generation_model_tag} with the top{' '}
               {snapshot.runs.answers.top_n} retrieved chunks. Reviews apply only to these exact
               responses.{' '}
@@ -106,7 +106,7 @@ export function EvaluationView() {
           <div className="min-w-0 border-t border-[#bfc9c5] pt-[19px]">
             <span className="font-code text-[.73rem] text-[#629082]">02</span>
             <h3 className="my-3 font-display text-[1.3rem] font-normal">Retrieval run</h3>
-            <p className="text-[.8rem] leading-[1.7] text-[#5e6a70]">
+            <p className="mt-0 text-[.8rem] leading-[1.7] text-[#5e6a70]">
               Retrieval metrics use an independent top-{snapshot.runs.retrieval.top_n} ranking, without
               generating answers. Model tags alone do not establish immutable model weights.</p>
             <code className="block text-[.66rem] text-[#52676a] [overflow-wrap:anywhere]">
@@ -116,7 +116,7 @@ export function EvaluationView() {
           <div className="min-w-0 border-t border-[#bfc9c5] pt-[19px]">
             <span className="font-code text-[.73rem] text-[#629082]">03</span>
             <h3 className="my-3 font-display text-[1.3rem] font-normal">Held-out check</h3>
-            <p className="text-[.8rem] leading-[1.7] text-[#5e6a70]">
+            <p className="mt-0 text-[.8rem] leading-[1.7] text-[#5e6a70]">
               Metrics above use 24 dev questions. Another 16 test questions are reserved for a final
               check, rather than tuning this demo.</p>
             <a className="text-[.84rem] font-[750] text-[#246a61] decoration-[1px]"

@@ -18,7 +18,8 @@ function App() {
     <div className="overflow-hidden">
       <header className="mx-auto flex min-h-[78px] w-[calc(100%-64px)] max-w-[1180px] items-center
         justify-between border-b border-[#314151] text-[#eeeae1]">
-        <a className="inline-flex items-center gap-[14px] text-[.88rem] font-[750] no-underline"
+        <a className="inline-flex items-center gap-[14px] text-[.88rem] font-[750]
+          text-[#eeeae1] no-underline"
           href="#top" aria-label="SEC RAG Evidence Lab home">
           <span className="grid size-9 place-items-center rounded-[5px] border border-[#bca983]
             font-display text-[.96rem] text-[#d9c5a1]" aria-hidden="true">
@@ -60,7 +61,7 @@ function App() {
               leading-[1.04] font-normal text-[#f6f4ed]">
               Evidence <i className="font-normal text-[#d5bc90]">before</i><br />answers.
             </h1>
-            <p className="max-w-[560px] text-[1.02rem] leading-[1.8] text-[#bfcbd0]">
+            <p className="mt-0 max-w-[560px] text-[1.02rem] leading-[1.8] text-[#bfcbd0]">
               Ask a question about one verified filing and read the generated answer next to the
               retrieved passages. The saved evaluation replay lives under Evaluation.
             </p>
@@ -90,8 +91,8 @@ function App() {
               <span>?</span><span className="font-code text-[1.4rem] text-[#70a595]">→</span><span>§</span>
               <span className="font-code text-[1.4rem] text-[#70a595]">→</span><span>A</span>
             </div>
-            <h2 className="font-display text-[1.65rem] font-normal text-[#f5f1e7]">Live filing chat</h2>
-            <p className="text-[.86rem] leading-[1.7] text-[#b8c6c9]">
+            <h2 className="mt-0 font-display text-[1.65rem] font-normal text-[#f5f1e7]">Live filing chat</h2>
+            <p className="mt-0 text-[.86rem] leading-[1.7] text-[#b8c6c9]">
               Choose a filing, ask in your own words, and inspect the answer with its evidence.
             </p>
             <div className="mt-[25px] mb-[21px] h-px bg-[#40535d]" />

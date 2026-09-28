@@ -40,7 +40,7 @@ export function RetrievedChunks({ chunks, description, count, note }: Props) {
               </span>
             </summary>
             {hasTable && <div className="flex justify-end px-[14px] pb-[9px]">
-              <button type="button" className="border-0 bg-transparent text-[.7rem] font-[750]
+              <button type="button" className="border-0 bg-transparent font-sans text-[.7rem] font-[750]
                 text-[#2b6f61] underline underline-offset-[3px]" aria-pressed={unwrappedChunk === chunk.rank}
                 onClick={() => setUnwrappedChunk(unwrappedChunk === chunk.rank ? null : chunk.rank)}>
                 {unwrappedChunk === chunk.rank ? 'Wrap long lines' : 'Preserve table rows ↔'}

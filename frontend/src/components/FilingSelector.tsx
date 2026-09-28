@@ -88,8 +88,8 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
   if (error || !filings) {
     return (
       <Notice role="alert">
-        <h2 className="font-display font-normal">Filing catalog unavailable</h2>
-        <p>{error ?? 'The filing catalog is incomplete.'}</p>
+        <h2 className="mt-0 font-display font-normal">Filing catalog unavailable</h2>
+        <p className="mt-0">{error ?? 'The filing catalog is incomplete.'}</p>
         <PrimaryButton type="button" className="mt-[10px]"
           onClick={() => setRetry(value => value + 1)}>
           Try again
@@ -116,7 +116,7 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
       </label>
       <select
         id="filing-select"
-        className="min-h-[46px] w-full rounded-[3px] border border-[#bfcac4] bg-[#f9faf7]
+        className="min-h-[46px] w-full rounded-[3px] border border-[#bfcac4] bg-[#f9faf7] font-sans
           py-[9px] pr-[31px] pl-[11px] text-[.77rem] text-[#1d3032]"
         value={selected.filing_id}
         onChange={event => {
@@ -146,12 +146,12 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
       </p>
       <div className="mt-[22px] border-t border-[#e4e9e5] pt-4" aria-live="polite">
         {selected.status === 'ready' ? (
-          <p className="mb-3 text-[.78rem] leading-normal text-[#49665d] [overflow-wrap:anywhere]">
+          <p className="mt-0 mb-3 text-[.78rem] leading-normal text-[#49665d] [overflow-wrap:anywhere]">
             Ready to chat · verified source and index
           </p>
         ) : selected.status === 'unprepared' || selected.status === 'failed' ? (
           <>
-            <p className="mb-3 text-[.78rem] leading-normal text-[#49665d] [overflow-wrap:anywhere]">
+            <p className="mt-0 mb-3 text-[.78rem] leading-normal text-[#49665d] [overflow-wrap:anywhere]">
               {selected.status === 'failed' ? selected.detail : 'This filing has not been prepared yet.'}
             </p>
             <PrimaryButton type="button" className="w-full justify-center disabled:cursor-not-allowed
@@ -162,12 +162,12 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
             </PrimaryButton>
           </>
         ) : (
-          <p className="mb-3 text-[.78rem] leading-normal text-[#49665d] [overflow-wrap:anywhere]"
+          <p className="mt-0 mb-3 text-[.78rem] leading-normal text-[#49665d] [overflow-wrap:anywhere]"
             role="status">{selected.status === 'queued' ? 'Queued' : selected.status === 'waiting_for_models'
               ? 'Waiting for embedding model' : selected.status === 'downloading' ? 'Downloading from SEC'
                 : 'Building the index'}… This can take a while on CPU.</p>
         )}
-        {prepareError && <p className="mb-3 text-[.78rem] leading-normal text-[#9b583e]"
+        {prepareError && <p className="mt-0 mb-3 text-[.78rem] leading-normal text-[#9b583e]"
           role="alert">{prepareError}</p>}
       </div>
     </div>

@@ -13,7 +13,7 @@ export function AnswerPanel({ example }: Props) {
       aria-labelledby="answer-heading">
       <div className="mb-[30px] flex items-start justify-between gap-[25px]">
         <div>
-          <p className="mb-[13px] text-[.7rem] leading-[1.4] font-extrabold tracking-[.15em]
+          <p className="mt-0 mb-[13px] text-[.7rem] leading-[1.4] font-extrabold tracking-[.15em]
             text-[#55877b] uppercase">Question / {example.id}</p>
           <h3 id="answer-heading" className="m-0 max-w-[650px] font-display
             text-[clamp(1.45rem,2.4vw,2rem)] leading-[1.3] font-normal"
@@ -49,7 +49,7 @@ export function AnswerPanel({ example }: Props) {
 
       <div className="mt-[25px] border-t border-[#e4e9e5] pt-5">
         <div className="flex flex-wrap justify-between gap-2">
-          <p className="mb-[9px] text-[.7rem] leading-[1.4] font-extrabold tracking-[.15em]
+          <p className="mt-0 mb-[9px] text-[.7rem] leading-[1.4] font-extrabold tracking-[.15em]
             text-[#55877b] uppercase">Answer assessment</p>
           <span className="text-[.7rem] text-[#6f7c7d]">{reviewLabel(review)}
             {review.confidence && ` · ${review.confidence} confidence`}</span>

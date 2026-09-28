@@ -11,9 +11,9 @@ export function EvidencePanel({ example }: Props) {
       aria-labelledby="evidence-heading">
       <div className="flex flex-wrap items-start justify-between gap-[15px]">
         <div>
-          <p className="mb-2 text-[.7rem] leading-[1.4] font-extrabold tracking-[.15em]
+          <p className="mt-0 mb-2 text-[.7rem] leading-[1.4] font-extrabold tracking-[.15em]
             text-[#55877b] uppercase">Trace the evidence</p>
-          <h3 id="evidence-heading" className="mb-0 font-display text-[1.5rem] font-normal">
+          <h3 id="evidence-heading" className="mt-0 mb-0 font-display text-[1.5rem] font-normal">
             What did the system see?
           </h3>
         </div>

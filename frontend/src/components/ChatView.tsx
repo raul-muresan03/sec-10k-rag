@@ -120,8 +120,8 @@ export function ChatView() {
             </label>
             <textarea
               id="chat-question"
-              className="block min-h-[120px] w-full resize-y rounded-[3px] border border-[#bfcac4]
-                bg-[#f9faf7] p-[14px] leading-[1.6] text-[#1d3032] placeholder:text-[#697978]"
+              className="block min-h-[120px] w-full resize-y rounded-[3px] border border-[#bfcac4] font-sans
+                bg-[#f9faf7] p-[14px] text-base leading-[1.6] text-[#1d3032] placeholder:text-[#697978]"
               rows={3}
               maxLength={2000}
               value={draft}
@@ -138,7 +138,7 @@ export function ChatView() {
             <div className="mt-[14px] flex items-center justify-between gap-[10px]
               text-[.75rem] text-[#65737b]">
               <span>{draft.trim().length}/2000</span>
-              <button type="submit" className="min-h-11 rounded-[3px] border border-[#bdd6cc]
+              <button type="submit" className="min-h-11 rounded-[3px] border border-[#bdd6cc] font-sans
                 bg-[#e9f2ed] px-[18px] py-2 text-[.74rem] font-[750] text-[#205f50]
                 hover:underline hover:underline-offset-4 disabled:cursor-not-allowed disabled:opacity-55"
                 disabled={!canSend}>
@@ -152,7 +152,7 @@ export function ChatView() {
                 key={message.id} aria-label={`Answer to ${message.question}`}>
                 <div className="mb-[30px] flex items-start justify-between gap-[25px]">
                   <div>
-                    <p className="mb-[13px] text-[.7rem] leading-[1.4] font-extrabold tracking-[.15em]
+                    <p className="mt-0 mb-[13px] text-[.7rem] leading-[1.4] font-extrabold tracking-[.15em]
                       text-[#55877b] uppercase">
                       {message.filing.company} · {message.filing.filing_year}
                     </p>
@@ -165,8 +165,8 @@ export function ChatView() {
                 )}
                 {message.status === 'error' && (
                   <Notice role="alert">
-                    <h2 className="font-display font-normal">Live answer unavailable</h2>
-                    <p>{message.error ?? 'The question could not be answered.'}</p>
+                    <h2 className="mt-0 font-display font-normal">Live answer unavailable</h2>
+                    <p className="mt-0">{message.error ?? 'The question could not be answered.'}</p>
                     <PrimaryButton
                       type="button"
                       className="mt-[10px]"

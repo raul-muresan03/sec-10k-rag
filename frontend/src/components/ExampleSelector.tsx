@@ -22,7 +22,7 @@ export function ExampleSelector({ examples, selected, onSelect }: Props) {
       <label className="mt-7 mb-[9px] block text-[.78rem] font-[760]" htmlFor="case-select">
         Choose a saved question
       </label>
-      <select className="min-h-[46px] w-full rounded-[3px] border border-[#bfcac4] bg-[#f9faf7]
+      <select className="min-h-[46px] w-full rounded-[3px] border border-[#bfcac4] bg-[#f9faf7] font-sans
         py-[9px] pr-[31px] pl-[11px] text-[.77rem] text-[#1d3032]" id="case-select" value={selected.id}
         onChange={event => onSelect(event.target.value)}>
         {examples.map(example => (
@@ -30,12 +30,12 @@ export function ExampleSelector({ examples, selected, onSelect }: Props) {
         ))}
       </select>
       <div className="mt-[13px] mb-6 flex items-center justify-between gap-[10px]">
-        <button type="button" className="border-0 bg-transparent px-0 py-[5px] text-[.74rem]
+        <button type="button" className="border-0 bg-transparent px-0 py-[5px] font-sans text-[.74rem]
           font-[750] text-[#2e7565] hover:underline hover:underline-offset-4"
           onClick={() => onSelect(examples[(index - 1 + examples.length) % examples.length].id)}>
           <span aria-hidden="true">←</span> Previous
         </button>
-        <button type="button" className="border-0 bg-transparent px-0 py-[5px] text-[.74rem]
+        <button type="button" className="border-0 bg-transparent px-0 py-[5px] font-sans text-[.74rem]
           font-[750] text-[#2e7565] hover:underline hover:underline-offset-4"
           onClick={() => onSelect(examples[(index + 1) % examples.length].id)}>
           Next <span aria-hidden="true">→</span>

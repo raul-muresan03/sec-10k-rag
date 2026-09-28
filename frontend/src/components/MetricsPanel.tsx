@@ -42,9 +42,9 @@ export function MetricsPanel({ snapshot }: Props) {
       <div className="mt-8 flex items-center justify-between gap-[26px] border-l-[3px] border-[#8caf9f]
         bg-[#ebece6] px-[30px] py-[25px]">
         <div>
-          <p className="mb-[5px] text-[.7rem] leading-[1.4] font-extrabold tracking-[.15em]
+          <p className="mt-0 mb-[5px] text-[.7rem] leading-[1.4] font-extrabold tracking-[.15em]
             text-[#55877b] uppercase">Separate answer review · top 5</p>
-          <h3 className="mb-[7px] font-display text-[1.3rem] font-normal">
+          <h3 className="mt-0 mb-[7px] font-display text-[1.3rem] font-normal">
             Generated answers need their own assessment.
           </h3>
           <p className="m-0 text-[.82rem] leading-[1.6] text-[#58686c]">
