@@ -3,12 +3,13 @@ import { AnswerPanel } from '../components/AnswerPanel'
 import { EvidencePanel } from '../components/EvidencePanel'
 import { ExampleSelector } from '../components/ExampleSelector'
 import { MetricsPanel } from '../components/MetricsPanel'
+import { Notice } from '../components/Notice'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { SectionHeading } from '../components/SectionHeading'
 import { loadSnapshot } from '../data'
 import type { Snapshot } from '../types'
 import {
-  caseContent, eyebrow, explorerGrid, inlineLink, loadErrorTitle, loadMessage,
+  caseContent, eyebrow, explorerGrid, inlineLink, loadErrorTitle,
   sectionTitle,
 } from '../ui'
 
@@ -42,17 +43,17 @@ export function EvaluationView() {
   const selected = snapshot?.examples.find(example => example.id === selectedId) ?? snapshot?.examples[0]
   const pendingReviews = snapshot?.answer_review.summary.pending_owner_confirmation ?? 0
 
-  if (loading) return <div className={loadMessage} role="status">Loading saved evaluation data…</div>
+  if (loading) return <Notice role="status">Loading saved evaluation data…</Notice>
   if (error || !snapshot || !selected) {
     return (
-      <div className={loadMessage} role="alert">
+      <Notice role="alert">
         <h2 className={loadErrorTitle}>Evaluation replay unavailable</h2>
         <p>{error ?? 'The evaluation data is incomplete.'}</p>
         <PrimaryButton type="button" className="mt-[10px]"
           onClick={() => setRetry(value => value + 1)}>
           Try again
         </PrimaryButton>
-      </div>
+      </Notice>
     )
   }
 

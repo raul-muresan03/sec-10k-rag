@@ -15,8 +15,6 @@ export const answerPanel = `${panel} p-8`
 export const selectorContext = 'mt-[14px] mb-0 font-code text-[.65rem] leading-[1.6] ' +
   'text-[#8b9794] [overflow-wrap:anywhere]'
 
-export const loadMessage = 'my-[74px] border border-[#d8deda] bg-white p-[34px] text-[#4b615f]'
-
 export const loadErrorTitle = 'font-display font-normal'
 
 export const badge = 'inline-flex w-max max-w-full items-center rounded-[3px] px-[10px] py-[7px] ' +

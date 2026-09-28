@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { postChat } from '../api'
 import type { ChatResponse, FilingSummary } from '../api'
 import {
-  answerPanel, caseContent, eyebrow, explorerGrid, loadErrorTitle, loadMessage, panelHeading,
+  answerPanel, caseContent, eyebrow, explorerGrid, loadErrorTitle, panelHeading,
   panelTitle, selectorContext,
 } from '../ui'
 import { FilingSelector } from './FilingSelector'
 import { LiveAnswer } from './LiveAnswer'
+import { Notice } from './Notice'
 import { PrimaryButton } from './PrimaryButton'
 import { SectionHeading } from './SectionHeading'
 
@@ -159,10 +160,10 @@ export function ChatView() {
                   </div>
                 </div>
                 {message.status === 'pending' && (
-                  <div className={loadMessage} role="status">Waiting for the model…</div>
+                  <Notice role="status">Waiting for the model…</Notice>
                 )}
                 {message.status === 'error' && (
-                  <div className={loadMessage} role="alert">
+                  <Notice role="alert">
                     <h2 className={loadErrorTitle}>Live answer unavailable</h2>
                     <p>{message.error ?? 'The question could not be answered.'}</p>
                     <PrimaryButton
@@ -172,7 +173,7 @@ export function ChatView() {
                     >
                       Retry
                     </PrimaryButton>
-                  </div>
+                  </Notice>
                 )}
                 {message.status === 'done' && message.answer && (
                   <LiveAnswer answer={message.answer} />

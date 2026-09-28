@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { fetchFilings, prepareFiling } from '../api'
 import type { FilingSummary } from '../api'
+import { Notice } from './Notice'
 import { PrimaryButton } from './PrimaryButton'
 
 interface Props {
@@ -83,18 +84,17 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
     }
   }
 
-  if (loading) return <div className="my-[74px] border border-[#d8deda] bg-white p-[34px] text-[#4b615f]"
-    role="status">Loading verified filings…</div>
+  if (loading) return <Notice role="status">Loading verified filings…</Notice>
   if (error || !filings) {
     return (
-      <div className="my-[74px] border border-[#d8deda] bg-white p-[34px] text-[#4b615f]" role="alert">
+      <Notice role="alert">
         <h2 className="font-display font-normal">Filing catalog unavailable</h2>
         <p>{error ?? 'The filing catalog is incomplete.'}</p>
         <PrimaryButton type="button" className="mt-[10px]"
           onClick={() => setRetry(value => value + 1)}>
           Try again
         </PrimaryButton>
-      </div>
+      </Notice>
     )
   }
 
