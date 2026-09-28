@@ -27,22 +27,3 @@ a:hover { text-decoration-color: currentColor; }
 h1, h2, h3, h4, p { margin-top: 0; }
 
 h1, h2, h3 { letter-spacing: -0.035em; }
-
-.status-pill, .verdict-chip {
-  display: inline-flex;
-  align-items: center;
-  width: max-content;
-  max-width: 100%;
-  padding: 7px 10px;
-  border-radius: 3px;
-  font-size: .7rem;
-  font-weight: 800;
-  letter-spacing: .035em;
-  text-transform: uppercase;
-}
-
-.verdict-chip.pass { color: #196457; background: #e1f2ea; }
-.verdict-chip.partial { color: #855721; background: #fff1d9; }
-.verdict-chip.incorrect { color: #a14335; background: #fde7e1; }
-.verdict-chip.unreviewed { color: #59636b; background: #eaeef0; }
-.status-pill.pending { color: #845924; background: #fcf0d9; }

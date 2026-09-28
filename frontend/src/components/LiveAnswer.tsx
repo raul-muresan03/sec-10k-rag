@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ChunkText } from './ChunkText'
 import type { ChatResponse } from '../api'
-import { inlineLink, selectorContext } from '../ui'
+import { answerText, inlineLink, selectorContext } from '../ui'
 
 interface Props {
   answer: ChatResponse
@@ -13,7 +13,7 @@ export function LiveAnswer({ answer }: Props) {
 
   return (
     <>
-      <p className="answer-text">{answer.answer}</p>
+      <p className={answerText}>{answer.answer}</p>
       <p className={selectorContext}>
         Filing ID: {answer.filing_id}
         {' · '}{answer.model} · retrieval {times.retrieval.toFixed(2)}s

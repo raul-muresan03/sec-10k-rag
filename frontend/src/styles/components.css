@@ -1,34 +1,4 @@
 .evidence-panel { min-width: 0; border: 1px solid #dce2dc; border-radius: 5px; background: #fff; }
-.panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 25px;
-  margin-bottom: 30px; }
-.panel-heading h3 { max-width: 650px; margin: 0; font-family: Georgia, serif;
-  font-size: clamp(1.45rem, 2.4vw, 2rem); font-weight: 400; line-height: 1.3; }
-.panel-heading .verdict-chip { flex: none; margin-top: 3px; }
-.answer-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.answer-block { min-width: 0; min-height: 163px; padding: 21px; border-radius: 4px; }
-.answer-block.generated { background: #f0f5f1; }
-.answer-block.reference { background: #f6f4ed; }
-.block-label { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; color: #506d66;
-  font-size: .7rem; font-weight: 820; letter-spacing: .06em; text-transform: uppercase; }
-.reference .block-label { color: #877457; }
-.label-mark { width: 9px; height: 9px; border: 2px solid currentColor; border-radius: 50%; }
-.answer-text { margin: 0; font-size: .86rem; line-height: 1.75; overflow-wrap: anywhere; white-space: pre-wrap; }
-.verification-note { margin: 16px 0 0; padding-top: 12px; border-top: 1px solid #e4ddcd; color: #7a6555;
-  font-size: .72rem; line-height: 1.6; }
-.review-box { margin-top: 25px; padding: 20px 0 0; border-top: 1px solid #e4e9e5; }
-.review-title-row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
-.review-title-row .eyebrow { margin-bottom: 9px; }
-.review-source { color: #6f7c7d; font-size: .7rem; }
-.review-box > p { margin: 0; font-size: .85rem; line-height: 1.7; }
-.dimensions { margin-top: 18px; border-top: 1px dashed #d7ded9; }
-.dimensions summary { padding: 13px 0 0; color: #367063; cursor: pointer; font-size: .73rem; font-weight: 750; }
-.dimensions summary span { margin-left: 4px; }
-.dimensions dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 22px; margin: 15px 0 0; }
-.dimensions dl div { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid #e9eee9;
-  padding: 0 0 8px; font-size: .73rem; }
-.dimensions dt { color: #697575; text-transform: capitalize; }
-.dimensions dd { margin: 0; font-weight: 700; text-align: right; text-transform: capitalize; }
-
 .evidence-panel { padding: 32px; }
 .evidence-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;
   gap: 15px; }

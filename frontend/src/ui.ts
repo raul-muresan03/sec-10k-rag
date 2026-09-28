@@ -1,3 +1,5 @@
+import type { Verdict } from './types'
+
 export const eyebrow = 'text-[#55877b] text-[.7rem] font-extrabold tracking-[.15em] leading-[1.4] uppercase'
 
 export const inlineLink = 'text-[#246a61] text-[.84rem] font-[750] decoration-[1px]'
@@ -46,3 +48,21 @@ export const loadErrorTitle = 'font-display font-normal'
 
 export const badge = 'inline-flex w-max max-w-full items-center rounded-[3px] px-[10px] py-[7px] ' +
   'text-[.7rem] font-extrabold tracking-[.035em] uppercase'
+
+const verdictColors = {
+  pass: 'bg-[#e1f2ea] text-[#196457]',
+  partial: 'bg-[#fff1d9] text-[#855721]',
+  incorrect: 'bg-[#fde7e1] text-[#a14335]',
+  unreviewed: 'bg-[#eaeef0] text-[#59636b]',
+}
+
+export function verdictBadge(verdict: Verdict): string {
+  return `${badge} ${verdictColors[verdict ?? 'unreviewed']}`
+}
+
+export const panelHeading = 'mb-[30px] flex items-start justify-between gap-[25px] max-[460px]:flex-col'
+
+export const panelTitle = 'm-0 max-w-[650px] font-display text-[clamp(1.45rem,2.4vw,2rem)] ' +
+  'leading-[1.3] font-normal'
+
+export const answerText = 'm-0 text-[.86rem] leading-[1.75] whitespace-pre-wrap [overflow-wrap:anywhere]'

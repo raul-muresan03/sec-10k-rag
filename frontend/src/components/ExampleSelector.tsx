@@ -1,7 +1,7 @@
 import { exampleLabel, reviewLabel, verdictLabel } from '../labels'
 import type { Example } from '../types'
 import {
-  caseCount, eyebrow, selectorContext, selectorControl, selectorLabel, selectorPanel, selectorTopline,
+  caseCount, eyebrow, selectorContext, selectorControl, selectorLabel, selectorPanel, selectorTopline, verdictBadge,
 } from '../ui'
 
 interface Props {
@@ -41,7 +41,7 @@ export function ExampleSelector({ examples, selected, onSelect }: Props) {
       </div>
       <div className="flex flex-wrap items-center justify-start gap-[10px] border-t border-[#e4e9e5]
         pt-[21px] text-[.7rem] text-[#637273]">
-        <span className={`verdict-chip ${selected.review.verdict ?? 'unreviewed'}`}>
+        <span className={verdictBadge(selected.review.verdict)}>
           {verdictLabel(selected.review)}
         </span>
         <span>{reviewLabel(selected.review)}</span>

@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { postChat } from '../api'
 import type { ChatResponse, FilingSummary } from '../api'
 import {
-  answerPanel, caseContent, eyebrow, explorerGrid, loadErrorTitle, loadMessage, primaryButton,
-  sectionCaption, sectionHeading, sectionTitle, selectorContext,
+  answerPanel, caseContent, eyebrow, explorerGrid, loadErrorTitle, loadMessage, panelHeading,
+  panelTitle, primaryButton, sectionCaption, sectionHeading, sectionTitle, selectorContext,
 } from '../ui'
 import { FilingSelector } from './FilingSelector'
 import { LiveAnswer } from './LiveAnswer'
@@ -155,12 +155,12 @@ export function ChatView() {
           <div aria-live="polite">
             {messages.map(message => (
               <article className={answerPanel} key={message.id} aria-label={`Answer to ${message.question}`}>
-                <div className="panel-heading">
+                <div className={panelHeading}>
                   <div>
-                    <p className={eyebrow}>
+                    <p className={`${eyebrow} mb-[13px]`}>
                       {message.filing.company} · {message.filing.filing_year}
                     </p>
-                    <h3>{message.question}</h3>
+                    <h3 className={panelTitle}>{message.question}</h3>
                   </div>
                 </div>
                 {message.status === 'pending' && (

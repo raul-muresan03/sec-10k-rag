@@ -1,15 +1,6 @@
-@media (max-width: 1000px) {
-  .answer-columns { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 760px) {
-}
-
 @media (max-width: 460px) {
   .evidence-panel { padding: 19px; }
-  .panel-heading { flex-direction: column; }
   .chunk-preview, .chunk-score { display: none; }
-  .dimensions dl { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
