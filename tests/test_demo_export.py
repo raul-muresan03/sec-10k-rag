@@ -91,7 +91,7 @@ def test_synthetic_export_is_dev_only_and_valid_without_saved_runs(replay):
     assert [e["id"] for e in snapshot["examples"]] == ["dev-numeric", "dev-no-answer"]
     assert snapshot["retrieval_metrics"]["values"]["hit_at_10"]["hits"] == 1
     assert snapshot["examples"][0]["retrieved_context"][0]["text"].endswith("(in billions)")
-    output = root / "frontend" / "public" / "demo.v1.json"
+    output = root / "demo" / "snapshot.v1.json"
     write_snapshot(snapshot, output)
     assert "held-out-secret" not in output.read_text()
     answer_path.unlink()
@@ -144,7 +144,7 @@ def test_rejects_inconsistent_retrieval_summary_and_public_schema(replay):
 
 
 def test_committed_snapshot_validates_with_only_tracked_inputs():
-    snapshot = json.loads((ROOT / "frontend" / "public" / "demo.v1.json").read_text(encoding="utf-8"))
+    snapshot = json.loads((ROOT / "demo" / "snapshot.v1.json").read_text(encoding="utf-8"))
     validate_snapshot(snapshot)
     assert len(snapshot["examples"]) == 8
     assert snapshot["answer_review"]["summary"]["publication_status"] == "provisional"
