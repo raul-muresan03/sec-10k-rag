@@ -16,7 +16,7 @@ export function SourcePassages({ chunks, secUrl }: Props) {
         text-[.78rem] font-semibold text-[#315b4e] [&::-webkit-details-marker]:hidden">
         <span>Sources from this filing</span>
         <span className="font-normal text-[#72847a]">
-          {chunks.length} {chunks.length === 1 ? 'excerpt' : 'excerpts'}
+          {chunks.length} {chunks.length === 1 ? 'source' : 'sources'}
           <span className="ml-2 inline-block transition-transform group-open:rotate-180" aria-hidden="true">⌄</span>
         </span>
       </summary>
@@ -32,7 +32,7 @@ export function SourcePassages({ chunks, secUrl }: Props) {
                 border-[#e0e7e0] bg-white open:border-[#bad3c0]">
                 <summary className="flex cursor-pointer list-none items-center gap-3 px-3 py-3
                   text-[.76rem] text-[#40584e] [&::-webkit-details-marker]:hidden">
-                  <span className="shrink-0 font-semibold text-[#2d6d5f]">Excerpt {index + 1}</span>
+                  <span className="shrink-0 font-semibold text-[#2d6d5f]">Source {index + 1}</span>
                   <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap
                     text-[#809087]">{chunk.text.slice(0, 90).replace(/\s+/g, ' ')}…</span>
                   <span className="text-[#70917b] group-open/passage:rotate-180" aria-hidden="true">⌄</span>

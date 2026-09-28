@@ -26,7 +26,7 @@ Implemented:
 
 Not implemented:
 
-- Claim-level citations to exact locations in a filing (the interface shows consultable excerpts and a link to the full filing)
+- Claim-level citations to exact locations in a filing (the interface shows source passages and a link to the full filing)
 - Confidence scores or similarity thresholds
 - Cross-filing, multi-company, or year-over-year answers; each query selects one filing
 - Pinecone, LangChain, cloud LLM providers, or hybrid search
