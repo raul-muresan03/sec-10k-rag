@@ -181,6 +181,10 @@ npm --prefix frontend run dev -- --port 5173
 
 Chat is the default view; the saved evaluation replay stays under Evaluation. Each question selects one filing,
 is independent, and clears on refresh. In production the same origin serves the UI and reverse-proxies `/api`.
+The React/TypeScript UI uses Tailwind CSS v4 through the Vite plugin. Utility classes live alongside JSX in
+`frontend/src/components` and `frontend/src/App.tsx`; shared presentation is extracted into components there.
+`frontend/src/styles/tailwind.css` is only the Tailwind entrypoint and font theme. Preflight is omitted to preserve
+native filing/table rendering. The layout targets desktop screens (at least 1024px wide).
 
 ## Generated Data
 

@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { ChunkText } from './ChunkText'
+import { RetrievedChunks } from './RetrievedChunks'
 import type { Example } from '../types'
 
 interface Props {
@@ -7,32 +6,37 @@ interface Props {
 }
 
 export function EvidencePanel({ example }: Props) {
-  const [unwrappedChunk, setUnwrappedChunk] = useState<string | null>(null)
-
   return (
-    <section className="evidence-panel" aria-labelledby="evidence-heading">
-      <div className="evidence-header">
+    <section className="min-w-0 rounded-[5px] border border-[#dce2dc] bg-white p-8"
+      aria-labelledby="evidence-heading">
+      <div className="flex flex-wrap items-start justify-between gap-[15px]">
         <div>
-          <p className="eyebrow">Trace the evidence</p>
-          <h3 id="evidence-heading">What did the system see?</h3>
+          <p className="mt-0 mb-2 text-[.7rem] leading-[1.4] font-extrabold tracking-[.15em]
+            text-[#55877b] uppercase">Trace the evidence</p>
+          <h3 id="evidence-heading" className="mt-0 mb-0 font-display text-[1.5rem] font-normal">
+            What did the system see?
+          </h3>
         </div>
-        <a href={example.sec_url} target="_blank" rel="noopener noreferrer" className="inline-link">
+        <a href={example.sec_url} target="_blank" rel="noopener noreferrer"
+          className="mt-3 text-[.84rem] font-[750] text-[#246a61] decoration-[1px]">
           SEC filing <span aria-hidden="true">↗</span>
         </a>
       </div>
 
-      <div className="gold-evidence">
-        <div className="evidence-label-row">
-          <h4>Gold reference evidence</h4>
-          <span>Quoted passages from the evaluation set</span>
+      <div className="mt-[27px] rounded-[3px] border border-[#e5e4d9] bg-[#fcfbf6] p-5">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-[18px] gap-y-[6px]">
+          <h4 className="m-0 text-[.82rem] tracking-[-.015em]">Gold reference evidence</h4>
+          <span className="text-[.68rem] text-[#879189]">Quoted passages from the evaluation set</span>
         </div>
         {example.reference_evidence.length ? (
-          <ol>
+          <ol className="mt-[14px] mb-0 pl-[18px]">
             {example.reference_evidence.map((quote, index) => (
-              <li key={index}>
-                <blockquote>{quote}</blockquote>
-                <span className={example.answer_run_evidence_found[index]
-                  ? 'match-label found' : 'match-label missing'}>
+              <li className="mt-[10px] pl-1" key={index}>
+                <blockquote className="mx-0 mt-0 mb-2 text-[.81rem] leading-[1.65] text-[#41544f]">
+                  {quote}
+                </blockquote>
+                <span className={`text-[.69rem] font-[750] ${example.answer_run_evidence_found[index]
+                  ? 'text-[#277260]' : 'text-[#9b583e]'}`}>
                   {example.answer_run_evidence_found[index]
                     ? 'Strict match in saved top 5' : 'No strict match in saved top 5'}
                 </span>
@@ -40,43 +44,15 @@ export function EvidencePanel({ example }: Props) {
             ))}
           </ol>
         ) : (
-          <p className="empty-evidence">Not applicable — no gold passage is assigned to this no-answer question.</p>
+          <p className="mt-3 mb-0 text-[.8rem] text-[#67766c]">
+            Not applicable — no gold passage is assigned to this no-answer question.
+          </p>
         )}
       </div>
 
-      <div className="retrieved-heading">
-        <div>
-          <h4>Retrieved context</h4>
-          <p>Complete saved top-five chunks from the answer run, in original rank order.</p>
-        </div>
-        <span className="rank-count">01—05</span>
-      </div>
-      <div className="chunk-list">
-        {example.retrieved_context.map(chunk => {
-          const chunkId = `${example.id}-${chunk.rank}`
-          const hasTable = /\|\s*-{3,}/.test(chunk.text)
-          return <details key={chunkId} className="chunk" open={chunk.rank === 1}>
-            <summary>
-              <span className="chunk-rank">R{chunk.rank}</span>
-              <span>Retrieved passage <span className="chunk-preview">· {chunk.text.slice(0, 65)}…</span></span>
-              <span className="chunk-score">Similarity {chunk.score.toFixed(3)}</span>
-            </summary>
-            {hasTable && <div className="chunk-view-options">
-              <button type="button" aria-pressed={unwrappedChunk === chunkId}
-                onClick={() => setUnwrappedChunk(unwrappedChunk === chunkId ? null : chunkId)}>
-                {unwrappedChunk === chunkId ? 'Wrap long lines' : 'Preserve table rows ↔'}
-              </button>
-            </div>}
-            <div className="chunk-viewport">
-              <ChunkText text={chunk.text} unwrapped={unwrappedChunk === chunkId} />
-            </div>
-          </details>
-        })}
-      </div>
-      <p className="evidence-footnote">
-        The SEC link opens the full submission, not a precise passage citation. A missing strict quote can still have
-        equivalent table evidence; inspect the actual context before diagnosing retrieval.
-      </p>
+      <RetrievedChunks key={example.id} chunks={example.retrieved_context}
+        count="01—05" description="Complete saved top-five chunks from the answer run, in original rank order."
+        note="The SEC link opens the full submission, not a precise passage citation. A missing strict quote can still have equivalent table evidence; inspect the actual context before diagnosing retrieval." />
     </section>
   )
 }

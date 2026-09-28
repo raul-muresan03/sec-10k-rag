@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { fetchFilings, prepareFiling } from '../api'
 import type { FilingSummary } from '../api'
+import { Notice } from './Notice'
+import { PrimaryButton } from './PrimaryButton'
 
 interface Props {
   selectedId: string | null
@@ -82,34 +84,40 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
     }
   }
 
-  if (loading) return <div className="load-message" role="status">Loading verified filings…</div>
+  if (loading) return <Notice role="status">Loading verified filings…</Notice>
   if (error || !filings) {
     return (
-      <div className="load-message load-error" role="alert">
-        <h2>Filing catalog unavailable</h2>
-        <p>{error ?? 'The filing catalog is incomplete.'}</p>
-        <button type="button" className="button button-primary" onClick={() => setRetry(value => value + 1)}>
+      <Notice role="alert">
+        <h2 className="mt-0 font-display font-normal">Filing catalog unavailable</h2>
+        <p className="mt-0">{error ?? 'The filing catalog is incomplete.'}</p>
+        <PrimaryButton type="button" className="mt-[10px]"
+          onClick={() => setRetry(value => value + 1)}>
           Try again
-        </button>
-      </div>
+        </PrimaryButton>
+      </Notice>
     )
   }
 
   const selected = filings.find(filing => filing.filing_id === selectedId) ?? filings[0]
 
   return (
-    <div className="selector-panel">
-      <div className="selector-topline">
-        <span className="eyebrow">Filing</span>
-        <span className="case-count">
+    <div className="sticky top-5 min-w-0 rounded-[5px] border border-[#dce2dc] bg-white p-[23px]">
+      <div className="flex items-center justify-between gap-[10px]">
+        <span className="text-[.7rem] leading-[1.4] font-extrabold tracking-[.15em] text-[#55877b]
+          uppercase">Filing</span>
+        <span className="font-code text-[.72rem] text-[#687878]">
           {String(filings.findIndex(filing => filing.filing_id === selected.filing_id) + 1).padStart(2, '0')}
           {' / '}
           {String(filings.length).padStart(2, '0')}
         </span>
       </div>
-      <label htmlFor="filing-select">Company / filing year</label>
+      <label className="mt-7 mb-[9px] block text-[.78rem] font-[760]" htmlFor="filing-select">
+        Company / filing year
+      </label>
       <select
         id="filing-select"
+        className="min-h-[46px] w-full rounded-[3px] border border-[#bfcac4] bg-[#f9faf7] font-sans
+          py-[9px] pr-[31px] pl-[11px] text-[.77rem] text-[#1d3032]"
         value={selected.filing_id}
         onChange={event => {
           const filing = filings.find(candidate => candidate.filing_id === event.target.value)
@@ -125,32 +133,42 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
           </option>
         ))}
       </select>
-      <p className="selector-context">
+      <p className="mt-[14px] mb-0 font-code text-[.65rem] leading-[1.6] text-[#8b9794]
+        [overflow-wrap:anywhere]">
         {selected.filing_id} · SEC filing year {selected.filing_year}
       </p>
-      <p className="selector-context">
-        <a className="inline-link" href={selected.sec_url} target="_blank" rel="noopener noreferrer">
+      <p className="mt-[14px] mb-0 font-code text-[.65rem] leading-[1.6] text-[#8b9794]
+        [overflow-wrap:anywhere]">
+        <a className="text-[.84rem] font-[750] text-[#246a61] decoration-[1px]"
+          href={selected.sec_url} target="_blank" rel="noopener noreferrer">
           Official SEC source ↗
         </a>
       </p>
-      <div className="filing-preparation" aria-live="polite">
+      <div className="mt-[22px] border-t border-[#e4e9e5] pt-4" aria-live="polite">
         {selected.status === 'ready' ? (
-          <p>Ready to chat · verified source and index</p>
+          <p className="mt-0 mb-3 text-[.78rem] leading-normal text-[#49665d] [overflow-wrap:anywhere]">
+            Ready to chat · verified source and index
+          </p>
         ) : selected.status === 'unprepared' || selected.status === 'failed' ? (
           <>
-            <p>{selected.status === 'failed' ? selected.detail : 'This filing has not been prepared yet.'}</p>
-            <button type="button" className="button button-primary" disabled={starting !== null}
+            <p className="mt-0 mb-3 text-[.78rem] leading-normal text-[#49665d] [overflow-wrap:anywhere]">
+              {selected.status === 'failed' ? selected.detail : 'This filing has not been prepared yet.'}
+            </p>
+            <PrimaryButton type="button" className="w-full justify-center disabled:cursor-not-allowed
+              disabled:opacity-60" disabled={starting !== null}
               onClick={() => void prepare(selected)}>
               {starting === selected.filing_id ? 'Starting…'
                 : selected.status === 'failed' ? 'Retry preparation' : 'Prepare filing'}
-            </button>
+            </PrimaryButton>
           </>
         ) : (
-          <p role="status">{selected.status === 'queued' ? 'Queued' : selected.status === 'waiting_for_models'
-            ? 'Waiting for embedding model' : selected.status === 'downloading' ? 'Downloading from SEC'
-              : 'Building the index'}… This can take a while on CPU.</p>
+          <p className="mt-0 mb-3 text-[.78rem] leading-normal text-[#49665d] [overflow-wrap:anywhere]"
+            role="status">{selected.status === 'queued' ? 'Queued' : selected.status === 'waiting_for_models'
+              ? 'Waiting for embedding model' : selected.status === 'downloading' ? 'Downloading from SEC'
+                : 'Building the index'}… This can take a while on CPU.</p>
         )}
-        {prepareError && <p className="load-error" role="alert">{prepareError}</p>}
+        {prepareError && <p className="mt-0 mb-3 text-[.78rem] leading-normal text-[#9b583e]"
+          role="alert">{prepareError}</p>}
       </div>
     </div>
   )
