@@ -1,0 +1,9 @@
+@layer theme, base, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme {
+  --font-display: Georgia, "Times New Roman", serif;
+  --font-code: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
