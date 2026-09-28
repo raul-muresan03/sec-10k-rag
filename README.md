@@ -22,6 +22,7 @@ Implemented:
 - Inspect saved dev answers, evidence, and retrieval metrics in the frontend Evaluation replay
 - Prepare the six dev filings with `python3 -m etl_pipeline.filing_store` or prepare one through `ask.py`
 - Log questions, answers, retrieved chunks, latency, and Ollama metrics as JSONL
+- Run the frontend, API and Ollama together with Docker Compose; prepare a dev filing from the Chat view
 
 Not implemented:
 
@@ -29,7 +30,6 @@ Not implemented:
 - Confidence scores or similarity thresholds
 - Cross-filing, multi-company, or year-over-year answers; each query selects one filing
 - Pinecone, LangChain, cloud LLM providers, or hybrid search
-- Docker Compose
 
 ## How It Works
 
@@ -52,6 +52,54 @@ Index preparation keeps intermediate artifacts in a temporary directory rather t
 - Network access and a contact email only when obtaining SEC submissions separately
 - `nomic-embed-text` for indexing and retrieval
 - `gemma3:1b` by default for answer generation, or another installed Ollama model selected with `--model`
+
+## Docker Compose (simplest local start)
+
+Install Docker with the Compose plugin. From a clone of this repository:
+
+```bash
+docker compose up
+```
+
+Open **http://localhost:8080**. Chat lists the six manifest-pinned *dev* filings even on a clean install. Select
+one and press **Prepare filing** to download the exact SEC submission, verify its checksum and identity, and build
+its index. The UI shows download/model/indexing progress; on CPU, the first index can take a while. Two Ollama
+models (`nomic-embed-text` and `gemma3:1b`) are downloaded automatically in the background on the first start.
+They require internet access and several gigabytes of disk space. You can browse the app and Evaluation while they
+download. Chat becomes available for each filing as soon as its index is ready.
+
+Before pressing **Prepare filing**, set your real SEC contact address once (do not commit `.env`):
+
+```bash
+cp .env.example .env
+# Edit SEC_API_EMAIL in .env, then restart Compose if it was already running.
+```
+
+If you edit `.env` after starting, apply it with `docker compose up -d --force-recreate api`. The API only downloads
+the six pinned dev filings; it rejects a mismatched SHA-256 or SEC header. The 16 test questions and their filings
+are not part of this flow. Retry from the same button if a download or index build fails. Only the web port is
+exposed, bound to localhost by default; the API and Ollama are internal Compose services.
+
+Subsequent starts use the same `docker compose up` (add `-d` for background, or `--build` after code changes)
+and stop with:
+
+```bash
+docker compose down
+```
+
+The `filings` and `ollama_models` named volumes persist across `down` and image rebuilds; don't use `down -v` unless
+you intend to delete downloaded filings, indexes and models. Configure `WEB_PORT` in `.env` if port 8080 is taken.
+`GET http://localhost:8080/api/health` checks the API process; `/api/ready` reports when both Ollama models are
+available. `/api/filings` shows each filing's preparation status. To see model-pull or API errors, run
+`docker compose logs models api ollama`. The saved Evaluation replay remains independent of live preparation.
+
+Local CPU smoke on a 16-thread Ryzen 7 7435HS with 23 GiB RAM (2026-09-28): an NVDA index took about 131 seconds
+once model downloads finished; a live NVDA question took 5.18 seconds and returned five passages. During indexing,
+Ollama briefly used about 800% CPU (eight cores); after the query, the three running containers used about 1.9 GiB
+of RAM. The one-filing data volume used 17 MiB and the two-model volume 1.1 GiB; the Ollama container image itself
+occupied about 10.6 GB locally. These are observations from one machine, not a VPS sizing target.
+
+The commands below describe the alternative native Python/Vite setup.
 
 ## Setup
 
