@@ -131,10 +131,10 @@ export function ChatView() {
           <span className="text-lg leading-none" aria-hidden="true">＋</span> New chat
         </button>
         <p className="mt-auto mb-0 border-t border-[#dce2dc] pt-5 text-[.72rem] leading-[1.6]
-          text-[#6c7d76]">Answers use the filing you select above.</p>
+          text-[#6c7d76]">Each question is answered on its own. Include the details you need in follow-up questions.</p>
       </aside>
 
-      <div className="flex min-w-0 flex-col bg-white">
+      <div className="flex min-h-0 min-w-0 flex-col bg-white">
         <div className="flex min-h-[72px] items-center justify-between gap-4 border-b border-[#e7ebe7] px-8">
           <div>
             <h1 id="chat-heading" className="m-0 text-[1.03rem] font-semibold text-[#20353b]">
@@ -164,9 +164,9 @@ export function ChatView() {
               </p>
               <div className="grid grid-cols-3 gap-3" aria-label="Suggested questions">
                 {[
-                  'What does this company do?',
-                  'What were its main risks?',
-                  'How did revenue change?',
+                  'What risks does this filing highlight?',
+                  'What does it report about revenue?',
+                  'What does it say about cash flow?',
                 ].map(prompt => (
                   <button key={prompt} type="button" className="min-h-[88px] rounded-lg border
                     border-[#dce5dd] bg-[#fafbf8] px-4 py-3 text-left font-sans text-[.79rem]
