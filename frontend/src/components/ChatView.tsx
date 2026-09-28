@@ -3,10 +3,11 @@ import { postChat } from '../api'
 import type { ChatResponse, FilingSummary } from '../api'
 import {
   answerPanel, caseContent, eyebrow, explorerGrid, loadErrorTitle, loadMessage, panelHeading,
-  panelTitle, primaryButton, selectorContext,
+  panelTitle, selectorContext,
 } from '../ui'
 import { FilingSelector } from './FilingSelector'
 import { LiveAnswer } from './LiveAnswer'
+import { PrimaryButton } from './PrimaryButton'
 import { SectionHeading } from './SectionHeading'
 
 const CLIENT_TIMEOUT_MS = 125_000
@@ -164,13 +165,13 @@ export function ChatView() {
                   <div className={loadMessage} role="alert">
                     <h2 className={loadErrorTitle}>Live answer unavailable</h2>
                     <p>{message.error ?? 'The question could not be answered.'}</p>
-                    <button
+                    <PrimaryButton
                       type="button"
-                      className={`${primaryButton} mt-[10px]`}
+                      className="mt-[10px]"
                       onClick={() => void send(message.question, message.id)}
                     >
                       Retry
-                    </button>
+                    </PrimaryButton>
                   </div>
                 )}
                 {message.status === 'done' && message.answer && (

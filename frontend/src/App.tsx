@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { ChatView } from './components/ChatView'
 import { EvaluationView } from './views/EvaluationView'
-import { primaryButton, quietButton } from './ui'
 
 const REPO_URL = 'https://github.com/raul-muresan03/sec-rag-tool'
 
@@ -66,10 +65,16 @@ function App() {
               retrieved passages. The saved evaluation replay lives under Evaluation.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <a className={primaryButton} href="#chat" onClick={select('chat')}>
+              <a className="inline-flex min-h-12 items-center justify-between gap-7 rounded border
+                border-transparent bg-[#d8c29f] px-[18px] py-3 text-[.83rem] font-[750] text-[#142436]
+                no-underline transition-[background,transform] duration-200 hover:-translate-y-0.5
+                hover:bg-[#f0d5ab] motion-reduce:transition-none" href="#chat" onClick={select('chat')}>
                 Ask a question <span aria-hidden="true">↗</span>
               </a>
-              <a className={quietButton} href="#evaluation" onClick={select('evaluation')}>
+              <a className="inline-flex min-h-12 items-center justify-between gap-7 rounded border
+                border-[#60727c] bg-transparent px-[18px] py-3 text-[.83rem] font-[750] text-[#f5f2ea]
+                no-underline transition-[background,transform] duration-200 hover:-translate-y-0.5
+                hover:bg-[#27394a] motion-reduce:transition-none" href="#evaluation" onClick={select('evaluation')}>
                 Inspect saved evaluation <span aria-hidden="true">↗</span>
               </a>
             </div>

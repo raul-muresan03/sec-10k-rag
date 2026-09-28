@@ -2,14 +2,6 @@ export const eyebrow = 'text-[#55877b] text-[.7rem] font-extrabold tracking-[.15
 
 export const inlineLink = 'text-[#246a61] text-[.84rem] font-[750] decoration-[1px]'
 
-export const button = 'inline-flex min-h-12 items-center justify-between gap-7 rounded border ' +
-  'px-[18px] py-3 text-[.83rem] font-[750] no-underline transition-[background,transform] duration-200 ' +
-  'hover:-translate-y-0.5 motion-reduce:transition-none'
-
-export const primaryButton = `${button} border-transparent bg-[#d8c29f] text-[#142436] hover:bg-[#f0d5ab]`
-
-export const quietButton = `${button} border-[#60727c] bg-transparent text-[#f5f2ea] hover:bg-[#27394a]`
-
 export const sectionTitle = 'm-0 font-display text-[clamp(2rem,3.4vw,2.7rem)] font-normal'
 
 export const explorerGrid = 'grid grid-cols-[260px_minmax(0,1fr)] items-start gap-[18px]'

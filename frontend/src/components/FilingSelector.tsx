@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { fetchFilings, prepareFiling } from '../api'
 import type { FilingSummary } from '../api'
+import { PrimaryButton } from './PrimaryButton'
 import {
-  caseCount, eyebrow, inlineLink, loadErrorTitle, loadMessage, primaryButton, selectorContext,
+  caseCount, eyebrow, inlineLink, loadErrorTitle, loadMessage, selectorContext,
   selectorControl, selectorLabel, selectorPanel, selectorTopline,
 } from '../ui'
 
@@ -92,10 +93,10 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
       <div className={loadMessage} role="alert">
         <h2 className={loadErrorTitle}>Filing catalog unavailable</h2>
         <p>{error ?? 'The filing catalog is incomplete.'}</p>
-        <button type="button" className={`${primaryButton} mt-[10px]`}
+        <PrimaryButton type="button" className="mt-[10px]"
           onClick={() => setRetry(value => value + 1)}>
           Try again
-        </button>
+        </PrimaryButton>
       </div>
     )
   }
@@ -149,12 +150,12 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
             <p className="mb-3 text-[.78rem] leading-normal text-[#49665d] [overflow-wrap:anywhere]">
               {selected.status === 'failed' ? selected.detail : 'This filing has not been prepared yet.'}
             </p>
-            <button type="button" className={`${primaryButton} w-full justify-center disabled:cursor-not-allowed
-              disabled:opacity-60`} disabled={starting !== null}
+            <PrimaryButton type="button" className="w-full justify-center disabled:cursor-not-allowed
+              disabled:opacity-60" disabled={starting !== null}
               onClick={() => void prepare(selected)}>
               {starting === selected.filing_id ? 'Starting…'
                 : selected.status === 'failed' ? 'Retry preparation' : 'Prepare filing'}
-            </button>
+            </PrimaryButton>
           </>
         ) : (
           <p className="mb-3 text-[.78rem] leading-normal text-[#49665d] [overflow-wrap:anywhere]"

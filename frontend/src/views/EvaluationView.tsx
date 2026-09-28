@@ -3,11 +3,12 @@ import { AnswerPanel } from '../components/AnswerPanel'
 import { EvidencePanel } from '../components/EvidencePanel'
 import { ExampleSelector } from '../components/ExampleSelector'
 import { MetricsPanel } from '../components/MetricsPanel'
+import { PrimaryButton } from '../components/PrimaryButton'
 import { SectionHeading } from '../components/SectionHeading'
 import { loadSnapshot } from '../data'
 import type { Snapshot } from '../types'
 import {
-  caseContent, eyebrow, explorerGrid, inlineLink, loadErrorTitle, loadMessage, primaryButton,
+  caseContent, eyebrow, explorerGrid, inlineLink, loadErrorTitle, loadMessage,
   sectionTitle,
 } from '../ui'
 
@@ -47,10 +48,10 @@ export function EvaluationView() {
       <div className={loadMessage} role="alert">
         <h2 className={loadErrorTitle}>Evaluation replay unavailable</h2>
         <p>{error ?? 'The evaluation data is incomplete.'}</p>
-        <button type="button" className={`${primaryButton} mt-[10px]`}
+        <PrimaryButton type="button" className="mt-[10px]"
           onClick={() => setRetry(value => value + 1)}>
           Try again
-        </button>
+        </PrimaryButton>
       </div>
     )
   }
