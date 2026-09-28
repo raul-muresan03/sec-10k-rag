@@ -4,6 +4,8 @@ The FastAPI service answers independent questions about one of the six manifest-
 complete, filing-scoped indexes and calls Ollama for the question embedding and answer. The evaluation replay in
 `frontend/` is separate from these live responses.
 
+For the Docker Compose workflow (including the Prepare filing button), see the [root README](../README.md).
+
 ## Run
 
 From the repository root, install the pipeline, API and test dependencies:
@@ -29,9 +31,14 @@ python3 -m etl_pipeline.filing_store
 python3 -m uvicorn api.main:app --host 127.0.0.1 --port 8000 --env-file .env
 ```
 
-`GET /api/health` checks the process. `GET /api/ready` checks all six verified indexes and both Ollama models;
-it returns HTTP 503 if dependencies are missing. `GET /api/filings` lists only prepared dev filings with their
-`filing_id`, ticker, company, SEC filing year, and official SEC source URL.
+`GET /api/health` checks the process. `GET /api/ready` checks the dev manifest and both Ollama models;
+it returns HTTP 503 if models are still downloading. `GET /api/filings` lists all six dev filings, including those
+not yet downloaded, with their `filing_id`, SEC source URL, and preparation `status` and `detail`.
+`POST /api/filings/{filing_id}/prepare` queues a verified download and index build, one at a time. It returns 202;
+poll `/api/filings` for `queued`, `downloading`, `waiting_for_models`, `indexing`, `ready` or `failed`. Repeating a
+request for a queued or ready filing is safe. The raw SEC submission and prepared index persist on disk; job status
+is in process memory and an interrupted preparation can be retried. `SEC_API_EMAIL` is required for downloads.
+Only manifest-pinned dev IDs are accepted by this endpoint.
 
 ```sh
 curl http://127.0.0.1:8000/api/filings

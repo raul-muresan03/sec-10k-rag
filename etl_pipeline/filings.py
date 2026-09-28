@@ -46,6 +46,58 @@ def hash_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def catalog_filings(manifest_path: Path, split: str = "dev") -> dict[str, VerifiedFiling]:
+    manifest_path = manifest_path.resolve()
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not isinstance(manifest, dict) or manifest.get("version") != 1 or not isinstance(manifest.get("filings"), list):
+        raise ValueError("Invalid v1 corpus manifest")
+    catalog = {}
+    for entry in manifest["filings"]:
+        if not isinstance(entry, dict):
+            raise ValueError("Invalid filing in corpus manifest")
+        if entry.get("split") != split:
+            continue
+        try:
+            ticker, year, accession = entry["ticker"], entry["filing_year"], entry["accession"]
+            path, digest, url = entry["path"], entry["sha256"], entry["sec_url"]
+        except KeyError as error:
+            raise ValueError(f"Missing manifest field: {error.args[0]}") from error
+        expected = f"data/sec-edgar-filings/{ticker}/10-K/{accession}/full-submission.txt"
+        if (
+            not isinstance(ticker, str) or type(year) is not int
+            or not isinstance(accession, str) or not ACCESSION.fullmatch(accession)
+            or path != expected or not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest)
+            or not isinstance(url, str)
+        ):
+            raise ValueError(f"Invalid manifest entry for {ticker} {year}")
+        filing = VerifiedFiling(ticker, year, split, accession, manifest_path.parent.parent / path, digest, url)
+        selected_id = filing_id(filing)
+        if selected_id in catalog:
+            raise ValueError(f"Duplicate filing ID: {selected_id}")
+        catalog[selected_id] = filing
+    if not catalog:
+        raise ValueError(f"No {split} filings in corpus manifest")
+    return catalog
+
+
+def verify_file(filing: VerifiedFiling, path: Path) -> None:
+    if hash_file(path) != filing.sha256:
+        raise ValueError(f"Filing SHA-256 mismatch for {filing.ticker} {filing.year}: {path}")
+    with path.open("r", encoding="utf-8", errors="replace") as source:
+        header = source.read(16_384)
+    fields = {
+        label: re.search(rf"^{label}:\s*([^\r\n]+)", header, flags=re.MULTILINE)
+        for label in ("ACCESSION NUMBER", "CONFORMED SUBMISSION TYPE", "FILED AS OF DATE")
+    }
+    if (
+        any(match is None for match in fields.values())
+        or fields["ACCESSION NUMBER"].group(1).strip() != filing.accession
+        or fields["CONFORMED SUBMISSION TYPE"].group(1).strip() != "10-K"
+        or fields["FILED AS OF DATE"].group(1).strip()[:4] != str(filing.year)
+    ):
+        raise ValueError(f"SEC header accession/form/filing year mismatch for {filing.ticker} {filing.year}: {path}")
+
+
 def verify_filings(
     manifest_path: Path, keys: set[tuple[str, int]], split: str,
 ) -> tuple[int, str, dict[tuple[str, int], VerifiedFiling]]:
@@ -92,25 +144,12 @@ def verify_filings(
         path = root / relative_path
         if not path.is_file():
             raise ValueError(f"Filing missing for {ticker} {year}: {path}")
-        if hash_file(path) != expected_hash:
-            raise ValueError(f"Filing SHA-256 mismatch for {ticker} {year}: {path}")
-        with path.open("r", encoding="utf-8", errors="replace") as source:
-            header = source.read(16_384)
-        fields = {
-            label: re.search(rf"^{label}:\s*([^\r\n]+)", header, flags=re.MULTILINE)
-            for label in ("ACCESSION NUMBER", "CONFORMED SUBMISSION TYPE", "FILED AS OF DATE")
-        }
-        if (
-            any(match is None for match in fields.values())
-            or fields["ACCESSION NUMBER"].group(1).strip() != accession
-            or fields["CONFORMED SUBMISSION TYPE"].group(1).strip() != "10-K"
-            or fields["FILED AS OF DATE"].group(1).strip()[:4] != str(year)
-        ):
-            raise ValueError(f"SEC header accession/form/filing year mismatch for {ticker} {year}: {path}")
         sec_url = entry.get("sec_url")
         if sec_url is not None and (not isinstance(sec_url, str) or not SEC_URL.fullmatch(sec_url)):
             raise ValueError(f"Invalid SEC source URL for {ticker} {year}")
-        selected[key] = VerifiedFiling(ticker, year, split, accession, path, expected_hash, sec_url)
+        filing = VerifiedFiling(ticker, year, split, accession, path, expected_hash, sec_url)
+        verify_file(filing, path)
+        selected[key] = filing
 
     missing = keys - selected.keys()
     if missing:

@@ -4,7 +4,18 @@ export interface FilingSummary {
   company: string
   filing_year: number
   sec_url: string
+  status: 'unprepared' | 'queued' | 'downloading' | 'waiting_for_models' | 'indexing' | 'ready' | 'failed'
+  detail: string | null
 }
+
+export interface PreparationResult {
+  status: FilingSummary['status']
+  detail: string | null
+}
+
+const filingStatuses: FilingSummary['status'][] = [
+  'unprepared', 'queued', 'downloading', 'waiting_for_models', 'indexing', 'ready', 'failed',
+]
 
 export interface RetrievedChunk {
   rank: number
@@ -63,6 +74,8 @@ function isFiling(value: unknown): value is FilingSummary {
     && typeof filing.company === 'string'
     && typeof filing.filing_year === 'number'
     && typeof filing.sec_url === 'string'
+    && typeof filing.status === 'string' && filingStatuses.includes(filing.status as FilingSummary['status'])
+    && (filing.detail === null || typeof filing.detail === 'string')
 }
 
 function isStageTimes(value: unknown): value is StageTimes {
@@ -98,9 +111,24 @@ export async function fetchFilings(signal: AbortSignal): Promise<FilingSummary[]
     throw new ApiError(response.status, 'The filing catalog is incomplete or uses an unsupported format.')
   }
   if (data.length === 0) {
-    throw new ApiError(response.status, 'No verified filings are prepared yet. Prepare the dev indexes and try again.')
+    throw new ApiError(response.status, 'No dev filings are listed in the catalog.')
   }
   return data
+}
+
+export async function prepareFiling(filingId: string): Promise<PreparationResult> {
+  const response = await fetch(`/api/filings/${encodeURIComponent(filingId)}/prepare`, { method: 'POST' })
+  if (!response.ok) throw new ApiError(response.status, await readDetail(response))
+  const data: unknown = await response.json()
+  if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+    throw new ApiError(response.status, 'The preparation status is invalid.')
+  }
+  const result = data as Record<string, unknown>
+  if (typeof result.status !== 'string' || !filingStatuses.includes(result.status as FilingSummary['status'])
+    || (result.detail !== null && typeof result.detail !== 'string')) {
+    throw new ApiError(response.status, 'The preparation status is invalid.')
+  }
+  return result as unknown as PreparationResult
 }
 
 export async function postChat(filingId: string, question: string, signal: AbortSignal): Promise<ChatResponse> {

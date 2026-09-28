@@ -27,7 +27,10 @@ export function ChatView() {
   useEffect(() => () => abortRef.current?.abort(), [])
 
   const handleSelect = (next: FilingSummary) => {
-    if (next.filing_id === filing?.filing_id) return
+    if (next.filing_id === filing?.filing_id) {
+      setFiling(previous => previous?.status === next.status && previous.detail === next.detail ? previous : next)
+      return
+    }
     abortRef.current?.abort()
     abortRef.current = null
     sessionRef.current += 1
@@ -39,7 +42,7 @@ export function ChatView() {
   const send = async (question: string, messageId?: number) => {
     const target = filing
     const text = question.trim()
-    if (target === null || text === '' || pending) return
+    if (target === null || target.status !== 'ready' || text === '' || pending) return
     const session = sessionRef.current
     const id = messageId ?? ++messageRef.current
     if (messageId === undefined) {
@@ -91,7 +94,7 @@ export function ChatView() {
     void send(text)
   }
 
-  const canSend = filing !== null && !pending && draft.trim() !== ''
+  const canSend = filing?.status === 'ready' && !pending && draft.trim() !== ''
 
   return (
     <section aria-labelledby="chat-heading">
@@ -123,10 +126,15 @@ export function ChatView() {
               rows={3}
               maxLength={2000}
               value={draft}
-              disabled={filing === null || pending}
+              disabled={filing?.status !== 'ready' || pending}
               placeholder="How does the filing describe revenue recognition?"
               onChange={event => setDraft(event.target.value)}
             />
+            {filing && filing.status !== 'ready' && (
+              <p className="selector-context" role="status">
+                Prepare {filing.company} from the filing selector before asking questions.
+              </p>
+            )}
             <div className="selector-nav">
               <span>{draft.trim().length}/2000</span>
               <button type="submit" disabled={!canSend}>

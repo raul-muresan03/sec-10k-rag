@@ -12,7 +12,9 @@ from tempfile import TemporaryDirectory
 import etl_pipeline
 from etl_pipeline.chunker import EMBEDDING_MODEL
 from etl_pipeline.embedding_model import embedding_model_digest
-from etl_pipeline.filings import MANIFEST_PATH, SEC_URL, VerifiedFiling, filing_id, hash_file, verify_filings
+from etl_pipeline.filings import (
+    MANIFEST_PATH, SEC_URL, VerifiedFiling, catalog_filings, filing_id, hash_file, verify_filings,
+)
 from etl_pipeline.indexing import INDEX_FILENAME, build_index, index_configuration
 from etl_pipeline.vector_store import load_index
 
@@ -46,6 +48,9 @@ class FilingIndexStore:
     def __init__(self, manifest_path: Path = MANIFEST_PATH, index_root: Path | None = None):
         self.manifest_path = manifest_path
         self.index_root = index_root if index_root is not None else etl_pipeline.DATA_DIR / "indexes"
+
+    def catalog(self) -> dict[str, VerifiedFiling]:
+        return catalog_filings(self.manifest_path)
 
     def dev_filings(self) -> tuple[str, dict[tuple[str, int], VerifiedFiling]]:
         manifest = json.loads(self.manifest_path.read_text(encoding="utf-8"))
@@ -104,9 +109,21 @@ class FilingIndexStore:
         )
 
     def prepared(self) -> list[PreparedFiling]:
-        _, filings = self.dev_filings()
-        config = _configuration()
-        return [ready for filing in filings.values() if (ready := self._load(filing, config)) is not None]
+        available = []
+        config = None
+        for filing in self.catalog().values():
+            if not filing.path.is_file():
+                continue
+            try:
+                _, verified = self.verified(filing.ticker, filing.year)
+                if config is None:
+                    config = _configuration()
+                ready = self._load(verified, config)
+            except (OSError, ValueError):
+                continue
+            if ready is not None:
+                available.append(ready)
+        return available
 
     def resolve(self, ticker: str, year: int) -> PreparedFiling:
         _, filing = self.verified(ticker, year)
