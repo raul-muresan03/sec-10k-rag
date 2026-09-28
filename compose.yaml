@@ -1,0 +1,60 @@
+services:
+  web:
+    build: ./frontend
+    ports:
+      - "${WEB_BIND_ADDRESS:-127.0.0.1}:${WEB_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped
+
+  api:
+    build: .
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_TIMEOUT_SECONDS: ${OLLAMA_TIMEOUT_SECONDS:-120}
+      SEC_API_EMAIL: ${SEC_API_EMAIL:-}
+      EMBEDDING_BATCH_SIZE: ${EMBEDDING_BATCH_SIZE:-512}
+      RAG_MODEL: ${RAG_MODEL:-gemma3:1b}
+      RAG_TOP_N: ${RAG_TOP_N:-5}
+      RAG_MAX_CONCURRENT_GENERATIONS: ${RAG_MAX_CONCURRENT_GENERATIONS:-1}
+    volumes:
+      - filings:/app/data
+    depends_on:
+      ollama:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://localhost:8000/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama@sha256:a6149234667efc71d37766d61c1a16f24c33e4cd7a0bf4125c44a7e47e2419c4
+    volumes:
+      - ollama_models:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  models:
+    image: ollama/ollama@sha256:a6149234667efc71d37766d61c1a16f24c33e4cd7a0bf4125c44a7e47e2419c4
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - 'ollama show nomic-embed-text >/dev/null 2>&1 || ollama pull nomic-embed-text;
+         ollama show "$$RAG_MODEL" >/dev/null 2>&1 || ollama pull "$$RAG_MODEL"'
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      RAG_MODEL: ${RAG_MODEL:-gemma3:1b}
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: on-failure
+
+volumes:
+  filings:
+  ollama_models:
