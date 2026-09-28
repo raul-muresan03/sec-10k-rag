@@ -12,8 +12,6 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [retry, setRetry] = useState(0)
-  const [starting, setStarting] = useState<string | null>(null)
-  const [prepareError, setPrepareError] = useState<string | null>(null)
   const attemptedRef = useRef(new Set<string>())
   const preparingRef = useRef(new Set<string>())
   const selectionRef = useRef({ selectedId, onSelect })
@@ -33,7 +31,6 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
     fetchFilings(controller.signal)
       .then(data => {
         if (controller.signal.aborted) return
-        setPrepareError(null)
         update(data)
       })
       .catch(reason => {
@@ -58,11 +55,10 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
     const timer = setInterval(() => {
       void fetchFilings(controller.signal).then(data => {
         if (controller.signal.aborted) return
-        setPrepareError(null)
         update(data)
       }).catch(() => {
         if (controller.signal.aborted) return
-        setPrepareError('We couldn’t refresh this filing. Please try again.')
+        // The next poll can still pick up preparation progress.
       })
     }, 4000)
     return () => { controller.abort(); clearInterval(timer) }
@@ -73,8 +69,6 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
   const prepare = async (selected: FilingSummary) => {
     if (preparingRef.current.has(selected.filing_id)) return
     preparingRef.current.add(selected.filing_id)
-    setStarting(selected.filing_id)
-    setPrepareError(null)
     try {
       const result = await prepareFiling(selected.filing_id)
       setFilings(previous => previous?.map(filing =>
@@ -84,12 +78,9 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
         selectionRef.current.onSelect({ ...selected, ...result })
       }
     } catch {
-      if (selectionRef.current.selectedId === selected.filing_id) {
-        setPrepareError('We couldn’t open this filing. Please try again.')
-      }
+      // A failed request leaves the selected filing unavailable.
     } finally {
       preparingRef.current.delete(selected.filing_id)
-      setStarting(previous => previous === selected.filing_id ? null : previous)
     }
   }
 
@@ -132,7 +123,6 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
         onChange={event => {
           const filing = filings.find(candidate => candidate.filing_id === event.target.value)
           if (filing) {
-            setPrepareError(null)
             onSelect(filing)
           }
         }}
@@ -152,28 +142,6 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
           href={selected.sec_url} target="_blank" rel="noopener noreferrer">
           View original on SEC.gov ↗
         </a>
-      </div>
-      <div className="mt-4 text-[.76rem] leading-[1.6] text-[#5c7065]" aria-live="polite">
-        {selected.status === 'ready' ? (
-          <p className="mt-0 mb-0 flex items-center gap-2">
-            <span className="size-2 rounded-full bg-[#62a67d]" aria-hidden="true" /> Ready for questions
-          </p>
-        ) : selected.status === 'failed' || prepareError ? (
-          <>
-            <p className="mt-0 mb-3 text-[#9b583e]" role="alert">
-              We couldn’t open this filing. Please try again.
-            </p>
-            <button type="button" className="rounded-md border border-[#c7d9ca] bg-white px-3 py-2
-              font-sans text-[.75rem] font-semibold text-[#2e6956] hover:bg-[#edf5ee]"
-              disabled={starting === selected.filing_id}
-              onClick={() => {
-                if (selected.status === 'unprepared' || selected.status === 'failed') void prepare(selected)
-                else setRetry(value => value + 1)
-              }}>Try again</button>
-          </>
-        ) : (
-          <p className="mt-0" role="status">Opening this filing… This can take a few minutes.</p>
-        )}
       </div>
     </div>
   )

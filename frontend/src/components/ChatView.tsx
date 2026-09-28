@@ -45,16 +45,6 @@ export function ChatView() {
     setPending(false)
   }
 
-  const startNewChat = () => {
-    abortRef.current?.abort()
-    abortRef.current = null
-    sessionRef.current += 1
-    setMessages([])
-    setDraft('')
-    setPending(false)
-    questionRef.current?.focus()
-  }
-
   const send = async (question: string, messageId?: number) => {
     const target = filing
     const text = question.trim()
@@ -124,16 +114,7 @@ export function ChatView() {
           </p>
         </div>
         <FilingSelector selectedId={filing?.filing_id ?? null} onSelect={handleSelect} />
-        <button type="button" className="mt-5 flex min-h-11 items-center gap-2 rounded-md border
-          border-[#cbd8d1] bg-white px-4 font-sans text-[.8rem] font-semibold text-[#2f5e55]
-          hover:bg-[#e6eee8] disabled:cursor-not-allowed disabled:opacity-50"
-          onClick={startNewChat} disabled={messages.length === 0 && draft === ''}>
-          <span className="text-lg leading-none" aria-hidden="true">＋</span> New chat
-        </button>
-        <p className="mt-auto mb-0 border-t border-[#dce2dc] pt-5 text-[.72rem] leading-[1.6]
-          text-[#6c7d76]">Each question is answered on its own. Include the details you need in follow-up questions.</p>
       </aside>
-
       <div className="flex min-h-0 min-w-0 flex-col bg-white">
         <div className="flex min-h-[72px] items-center justify-between gap-4 border-b border-[#e7ebe7] px-8">
           <div>
