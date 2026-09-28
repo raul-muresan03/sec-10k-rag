@@ -1,33 +1,4 @@
-.selector-panel { position: sticky; top: 20px; padding: 23px; border: 1px solid #dce2dc; border-radius: 5px;
-  background: #fff; }
-.selector-topline, .selector-nav, .selector-status { display: flex; align-items: center;
-  justify-content: space-between; gap: 10px; }
-.case-count { color: #687878; font-family: ui-monospace, monospace; font-size: .72rem; }
-.selector-panel label { display: block; margin: 28px 0 9px; font-size: .78rem; font-weight: 760; }
-.selector-panel select { width: 100%; min-height: 46px; padding: 9px 31px 9px 11px; border: 1px solid #bfcac4;
-  border-radius: 3px; background: #f9faf7; color: #1d3032; font-size: .77rem; }
-.selector-nav { margin: 13px 0 24px; }
-.selector-nav button { padding: 5px 0; border: 0; background: none; color: #2e7565; font-size: .74rem;
-  font-weight: 750; }
-.selector-nav button:hover { text-decoration: underline; text-underline-offset: 4px; }
-.selector-status { justify-content: flex-start; flex-wrap: wrap; padding-top: 21px; border-top: 1px solid #e4e9e5;
-  color: #637273; font-size: .7rem; }
-.filing-preparation { margin-top: 22px; padding-top: 16px; border-top: 1px solid #e4e9e5; }
-.filing-preparation p { margin: 0 0 12px; color: #49665d; font-size: .78rem; line-height: 1.5;
-  overflow-wrap: anywhere; }
-.filing-preparation button { width: 100%; justify-content: center; }
-.filing-preparation button:disabled { cursor: not-allowed; opacity: .6; }
-.filing-preparation .load-error { color: #9b583e; }
-
 .evidence-panel { min-width: 0; border: 1px solid #dce2dc; border-radius: 5px; background: #fff; }
-.chat-form label { display: block; margin-bottom: 12px; color: #385450; font-size: .82rem; font-weight: 750; }
-.chat-form textarea { display: block; width: 100%; min-height: 120px; padding: 14px; border: 1px solid #bfcac4;
-  border-radius: 3px; background: #f9faf7; color: #1d3032; font: inherit; line-height: 1.6; resize: vertical; }
-.chat-form textarea::placeholder { color: #697978; }
-.chat-form .selector-nav { margin: 14px 0 0; color: #65737b; font-size: .75rem; }
-.chat-form .selector-nav button { min-height: 44px; padding: 8px 18px; border: 1px solid #bdd6cc;
-  border-radius: 3px; background: #e9f2ed; color: #205f50; }
-.chat-form .selector-nav button:disabled { cursor: not-allowed; opacity: .55; }
 .panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 25px;
   margin-bottom: 30px; }
 .panel-heading h3 { max-width: 650px; margin: 0; font-family: Georgia, serif;

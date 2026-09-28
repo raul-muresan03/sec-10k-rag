@@ -1,6 +1,8 @@
 import { exampleLabel, reviewLabel, verdictLabel } from '../labels'
 import type { Example } from '../types'
-import { eyebrow, selectorContext } from '../ui'
+import {
+  caseCount, eyebrow, selectorContext, selectorControl, selectorLabel, selectorPanel, selectorTopline,
+} from '../ui'
 
 interface Props {
   examples: Example[]
@@ -11,28 +13,34 @@ interface Props {
 export function ExampleSelector({ examples, selected, onSelect }: Props) {
   const index = examples.findIndex(example => example.id === selected.id)
   return (
-    <div className="selector-panel">
-      <div className="selector-topline">
+    <div className={selectorPanel}>
+      <div className={selectorTopline}>
         <span className={eyebrow}>Case file</span>
-        <span className="case-count">
+        <span className={caseCount}>
           {String(index + 1).padStart(2, '0')} / {String(examples.length).padStart(2, '0')}
         </span>
       </div>
-      <label htmlFor="case-select">Choose a saved question</label>
-      <select id="case-select" value={selected.id} onChange={event => onSelect(event.target.value)}>
+      <label className={selectorLabel} htmlFor="case-select">Choose a saved question</label>
+      <select className={selectorControl} id="case-select" value={selected.id}
+        onChange={event => onSelect(event.target.value)}>
         {examples.map(example => (
           <option key={example.id} value={example.id}>{exampleLabel(example)}</option>
         ))}
       </select>
-      <div className="selector-nav">
-        <button type="button" onClick={() => onSelect(examples[(index - 1 + examples.length) % examples.length].id)}>
+      <div className="mt-[13px] mb-6 flex items-center justify-between gap-[10px]">
+        <button type="button" className="border-0 bg-transparent px-0 py-[5px] text-[.74rem]
+          font-[750] text-[#2e7565] hover:underline hover:underline-offset-4"
+          onClick={() => onSelect(examples[(index - 1 + examples.length) % examples.length].id)}>
           <span aria-hidden="true">←</span> Previous
         </button>
-        <button type="button" onClick={() => onSelect(examples[(index + 1) % examples.length].id)}>
+        <button type="button" className="border-0 bg-transparent px-0 py-[5px] text-[.74rem]
+          font-[750] text-[#2e7565] hover:underline hover:underline-offset-4"
+          onClick={() => onSelect(examples[(index + 1) % examples.length].id)}>
           Next <span aria-hidden="true">→</span>
         </button>
       </div>
-      <div className="selector-status">
+      <div className="flex flex-wrap items-center justify-start gap-[10px] border-t border-[#e4e9e5]
+        pt-[21px] text-[.7rem] text-[#637273]">
         <span className={`verdict-chip ${selected.review.verdict ?? 'unreviewed'}`}>
           {verdictLabel(selected.review)}
         </span>

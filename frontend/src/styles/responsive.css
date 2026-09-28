@@ -1,5 +1,4 @@
 @media (max-width: 1000px) {
-  .explorer-grid { grid-template-columns: 220px minmax(0, 1fr); }
   .metric-card { padding: 20px; }
   .answer-columns { grid-template-columns: 1fr; }
 }
@@ -11,7 +10,6 @@
   .insight-banner { align-items: flex-start; flex-wrap: wrap; gap: 12px; }
   .insight-banner p { flex-basis: calc(100% - 58px); }
   .insight-banner button { margin-left: 37px; }
-  .selector-panel { position: static; }
   .method-grid { grid-template-columns: 1fr; gap: 26px; }
 }
 

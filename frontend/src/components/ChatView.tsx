@@ -119,14 +119,16 @@ export function ChatView() {
           />
         </div>
         <div className={caseContent}>
-          <form className={`${answerPanel} chat-form`} aria-label="Ask the selected filing" onSubmit={onSubmit}>
-            <label htmlFor="chat-question">
+          <form className={answerPanel} aria-label="Ask the selected filing" onSubmit={onSubmit}>
+            <label className="mb-3 block text-[.82rem] font-[750] text-[#385450]" htmlFor="chat-question">
               {filing === null
                 ? 'Question'
                 : `Question about ${filing.company} ${filing.filing_year}`}
             </label>
             <textarea
               id="chat-question"
+              className="block min-h-[120px] w-full resize-y rounded-[3px] border border-[#bfcac4]
+                bg-[#f9faf7] p-[14px] leading-[1.6] text-[#1d3032] placeholder:text-[#697978]"
               rows={3}
               maxLength={2000}
               value={draft}
@@ -139,9 +141,13 @@ export function ChatView() {
                 Prepare {filing.company} from the filing selector before asking questions.
               </p>
             )}
-            <div className="selector-nav">
+            <div className="mt-[14px] flex items-center justify-between gap-[10px]
+              text-[.75rem] text-[#65737b]">
               <span>{draft.trim().length}/2000</span>
-              <button type="submit" disabled={!canSend}>
+              <button type="submit" className="min-h-11 rounded-[3px] border border-[#bdd6cc]
+                bg-[#e9f2ed] px-[18px] py-2 text-[.74rem] font-[750] text-[#205f50]
+                hover:underline hover:underline-offset-4 disabled:cursor-not-allowed disabled:opacity-55"
+                disabled={!canSend}>
                 {pending ? 'Waiting for the model…' : 'Send →'}
               </button>
             </div>

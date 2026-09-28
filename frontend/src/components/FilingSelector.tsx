@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { fetchFilings, prepareFiling } from '../api'
 import type { FilingSummary } from '../api'
-import { eyebrow, inlineLink, loadErrorTitle, loadMessage, primaryButton, selectorContext } from '../ui'
+import {
+  caseCount, eyebrow, inlineLink, loadErrorTitle, loadMessage, primaryButton, selectorContext,
+  selectorControl, selectorLabel, selectorPanel, selectorTopline,
+} from '../ui'
 
 interface Props {
   selectedId: string | null
@@ -100,18 +103,19 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
   const selected = filings.find(filing => filing.filing_id === selectedId) ?? filings[0]
 
   return (
-    <div className="selector-panel">
-      <div className="selector-topline">
+    <div className={selectorPanel}>
+      <div className={selectorTopline}>
         <span className={eyebrow}>Filing</span>
-        <span className="case-count">
+        <span className={caseCount}>
           {String(filings.findIndex(filing => filing.filing_id === selected.filing_id) + 1).padStart(2, '0')}
           {' / '}
           {String(filings.length).padStart(2, '0')}
         </span>
       </div>
-      <label htmlFor="filing-select">Company / filing year</label>
+      <label className={selectorLabel} htmlFor="filing-select">Company / filing year</label>
       <select
         id="filing-select"
+        className={selectorControl}
         value={selected.filing_id}
         onChange={event => {
           const filing = filings.find(candidate => candidate.filing_id === event.target.value)
@@ -135,12 +139,16 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
           Official SEC source ↗
         </a>
       </p>
-      <div className="filing-preparation" aria-live="polite">
+      <div className="mt-[22px] border-t border-[#e4e9e5] pt-4" aria-live="polite">
         {selected.status === 'ready' ? (
-          <p>Ready to chat · verified source and index</p>
+          <p className="mb-3 text-[.78rem] leading-normal text-[#49665d] [overflow-wrap:anywhere]">
+            Ready to chat · verified source and index
+          </p>
         ) : selected.status === 'unprepared' || selected.status === 'failed' ? (
           <>
-            <p>{selected.status === 'failed' ? selected.detail : 'This filing has not been prepared yet.'}</p>
+            <p className="mb-3 text-[.78rem] leading-normal text-[#49665d] [overflow-wrap:anywhere]">
+              {selected.status === 'failed' ? selected.detail : 'This filing has not been prepared yet.'}
+            </p>
             <button type="button" className={`${primaryButton} w-full justify-center disabled:cursor-not-allowed
               disabled:opacity-60`} disabled={starting !== null}
               onClick={() => void prepare(selected)}>
@@ -149,11 +157,13 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
             </button>
           </>
         ) : (
-          <p role="status">{selected.status === 'queued' ? 'Queued' : selected.status === 'waiting_for_models'
-            ? 'Waiting for embedding model' : selected.status === 'downloading' ? 'Downloading from SEC'
-              : 'Building the index'}… This can take a while on CPU.</p>
+          <p className="mb-3 text-[.78rem] leading-normal text-[#49665d] [overflow-wrap:anywhere]"
+            role="status">{selected.status === 'queued' ? 'Queued' : selected.status === 'waiting_for_models'
+              ? 'Waiting for embedding model' : selected.status === 'downloading' ? 'Downloading from SEC'
+                : 'Building the index'}… This can take a while on CPU.</p>
         )}
-        {prepareError && <p className="load-error" role="alert">{prepareError}</p>}
+        {prepareError && <p className="mb-3 text-[.78rem] leading-normal text-[#9b583e]"
+          role="alert">{prepareError}</p>}
       </div>
     </div>
   )
