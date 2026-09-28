@@ -1,5 +1,6 @@
 import type { Snapshot } from '../types'
-import { badge, eyebrow, sectionCaption, sectionHeading, sectionTitle } from '../ui'
+import { badge, eyebrow } from '../ui'
+import { SectionHeading } from './SectionHeading'
 
 interface Props {
   snapshot: Snapshot
@@ -14,16 +15,8 @@ export function MetricsPanel({ snapshot }: Props) {
   return (
     <section className="border-b border-[#d8deda] pt-[75px] pb-[82px]"
       aria-labelledby="metrics-heading" id="results">
-      <div className={sectionHeading}>
-        <div>
-          <p className={`${eyebrow} mb-2`}>01 / Measured behavior</p>
-          <h2 id="metrics-heading" className={sectionTitle}>What the evaluation found</h2>
-        </div>
-        <p className={sectionCaption}>
-          {dataset.questions} dev questions · {dataset.answerable} answerable · {dataset.no_answer} no-answer ·{' '}
-          {dataset.filings} filings
-        </p>
-      </div>
+      <SectionHeading id="metrics-heading" eyebrow="01 / Measured behavior" title="What the evaluation found"
+        caption={`${dataset.questions} dev questions · ${dataset.answerable} answerable · ${dataset.no_answer} no-answer · ${dataset.filings} filings`} />
 
       <div className="grid grid-cols-4 gap-3"
         aria-label="Strict retrieval metrics">

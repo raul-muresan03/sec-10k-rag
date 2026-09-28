@@ -3,11 +3,12 @@ import { AnswerPanel } from '../components/AnswerPanel'
 import { EvidencePanel } from '../components/EvidencePanel'
 import { ExampleSelector } from '../components/ExampleSelector'
 import { MetricsPanel } from '../components/MetricsPanel'
+import { SectionHeading } from '../components/SectionHeading'
 import { loadSnapshot } from '../data'
 import type { Snapshot } from '../types'
 import {
   caseContent, eyebrow, explorerGrid, inlineLink, loadErrorTitle, loadMessage, primaryButton,
-  sectionCaption, sectionHeading, sectionTitle,
+  sectionTitle,
 } from '../ui'
 
 const REPO_URL = 'https://github.com/raul-muresan03/sec-rag-tool'
@@ -59,15 +60,9 @@ export function EvaluationView() {
       <MetricsPanel snapshot={snapshot} />
       <section className="pt-[78px] pb-[90px]" id="evaluation-cases"
         aria-labelledby="explorer-heading">
-        <div className={sectionHeading}>
-          <div>
-            <p className={`${eyebrow} mb-2`}>02 / Saved replay — not live answers</p>
-            <h2 id="explorer-heading" className={sectionTitle}>Look past the score.</h2>
-          </div>
-          <p className={sectionCaption}>
-            {snapshot.examples.length} selected dev cases · Successes, refusals and failures
-          </p>
-        </div>
+        <SectionHeading id="explorer-heading" eyebrow="02 / Saved replay — not live answers"
+          title="Look past the score."
+          caption={`${snapshot.examples.length} selected dev cases · Successes, refusals and failures`} />
         <div className="mb-5 flex items-center gap-5 rounded border border-[#c9d6cb] bg-[#e6eee6]
           px-6 py-[18px]">
           <span className="font-display text-[2.4rem] leading-none text-[#357b65]" aria-hidden="true">≠</span>

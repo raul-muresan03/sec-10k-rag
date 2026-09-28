@@ -1,6 +1,7 @@
-import { reviewLabel, verdictLabel } from '../labels'
+import { reviewLabel } from '../labels'
 import type { Example } from '../types'
-import { answerPanel, answerText, eyebrow, panelHeading, panelTitle, verdictBadge } from '../ui'
+import { answerPanel, answerText, eyebrow, panelHeading, panelTitle } from '../ui'
+import { VerdictBadge } from './VerdictBadge'
 
 interface Props {
   example: Example
@@ -15,9 +16,7 @@ export function AnswerPanel({ example }: Props) {
           <p className={`${eyebrow} mb-[13px]`}>Question / {example.id}</p>
           <h3 id="answer-heading" className={panelTitle} aria-live="polite">{example.question}</h3>
         </div>
-        <span className={`${verdictBadge(review.verdict)} mt-[3px] shrink-0`}>
-          {verdictLabel(review)}
-        </span>
+        <VerdictBadge review={review} className="mt-[3px] shrink-0" />
       </div>
 
       <div className="grid grid-cols-2 gap-3">

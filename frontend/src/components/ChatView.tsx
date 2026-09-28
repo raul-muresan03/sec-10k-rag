@@ -3,10 +3,11 @@ import { postChat } from '../api'
 import type { ChatResponse, FilingSummary } from '../api'
 import {
   answerPanel, caseContent, eyebrow, explorerGrid, loadErrorTitle, loadMessage, panelHeading,
-  panelTitle, primaryButton, sectionCaption, sectionHeading, sectionTitle, selectorContext,
+  panelTitle, primaryButton, selectorContext,
 } from '../ui'
 import { FilingSelector } from './FilingSelector'
 import { LiveAnswer } from './LiveAnswer'
+import { SectionHeading } from './SectionHeading'
 
 const CLIENT_TIMEOUT_MS = 125_000
 
@@ -102,15 +103,8 @@ export function ChatView() {
 
   return (
     <section aria-labelledby="chat-heading">
-      <div className={sectionHeading}>
-        <div>
-          <p className={`${eyebrow} mb-2`}>01 / Live filing chat</p>
-          <h2 id="chat-heading" className={sectionTitle}>Ask a verified filing.</h2>
-        </div>
-        <p className={sectionCaption}>
-          Each question is independent. Refreshing the page clears these messages.
-        </p>
-      </div>
+      <SectionHeading id="chat-heading" eyebrow="01 / Live filing chat" title="Ask a verified filing."
+        caption="Each question is independent. Refreshing the page clears these messages." />
       <div className={explorerGrid}>
         <div>
           <FilingSelector

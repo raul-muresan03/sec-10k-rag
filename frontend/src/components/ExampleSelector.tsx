@@ -1,8 +1,9 @@
-import { exampleLabel, reviewLabel, verdictLabel } from '../labels'
+import { exampleLabel, reviewLabel } from '../labels'
 import type { Example } from '../types'
 import {
-  caseCount, eyebrow, selectorContext, selectorControl, selectorLabel, selectorPanel, selectorTopline, verdictBadge,
+  caseCount, eyebrow, selectorContext, selectorControl, selectorLabel, selectorPanel, selectorTopline,
 } from '../ui'
+import { VerdictBadge } from './VerdictBadge'
 
 interface Props {
   examples: Example[]
@@ -41,9 +42,7 @@ export function ExampleSelector({ examples, selected, onSelect }: Props) {
       </div>
       <div className="flex flex-wrap items-center justify-start gap-[10px] border-t border-[#e4e9e5]
         pt-[21px] text-[.7rem] text-[#637273]">
-        <span className={verdictBadge(selected.review.verdict)}>
-          {verdictLabel(selected.review)}
-        </span>
+        <VerdictBadge review={selected.review} />
         <span>{reviewLabel(selected.review)}</span>
       </div>
       <p className={selectorContext}>

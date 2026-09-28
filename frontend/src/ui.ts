@@ -1,5 +1,3 @@
-import type { Verdict } from './types'
-
 export const eyebrow = 'text-[#55877b] text-[.7rem] font-extrabold tracking-[.15em] leading-[1.4] uppercase'
 
 export const inlineLink = 'text-[#246a61] text-[.84rem] font-[750] decoration-[1px]'
@@ -12,11 +10,7 @@ export const primaryButton = `${button} border-transparent bg-[#d8c29f] text-[#1
 
 export const quietButton = `${button} border-[#60727c] bg-transparent text-[#f5f2ea] hover:bg-[#27394a]`
 
-export const sectionHeading = 'mb-6 flex items-end justify-between gap-6'
-
 export const sectionTitle = 'm-0 font-display text-[clamp(2rem,3.4vw,2.7rem)] font-normal'
-
-export const sectionCaption = 'm-0 max-w-[330px] text-right text-[.8rem] leading-[1.6] text-[#65737b]'
 
 export const explorerGrid = 'grid grid-cols-[260px_minmax(0,1fr)] items-start gap-[18px]'
 
@@ -46,17 +40,6 @@ export const loadErrorTitle = 'font-display font-normal'
 
 export const badge = 'inline-flex w-max max-w-full items-center rounded-[3px] px-[10px] py-[7px] ' +
   'text-[.7rem] font-extrabold tracking-[.035em] uppercase'
-
-const verdictColors = {
-  pass: 'bg-[#e1f2ea] text-[#196457]',
-  partial: 'bg-[#fff1d9] text-[#855721]',
-  incorrect: 'bg-[#fde7e1] text-[#a14335]',
-  unreviewed: 'bg-[#eaeef0] text-[#59636b]',
-}
-
-export function verdictBadge(verdict: Verdict): string {
-  return `${badge} ${verdictColors[verdict ?? 'unreviewed']}`
-}
 
 export const panelHeading = 'mb-[30px] flex items-start justify-between gap-[25px]'
 
