@@ -66,3 +66,36 @@ export const panelTitle = 'm-0 max-w-[650px] font-display text-[clamp(1.45rem,2.
   'leading-[1.3] font-normal'
 
 export const answerText = 'm-0 text-[.86rem] leading-[1.75] whitespace-pre-wrap [overflow-wrap:anywhere]'
+
+export const evidencePanel = `${panel} p-8 max-[460px]:p-[19px]`
+
+export const evidenceLabelRow = 'flex flex-wrap items-baseline justify-between gap-x-[18px] gap-y-[6px]'
+
+export const evidenceTitle = 'm-0 text-[.82rem] tracking-[-.015em]'
+
+export const retrievedHeading = `mt-[30px] mb-[15px] ${evidenceLabelRow}`
+
+export const rankCount = 'font-code text-[.72rem] text-[#8a9b91]'
+
+export const chunkList = 'grid gap-2'
+
+export const chunkCard = 'min-w-0 rounded-[3px] border border-[#e0e6e0] bg-white ' +
+  'open:border-[#bbd4c3] open:bg-[#fbfdfb]'
+
+export const chunkSummary = 'flex cursor-pointer list-none items-center gap-3 px-[14px] py-3 text-[.75rem]'
+
+export const chunkRank = 'grid h-[27px] w-8 shrink-0 place-items-center rounded-[3px] ' +
+  'bg-[#eaf3ec] font-code font-extrabold text-[#29705f]'
+
+export const chunkPreview = 'font-normal text-[#83908c] max-[460px]:hidden'
+
+export const chunkScore = 'shrink-0 font-code text-[.68rem] text-[#82908a] max-[460px]:hidden'
+
+export const chunkViewOptions = 'flex justify-end px-[14px] pb-[9px]'
+
+export const chunkViewport = 'mx-[14px] mb-[14px] max-h-[360px] overflow-auto border-t border-[#e5ebe6]'
+
+export const chunkText = 'm-0 px-0 pt-[14px] pb-1 font-code text-[.71rem] leading-[1.65] ' +
+  'text-[#3f5151] whitespace-pre-wrap [overflow-wrap:anywhere]'
+
+export const evidenceFootnote = 'mt-[17px] mb-0 text-[.7rem] leading-[1.65] text-[#7d8887]'

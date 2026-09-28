@@ -1,8 +1,0 @@
-@media (max-width: 460px) {
-  .evidence-panel { padding: 19px; }
-  .chunk-preview, .chunk-score { display: none; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  :root { scroll-behavior: auto; }
-}
