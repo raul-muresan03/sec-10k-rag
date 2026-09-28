@@ -34,9 +34,3 @@
     :root { scroll-behavior: auto; }
   }
 }
-
-@layer components {
-  .chunk summary::-webkit-details-marker { display: none; }
-  .chunk summary::after { content: '+'; order: 5; color: #568172; font-size: 1rem; }
-  .chunk[open] summary::after { content: '−'; }
-}
