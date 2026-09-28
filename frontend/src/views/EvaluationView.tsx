@@ -57,7 +57,8 @@ export function EvaluationView() {
   return (
     <>
       <MetricsPanel snapshot={snapshot} />
-      <section className="explorer-section" id="evaluation-cases" aria-labelledby="explorer-heading">
+      <section className="pt-[78px] pb-[90px] max-[760px]:py-[60px]" id="evaluation-cases"
+        aria-labelledby="explorer-heading">
         <div className={sectionHeading}>
           <div>
             <p className={`${eyebrow} mb-2`}>02 / Saved replay — not live answers</p>
@@ -67,11 +68,16 @@ export function EvaluationView() {
             {snapshot.examples.length} selected dev cases · Successes, refusals and failures
           </p>
         </div>
-        <div className="insight-banner">
-          <span className="insight-symbol" aria-hidden="true">≠</span>
-          <p><strong>A retrieval hit is not a correct answer.</strong> Ford’s gold passage was found in the
+        <div className="mb-5 flex items-center gap-5 rounded border border-[#c9d6cb] bg-[#e6eee6]
+          px-6 py-[18px] max-[760px]:flex-wrap max-[760px]:items-start max-[760px]:gap-3">
+          <span className="font-display text-[2.4rem] leading-none text-[#357b65]" aria-hidden="true">≠</span>
+          <p className="m-0 flex-1 text-[.8rem] leading-[1.6] text-[#385450]
+            max-[760px]:basis-[calc(100%-58px)]">
+            <strong>A retrieval hit is not a correct answer.</strong> Ford’s gold passage was found in the
             saved context, yet the model answered the wrong fact.</p>
-          <button type="button" onClick={() => setSelectedId('f-2014-numeric')}>
+          <button type="button" className="shrink-0 border-0 bg-transparent text-[.77rem]
+            font-extrabold text-[#205f50] underline underline-offset-4 max-[760px]:ml-[37px]"
+            onClick={() => setSelectedId('f-2014-numeric')}>
             Inspect Ford case →
           </button>
         </div>
@@ -83,26 +89,41 @@ export function EvaluationView() {
           </div>
         </div>
       </section>
-      <section className="method-section" aria-labelledby="method-heading">
+      <section className="border-t border-[#d8deda] pt-[76px] pb-[88px] max-[760px]:py-[60px]"
+        aria-labelledby="method-heading">
         <p className={`${eyebrow} mb-3`}>03 / Read the fine print</p>
         <h2 id="method-heading" className={sectionTitle}>Two runs. Different claims.</h2>
-        <div className="method-grid">
-          <div><span className="method-number">01</span><h3>Answer run</h3>
-            <p>Saved responses use {snapshot.runs.answers.generation_model_tag} with the top{' '}
+        <div className="mt-[35px] grid grid-cols-3 gap-[38px] max-[760px]:grid-cols-1
+          max-[760px]:gap-[26px]">
+          <div className="min-w-0 border-t border-[#bfc9c5] pt-[19px]">
+            <span className="font-code text-[.73rem] text-[#629082]">01</span>
+            <h3 className="my-3 font-display text-[1.3rem] font-normal">Answer run</h3>
+            <p className="text-[.8rem] leading-[1.7] text-[#5e6a70]">
+              Saved responses use {snapshot.runs.answers.generation_model_tag} with the top{' '}
               {snapshot.runs.answers.top_n} retrieved chunks. Reviews apply only to these exact
               responses.{' '}
               {pendingReviews > 0
                 ? `${pendingReviews} judgments await owner confirmation.`
                 : 'Owner checkpoints are complete.'}</p>
-            <code>{snapshot.runs.answers.run_id}</code>
+            <code className="block text-[.66rem] text-[#52676a] [overflow-wrap:anywhere]">
+              {snapshot.runs.answers.run_id}
+            </code>
           </div>
-          <div><span className="method-number">02</span><h3>Retrieval run</h3>
-            <p>Retrieval metrics use an independent top-{snapshot.runs.retrieval.top_n} ranking, without
+          <div className="min-w-0 border-t border-[#bfc9c5] pt-[19px]">
+            <span className="font-code text-[.73rem] text-[#629082]">02</span>
+            <h3 className="my-3 font-display text-[1.3rem] font-normal">Retrieval run</h3>
+            <p className="text-[.8rem] leading-[1.7] text-[#5e6a70]">
+              Retrieval metrics use an independent top-{snapshot.runs.retrieval.top_n} ranking, without
               generating answers. Model tags alone do not establish immutable model weights.</p>
-            <code>{snapshot.runs.retrieval.run_id}</code>
+            <code className="block text-[.66rem] text-[#52676a] [overflow-wrap:anywhere]">
+              {snapshot.runs.retrieval.run_id}
+            </code>
           </div>
-          <div><span className="method-number">03</span><h3>Held-out check</h3>
-            <p>Metrics above use 24 dev questions. Another 16 test questions are reserved for a final
+          <div className="min-w-0 border-t border-[#bfc9c5] pt-[19px]">
+            <span className="font-code text-[.73rem] text-[#629082]">03</span>
+            <h3 className="my-3 font-display text-[1.3rem] font-normal">Held-out check</h3>
+            <p className="text-[.8rem] leading-[1.7] text-[#5e6a70]">
+              Metrics above use 24 dev questions. Another 16 test questions are reserved for a final
               check, rather than tuning this demo.</p>
             <a className={inlineLink} href={REPORT_URL} target="_blank" rel="noopener noreferrer">
               Full methodology <span aria-hidden="true">↗</span>

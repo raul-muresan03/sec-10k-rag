@@ -43,3 +43,6 @@ export const caseCount = 'font-code text-[.72rem] text-[#687878]'
 export const loadMessage = 'my-[74px] border border-[#d8deda] bg-white p-[34px] text-[#4b615f]'
 
 export const loadErrorTitle = 'font-display font-normal'
+
+export const badge = 'inline-flex w-max max-w-full items-center rounded-[3px] px-[10px] py-[7px] ' +
+  'text-[.7rem] font-extrabold tracking-[.035em] uppercase'
