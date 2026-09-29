@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { fetchFilings, prepareFiling } from '../api'
 import type { FilingSummary } from '../api'
+import { FilingPreparationNotice } from './FilingPreparationNotice'
 
 interface Props {
   selectedId: string | null
@@ -12,6 +13,10 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [retry, setRetry] = useState(0)
+  const [pollRetry, setPollRetry] = useState(0)
+  const [pollError, setPollError] = useState(false)
+  const [startingIds, setStartingIds] = useState<string[]>([])
+  const [requestErrors, setRequestErrors] = useState<string[]>([])
   const attemptedRef = useRef(new Set<string>())
   const preparingRef = useRef(new Set<string>())
   const selectionRef = useRef({ selectedId, onSelect })
@@ -52,23 +57,27 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
   useEffect(() => {
     if (!active) return
     const controller = new AbortController()
-    const timer = setInterval(() => {
+    const poll = () => {
       void fetchFilings(controller.signal).then(data => {
         if (controller.signal.aborted) return
+        setPollError(false)
         update(data)
       }).catch(() => {
-        if (controller.signal.aborted) return
-        // The next poll can still pick up preparation progress.
+        if (!controller.signal.aborted) setPollError(true)
       })
-    }, 4000)
+    }
+    if (pollRetry > 0) poll()
+    const timer = setInterval(poll, 4000)
     return () => { controller.abort(); clearInterval(timer) }
     // update reads the latest selectionRef without restarting the interval on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active])
+  }, [active, pollRetry])
 
   const prepare = async (selected: FilingSummary) => {
     if (preparingRef.current.has(selected.filing_id)) return
     preparingRef.current.add(selected.filing_id)
+    setStartingIds(previous => [...previous, selected.filing_id])
+    setRequestErrors(previous => previous.filter(id => id !== selected.filing_id))
     try {
       const result = await prepareFiling(selected.filing_id)
       setFilings(previous => previous?.map(filing =>
@@ -78,9 +87,10 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
         selectionRef.current.onSelect({ ...selected, ...result })
       }
     } catch {
-      // A failed request leaves the selected filing unavailable.
+      setRequestErrors(previous => [...previous, selected.filing_id])
     } finally {
       preparingRef.current.delete(selected.filing_id)
+      setStartingIds(previous => previous.filter(id => id !== selected.filing_id))
     }
   }
 
@@ -90,7 +100,7 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
     if (!selected || selected.status !== 'unprepared' || attemptedRef.current.has(selected.filing_id)) return
     attemptedRef.current.add(selected.filing_id)
     void prepare(selected)
-    // Prepare once on selection; explicit retry remains available after failure.
+    // Prepare once on selection; the user can retry if it fails.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected?.filing_id, selected?.status])
 
@@ -143,6 +153,17 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
           View original on SEC.gov ↗
         </a>
       </div>
+      <FilingPreparationNotice
+        status={selected.status}
+        starting={startingIds.includes(selected.filing_id)}
+        requestFailed={requestErrors.includes(selected.filing_id)}
+        refreshFailed={pollError}
+        onRetry={() => void prepare(selected)}
+        onRefresh={() => {
+          setPollError(false)
+          setPollRetry(value => value + 1)
+        }}
+      />
     </div>
   )
 }

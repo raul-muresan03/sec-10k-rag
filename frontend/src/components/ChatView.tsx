@@ -204,7 +204,8 @@ export function ChatView() {
                   font-sans text-[.9rem] leading-[1.6] text-[#20353b] outline-none
                   placeholder:text-[#8b9992]"
                 value={draft} disabled={!ready || pending}
-                placeholder={ready ? `Ask about ${filing.company}'s annual filing…` : 'Select a filing to begin…'}
+                placeholder={ready ? `Ask about ${filing.company}'s annual filing…`
+                  : filing ? 'Questions are available when this filing is ready…' : 'Select a filing to begin…'}
                 onChange={event => setDraft(event.target.value)}
                 onKeyDown={event => {
                   if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
