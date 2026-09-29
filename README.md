@@ -81,6 +81,12 @@ are not part of this flow. If preparation fails, use **Try again** beside the se
 be checked, use **Check again**. Only the web port is exposed, bound to localhost by default; the API and Ollama are
 internal Compose services.
 
+`FILING_PREPARATION_ACCESS=operator` changes the API to list only prepared filings and return 403 for all HTTP
+preparation requests. Prepare from an operator shell as described in [api/README.md](api/README.md). If no filing
+has been prepared, the chat view says so. This is a component of public deployment, **not** a complete public
+configuration: the Compose default still binds the web port to localhost and does not set up HTTPS or request
+rate limits. Do not expose the development setup to the internet by changing `WEB_BIND_ADDRESS` alone.
+
 Subsequent starts use the same `docker compose up` (add `-d` for background, or `--build` after code changes)
 and stop with:
 
