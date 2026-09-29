@@ -18,6 +18,7 @@ services:
       RAG_MODEL: ${RAG_MODEL:-gemma3:1b}
       RAG_TOP_N: ${RAG_TOP_N:-5}
       RAG_MAX_CONCURRENT_GENERATIONS: ${RAG_MAX_CONCURRENT_GENERATIONS:-1}
+      FILING_PREPARATION_ACCESS: ${FILING_PREPARATION_ACCESS:-browser}
     volumes:
       - filings:/app/data
     depends_on:
