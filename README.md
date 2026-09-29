@@ -212,6 +212,11 @@ python3 -m pytest -q
 The suite covers parsing, cleaning, indexing, retrieval, generation, CLI wiring and evaluation.
 It does not replace a live SEC download or Ollama end-to-end check.
 
+GitHub Actions runs on pull requests and pushes to `main`. It runs these Python tests and validates the committed
+dev snapshot, typechecks and builds the frontend while checking that the dev snapshot is not a public asset,
+and builds the API and web Docker images. These checks need no `.env`, SEC credentials, or running Ollama; they do not
+replace a live filing preparation and chat smoke test.
+
 ## Performance Benchmarks
 
 The ETL timing benchmark needs the saved NVIDIA 2026 filing and a running Ollama server:
