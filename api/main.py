@@ -46,7 +46,8 @@ def _register_status_routes(app: FastAPI, index_store: FilingIndexStore, config:
         return {"status": "ready"}
 
 
-def _register_filing_route(app: FastAPI, index_store: FilingIndexStore, preparation: PreparationService) -> None:
+def _register_filing_route(app: FastAPI, index_store: FilingIndexStore, preparation: PreparationService,
+                           config: Settings) -> None:
     @app.get("/api/filings", response_model=list[FilingSummary])
     def filings() -> list[FilingSummary]:
         try:
@@ -59,12 +60,15 @@ def _register_filing_route(app: FastAPI, index_store: FilingIndexStore, preparat
                     status=statuses[selected_id].status, detail=statuses[selected_id].detail,
                 )
                 for selected_id, item in index_store.catalog().items()
+                if config.preparation_access == "browser" or statuses[selected_id].status == "ready"
             ]
         except (OSError, ValueError, RuntimeError) as error:
             raise HTTPException(status_code=503, detail="Filing catalog unavailable") from error
 
     @app.post("/api/filings/{filing_id}/prepare", response_model=PreparationResult, status_code=202)
     def prepare(filing_id: str) -> PreparationResult:
+        if config.preparation_access == "operator":
+            raise HTTPException(status_code=403, detail="Filing preparation is operator-only")
         try:
             state = preparation.start(filing_id)
             return PreparationResult(status=state.status, detail=state.detail)
@@ -99,7 +103,7 @@ def create_app(store: FilingIndexStore | None = None, settings: Settings | None 
     index_store = store if store is not None else FilingIndexStore()
     config = settings if settings is not None else Settings.from_env()
     _register_status_routes(app, index_store, config)
-    _register_filing_route(app, index_store, PreparationService(index_store))
+    _register_filing_route(app, index_store, PreparationService(index_store), config)
     _register_chat_route(app, QueryService(index_store, config))
     return app
 

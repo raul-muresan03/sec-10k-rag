@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 import os
+from typing import Literal
 
 from etl_pipeline.ollama import base_url, timeout_seconds
 
@@ -11,14 +12,19 @@ class Settings:
     model: str = "gemma3:1b"
     top_n: int = 5
     max_concurrent_generations: int = 1
+    preparation_access: Literal["browser", "operator"] = "browser"
 
     @classmethod
     def from_env(cls) -> "Settings":
         model = os.getenv("RAG_MODEL", "gemma3:1b").strip()
         top_n = int(os.getenv("RAG_TOP_N", "5"))
         capacity = int(os.getenv("RAG_MAX_CONCURRENT_GENERATIONS", "1"))
+        preparation_access = os.getenv("FILING_PREPARATION_ACCESS", "browser").strip().lower()
         if not model or top_n < 1 or capacity < 1:
             raise ValueError("RAG_MODEL must be nonempty; RAG_TOP_N and generation capacity must be positive")
+        if preparation_access not in ("browser", "operator"):
+            raise ValueError("FILING_PREPARATION_ACCESS must be browser or operator")
         base_url()
         timeout_seconds()
-        return cls(model=model, top_n=top_n, max_concurrent_generations=capacity)
+        return cls(model=model, top_n=top_n, max_concurrent_generations=capacity,
+                   preparation_access=preparation_access)
