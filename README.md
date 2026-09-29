@@ -70,15 +70,16 @@ docker compose up
 
 Open **http://localhost:8080**. The app lists the six manifest-pinned *dev* filings even on a clean install. Choosing
 one starts preparation automatically: the API downloads the exact SEC submission, verifies its checksum and identity,
-and builds its index. The UI displays a simple loading state; on CPU, the first index can take a while. Two Ollama
+and builds its index. The UI shows when the filing is being opened; on CPU, the first index can take a while. Two Ollama
 models (`nomic-embed-text` and `gemma3:1b`) are downloaded automatically in the background on the first start.
 They require internet access and several gigabytes of disk space. Chat becomes available for each filing as soon as
 its index is ready. Do not commit `.env`.
 
 If you edit `.env` after starting, apply it with `docker compose up -d --force-recreate api`. The API only downloads
 the six pinned dev filings; it rejects a mismatched SHA-256 or SEC header. The 16 test questions and their filings
-are not part of this flow. Use **Try again** if a download or index build fails. Only the web port is
-exposed, bound to localhost by default; the API and Ollama are internal Compose services.
+are not part of this flow. If preparation fails, use **Try again** beside the selected filing; if its status cannot
+be checked, use **Check again**. Only the web port is exposed, bound to localhost by default; the API and Ollama are
+internal Compose services.
 
 Subsequent starts use the same `docker compose up` (add `-d` for background, or `--build` after code changes)
 and stop with:
