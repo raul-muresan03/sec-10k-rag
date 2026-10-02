@@ -26,10 +26,9 @@ class ModelConfig:
             raise ValueError("RAG_RUNTIME must be local or cloud")
         if not self.model.strip():
             raise ValueError("RAG_MODEL must be nonempty")
-        maximum = 90 if self.runtime == "cloud" else 120
-        if not isfinite(self.query_timeout_seconds) or not 0 < self.query_timeout_seconds <= maximum:
-            raise ValueError(f"RAG_QUERY_TIMEOUT_SECONDS must be positive and at most {maximum}")
         if self.runtime == "cloud":
+            if not isfinite(self.query_timeout_seconds) or not 0 < self.query_timeout_seconds <= 90:
+                raise ValueError("RAG_QUERY_TIMEOUT_SECONDS must be positive and at most 90")
             if not isfinite(self.cloud_timeout_seconds) or not 0 < self.cloud_timeout_seconds <= 30:
                 raise ValueError("CLOUD_TIMEOUT_SECONDS must be positive and at most 30")
             if self.model != CLOUD_GENERATION_MODEL:
@@ -59,19 +58,21 @@ class ModelConfig:
 
     def require_local_indexes(self) -> None:
         if self.index_mode != "local":
-            raise RuntimeError("Local Nomic indexes cannot be reused with cloud embeddings; use a verified cloud snapshot")
+            raise RuntimeError(
+                "Local Nomic indexes cannot be reused with cloud embeddings; use a verified cloud snapshot"
+            )
 
     @classmethod
     def from_env(cls, *, runtime: str | None = None, model: str | None = None) -> "ModelConfig":
         selected_runtime = (os.getenv("RAG_RUNTIME", "local") if runtime is None else runtime).strip()
         default_model = CLOUD_GENERATION_MODEL if selected_runtime == "cloud" else "gemma3:1b"
         selected_model = (os.getenv("RAG_MODEL", default_model) if model is None else model).strip()
+        if selected_runtime != "cloud":
+            return cls(runtime=selected_runtime, model=selected_model)
         try:
-            query_timeout = float(os.getenv("RAG_QUERY_TIMEOUT_SECONDS", "60" if selected_runtime == "cloud" else "120"))
+            query_timeout = float(os.getenv("RAG_QUERY_TIMEOUT_SECONDS", "60"))
         except ValueError:
             raise ValueError("RAG_QUERY_TIMEOUT_SECONDS must be a number") from None
-        if selected_runtime != "cloud":
-            return cls(runtime=selected_runtime, model=selected_model, query_timeout_seconds=query_timeout)
         try:
             cloud_timeout = float(os.getenv("CLOUD_TIMEOUT_SECONDS", "30"))
         except ValueError:
