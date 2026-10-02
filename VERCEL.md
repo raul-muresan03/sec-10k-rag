@@ -1,14 +1,17 @@
 # Vercel packaging and candidate releases
 
-Single Vercel project, repository root, one HTTPS origin: static React/Vite output from `public/` on the CDN,
-FastAPI (`api.main:app`, pinned in `pyproject.toml`) as one Fluid-compute function for everything else.
+One Vercel project, one HTTPS origin, two services: the `web` service builds the React/Vite application from
+`frontend/`; the `api` service runs FastAPI (`api.main:app`) from the repository root for `/api/*`.
+`etl_pipeline` is a library imported by the backend, not a service. No service calls another service, so no
+bindings exist: the browser reaches the backend on the same origin, and the backend calls only external clouds.
 
 ## Build and bundle
 
-- `vercel.json` builds the frontend with Node 22 (`engines` pin in `frontend/package.json`) and copies only
-  `frontend/dist/` into `public/`. The function code never mounts or serves `public/`.
-- Root `requirements.txt` includes both pinned descriptors; every runtime dependency is `==`-pinned.
-- `deploy/indexes/**` is bundled explicitly via `includeFiles` (snapshot `9b77d199…4e00d8`, ~4.8 MiB compressed).
+- The `web` service builds the frontend with Node 22 (`engines` pin in `frontend/package.json`); its output serves
+  every non-API path, including the SPA fallback. Top-level rewrites list `/api/*` first so no fallback swallows it.
+- The `api` service installs root `requirements.txt` (both pinned descriptors, every dependency `==`-pinned).
+- `deploy/indexes/**` is bundled explicitly via per-service `includeFiles` (snapshot `9b77d199…4e00d8`,
+  ~4.8 MiB compressed); `frontend/**` sources are excluded from the function bundle.
 - `.vercelignore` excludes `data/`, `resurse/`, `demo/`, `tests/`, `scripts/`, `perf/`, virtualenvs and Docker files.
 - Measured 2026-10-02 (clean `pip install --target` plus code, indexes and manifest): **~88 MB total**,
   far below the 500 MB Python bundle limit. Dependencies dominate (~72 MB); code, indexes and tokenizer are ~16 MB.
