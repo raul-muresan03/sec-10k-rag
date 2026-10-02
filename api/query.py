@@ -1,6 +1,7 @@
 """One independent filing question through retrieval and Ollama generation."""
 
 from contextlib import contextmanager
+import logging
 import time
 from threading import BoundedSemaphore
 from uuid import uuid4
@@ -16,6 +17,9 @@ from etl_pipeline.snapshot_query import query_snapshot
 
 class AtCapacity(RuntimeError):
     pass
+
+
+logger = logging.getLogger(__name__)
 
 
 class QueryService:
@@ -52,7 +56,8 @@ class QueryService:
             answer, _ = get_llm_response(question, chunks, self.settings.model)
             generation_seconds = time.perf_counter() - generation_start
 
-        return ChatResponse(
+        total_seconds = time.perf_counter() - started
+        response = ChatResponse(
             answer=answer or "", filing_id=filing.filing_id, model=self.settings.model,
             retrieved_chunks=[
                 RetrievedChunk(rank=rank, score=score, text=text)
@@ -61,7 +66,13 @@ class QueryService:
             sec_url=filing.sec_url,
             stage_times_seconds=StageTimes(
                 retrieval=retrieval_seconds, generation=generation_seconds,
-                total=time.perf_counter() - started,
+                total=total_seconds,
             ),
             request_id=str(uuid4()),
         )
+        logger.info(
+            "answered filing=%s model=%s snapshot=%s retrieval=%.3f generation=%.3f total=%.3f request=%s",
+            filing.filing_id, self.settings.model, getattr(self.store, "snapshot_id", "local"),
+            retrieval_seconds, generation_seconds, total_seconds, response.request_id,
+        )
+        return response
