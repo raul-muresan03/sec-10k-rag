@@ -53,6 +53,9 @@ automatically. The wall-clock timeout covers connection, headers and response bo
 Both public model interfaces accept the same optional absolute `time.monotonic()` deadline so a caller can constrain
 embedding plus generation to a single budget. The complete cloud query caller/client budget is wired with the snapshot
 release; this adapter release does not claim that a full cloud API request already works.
+The owner explicitly deferred API/CLI/evaluation deadline orchestration to that release. Local Ollama retains its
+existing per-call timeouts; those do not guarantee that embedding plus generation finishes within the client's
+125-second budget. Do not treat the current local setup as a production cloud timeout contract.
 
 ## Errors
 
