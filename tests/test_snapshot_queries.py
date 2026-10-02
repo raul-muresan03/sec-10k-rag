@@ -1,4 +1,3 @@
-from dataclasses import replace
 import json
 import time
 
@@ -28,7 +27,8 @@ def test_question_embedding_cache_is_isolated_by_snapshot(
             [0.0, 1.0] + [0.0] * 382 for _ in json.loads(request.content)["text"]
         ]},
     }))
-    second = prepare_snapshot(local_corpus.manifest_path, tmp_path / "other-cache", tmp_path / "other", cloud_config)
+    prepare_snapshot(local_corpus.manifest_path, tmp_path / "other-cache", tmp_path / "other", cloud_config)
+    second = SnapshotStore(tmp_path / "other")
     first = SnapshotStore(runtime_export)
     assert first.snapshot_id != second.snapshot_id
     calls = cloud_http(lambda request: httpx.Response(200, json={
@@ -38,3 +38,29 @@ def test_question_embedding_cache_is_isolated_by_snapshot(
                               cloud_config, generate=False) for store in (first, first, second)]
     assert [result.chunks[0][0] for result in results] == [1.0, 1.0, 0.0]
     assert len(calls) == 2
+
+
+def test_question_cache_evicts_old_embeddings_instead_of_growing_unbounded(runtime_export, cloud_config, cloud_http):
+    store = SnapshotStore(runtime_export)
+    calls = cloud_http(lambda request: httpx.Response(200, json={
+        "success": True, "result": {"data": [[1.0] + [0.0] * 383]},
+    }))
+    filing = store.resolve("F", 2014)
+    for number in range(129):
+        query_snapshot(store, filing.filing_id, f"Eviction probe {number}?", 5, cloud_config, generate=False)
+    query_snapshot(store, filing.filing_id, "Eviction probe 0?", 5, cloud_config, generate=False)
+    assert len(calls) == 130
+
+
+def test_snapshot_cosine_stays_finite_for_large_finite_vectors(local_corpus, cloud_config, cloud_http, tmp_path):
+    cloud_http(lambda request: httpx.Response(200, json={
+        "success": True, "result": {"data": [
+            [1e308] + [0.0] * 383 for _ in json.loads(request.content)["text"]
+        ]},
+    }))
+    root = tmp_path / "large-vector-export"
+    prepare_snapshot(local_corpus.manifest_path, tmp_path / "large-vector-cache", root, cloud_config)
+    store = SnapshotStore(root)
+    answer = query_snapshot(store, store.resolve("F", 2014).filing_id, "Large vector probe?", 5,
+                            cloud_config, generate=False)
+    assert answer.chunks[0][0] == 1.0

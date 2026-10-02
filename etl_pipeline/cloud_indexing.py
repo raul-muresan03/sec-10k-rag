@@ -18,16 +18,20 @@ from etl_pipeline.snapshot_export import export_snapshot
 from etl_pipeline.vector_store import load_index
 
 
-def _prepare(filing: VerifiedFiling, root: Path, config: ModelConfig, identity: dict) -> Path:
+def _index_path(filing: VerifiedFiling, root: Path, identity: dict) -> Path:
     version = configuration_id({"source_sha256": filing.sha256, "configuration": identity})
-    directory = root / filing.ticker / version
-    path = directory / "index.json"
+    return root / filing.ticker / version / "index.json"
+
+
+def _prepare(filing: VerifiedFiling, root: Path, config: ModelConfig, identity: dict) -> None:
+    path = _index_path(filing, root, identity)
+    directory, version = path.parent, path.parent.name
     if directory.exists():
         metadata = json.loads((directory / "metadata.json").read_text(encoding="utf-8"))
         if metadata != {"version": version, "sha256": hash_file(path)}:
             raise ValueError("Cloud index cache checksum mismatch")
         load_index(path)
-        return path
+        return
     directory.parent.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(prefix=".cloud-", dir=directory.parent) as temporary:
         workspace = Path(temporary)
@@ -44,21 +48,23 @@ def _prepare(filing: VerifiedFiling, root: Path, config: ModelConfig, identity: 
         parsed.unlink()
         cleaned.unlink()
         os.rename(workspace, directory)
-    return path
 
 
 def prepare_snapshot(manifest_path: Path, index_root: Path, destination: Path, config: ModelConfig,
-                     *, selected: set[tuple[str, int]] | None = None) -> SnapshotStore:
+                     *, selected: set[tuple[str, int]] | None = None) -> None:
     if config.runtime != "cloud":
         raise ValueError("Cloud preparation requires the explicit cloud profile")
     catalog = catalog_filings(manifest_path)
     keys = selected if selected is not None else {(filing.ticker, filing.year) for filing in catalog.values()}
     _, manifest_hash, verified = verify_filings(manifest_path, keys, "dev")
     identity = index_configuration()
-    indexes = [(filing, _prepare(filing, index_root, config, identity)) for filing in verified.values()]
+    indexes = []
+    for filing in verified.values():
+        _prepare(filing, index_root, config, identity)
+        indexes.append((filing, _index_path(filing, index_root, identity)))
     if hash_file(manifest_path) != manifest_hash:
         raise ValueError("Corpus manifest changed during cloud preparation")
-    return export_snapshot(indexes, identity, manifest_hash, destination)
+    export_snapshot(indexes, identity, manifest_hash, destination)
 
 
 def main() -> None:
@@ -73,7 +79,8 @@ def main() -> None:
         parser.error("--ticker and --year must be supplied together")
     try:
         selected = {(args.ticker.upper(), args.year)} if args.ticker is not None else None
-        store = prepare_snapshot(args.manifest, args.index_root, args.output, ModelConfig.from_env(), selected=selected)
+        prepare_snapshot(args.manifest, args.index_root, args.output, ModelConfig.from_env(), selected=selected)
+        store = SnapshotStore(args.output)
         print("Snapshot:", store.snapshot_id)
         for item in store.prepared():
             print(item.ticker, item.year, item.chunk_count, "chunks")

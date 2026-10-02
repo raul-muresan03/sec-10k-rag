@@ -14,7 +14,9 @@ from etl_pipeline.model_config import CLOUD_EMBEDDING_DIMENSION, CLOUD_EMBEDDING
 
 
 def canonical_json(value: object) -> bytes:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode("utf-8")
+    return json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False,
+    ).encode("utf-8")
 
 
 def configuration_id(value: object) -> str:

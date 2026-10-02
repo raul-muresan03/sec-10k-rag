@@ -10,6 +10,7 @@ import re
 from etl_pipeline.cloud_identity import configuration_id, embedding_configuration, valid_vector
 from etl_pipeline.cloud_tokens import validated_input
 from etl_pipeline.filings import VerifiedFiling, filing_id
+from etl_pipeline.snapshot_provenance import validate_provenance
 
 
 MAX_MANIFEST_BYTES = 128 * 1024
@@ -66,12 +67,7 @@ def validate_manifest(manifest: dict) -> None:
     if (not isinstance(config, dict) or config.get("embedding") != manifest["embedding_configuration"]
             or manifest["index_config_id"] != configuration_id(config)):
         raise ValueError("Invalid snapshot indexing provenance")
-    hashes = config.get("source_sha256")
-    if not isinstance(hashes, dict) or not hashes or any(
-        not isinstance(name, str) or not re.fullmatch(r"[a-z_]+\.py", name) or not valid_hash(value)
-        for name, value in hashes.items()
-    ):
-        raise ValueError("Missing snapshot indexing source hashes")
+    validate_provenance(config)
     if not valid_hash(manifest["corpus_manifest_sha256"]):
         raise ValueError("Invalid snapshot corpus checksum")
     payload = {key: value for key, value in manifest.items() if key != "snapshot_id"}

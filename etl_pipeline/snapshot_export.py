@@ -11,10 +11,11 @@ from etl_pipeline.cloud_identity import canonical_json, configuration_id, embedd
 from etl_pipeline.filings import VerifiedFiling, filing_id, hash_file
 from etl_pipeline.runtime_snapshot import SnapshotStore
 from etl_pipeline.vector_store import load_index
+from etl_pipeline.snapshot_provenance import verify_index_metadata
 
 
 def export_snapshot(filings: list[tuple[VerifiedFiling, Path]], config: dict,
-                    corpus_sha256: str, destination: Path) -> SnapshotStore:
+                    corpus_sha256: str, destination: Path) -> None:
     if destination.exists():
         raise ValueError("Snapshot destination already exists; publish into a new directory")
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -30,6 +31,7 @@ def export_snapshot(filings: list[tuple[VerifiedFiling, Path]], config: dict,
         for filing, index_path in sorted(filings, key=lambda pair: (pair[0].ticker, pair[0].year)):
             if filing.split != "dev" or hash_file(filing.path) != filing.sha256:
                 raise ValueError("Export requires unchanged verified dev filings")
+            verify_index_metadata(filing, index_path, config)
             chunks, vectors = load_index(index_path)
             expanded = canonical_json({"chunks": chunks, "embeddings": vectors})
             stream = io.BytesIO()
@@ -50,5 +52,7 @@ def export_snapshot(filings: list[tuple[VerifiedFiling, Path]], config: dict,
         manifest["snapshot_id"] = configuration_id(manifest)
         (workspace / "manifest.json").write_bytes(canonical_json(manifest) + b"\n")
         SnapshotStore(workspace)
+        for path in workspace.iterdir():
+            path.chmod(0o644)
+        workspace.chmod(0o755)
         os.rename(workspace, destination)
-    return SnapshotStore(destination)
