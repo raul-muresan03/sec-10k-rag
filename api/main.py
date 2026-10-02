@@ -68,7 +68,8 @@ def _register_filing_route(app: FastAPI, index_store: FilingIndexStore | Snapsho
                     detail=statuses[selected_id].detail if preparation is not None else None,
                 )
                 for selected_id, item in index_store.catalog().items()
-                if preparation is None or config.preparation_access == "browser" or statuses[selected_id].status == "ready"
+                if (preparation is None or config.preparation_access == "browser"
+                    or statuses[selected_id].status == "ready")
             ]
         except (OSError, ValueError, RuntimeError) as error:
             raise HTTPException(status_code=503, detail="Filing catalog unavailable") from error
