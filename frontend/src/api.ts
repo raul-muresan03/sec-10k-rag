@@ -51,6 +51,10 @@ export class ApiError extends Error {
 function errorMessage(status: number): string {
   if (status === 404) return 'This filing is no longer available. Choose another and try again.'
   if (status === 422) return 'Please enter a shorter question and try again.'
+  if (status === 429) {
+    return 'The shared model quota is exhausted right now. Please wait a while before trying again.'
+  }
+  if (status === 503) return 'The answering service is unavailable right now. Please try again later.'
   if (status === 504) return 'This is taking longer than expected. Please try again.'
   return 'We couldn’t complete your request right now. Please try again.'
 }
