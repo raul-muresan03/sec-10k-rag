@@ -1,10 +1,25 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm ci --prefix frontend && npm run build --prefix frontend && rm -rf public && mkdir -p public && cp -r frontend/dist/. public/",
-  "functions": {
-    "api/main.py": {
-      "maxDuration": 120,
-      "includeFiles": "deploy/indexes/**"
+  "services": {
+    "web": {
+      "root": "frontend",
+      "framework": "vite"
+    },
+    "api": {
+      "root": ".",
+      "runtime": "python",
+      "entrypoint": "api.main:app",
+      "functions": {
+        "api/main.py": {
+          "maxDuration": 120,
+          "includeFiles": "deploy/indexes/**",
+          "excludeFiles": "frontend/**"
+        }
+      }
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": { "service": "api" } },
+    { "source": "/(.*)", "destination": { "service": "web" } }
+  ]
 }
