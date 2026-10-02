@@ -34,13 +34,13 @@ FastAPI (`api.main:app`, pinned in `pyproject.toml`) as one Fluid-compute functi
 - Each answer logs one line: filing, model, snapshot ID, stage latencies and request ID. No secrets, questions, chunks
   or answers are logged.
 
-## Abuse and concurrency (explicitly undecided)
+## Abuse and concurrency (decided by the owner 2026-10-02)
 
 - There is **no per-user or per-IP rate limiting**: the semaphore caps concurrent generations per instance only,
   retries are manual-only, and the Free quotas fail closed (429/503) instead of billing. A burst can still exhaust
   the daily quota and silence the demo until reset.
-- The owner must still decide: accept per-instance limits plus provider quotas, or approve external coordination.
-  Until then, no global-generation claim is made.
+- The owner accepts per-instance limits plus provider quotas; no external coordination is introduced.
+  No global-generation claim is made.
 
 ## Candidate release checklist (owner-authorized only)
 
