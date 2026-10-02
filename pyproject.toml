@@ -1,0 +1,6 @@
+[project]
+name = "sec-rag-tool"
+requires-python = ">=3.12"
+
+[tool.vercel]
+entrypoint = "api.main:app"

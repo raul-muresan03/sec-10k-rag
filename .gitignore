@@ -5,6 +5,7 @@ venv/
 data/
 resurse/
 *.txt
+!requirements.txt
 !requirements-dev.txt
 !requirements-api.txt
 frontend/node_modules/
