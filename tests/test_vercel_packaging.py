@@ -73,6 +73,19 @@ def test_root_requirements_pin_every_runtime_dependency():
                 assert "==" in line, f"Unpinned runtime dependency in {name}: {line}"
 
 
+def test_pyproject_dependencies_match_the_pinned_requirements():
+    with (PROJECT_ROOT / "pyproject.toml").open("rb") as source:
+        declared = tomllib.load(source)["project"]["dependencies"]
+    pinned = []
+    for name in ("etl_pipeline/requirements.txt", "requirements-api.txt"):
+        pinned.extend(
+            line.strip()
+            for line in (PROJECT_ROOT / name).read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.startswith(("#", "-r"))
+        )
+    assert sorted(declared) == sorted(pinned)
+
+
 def test_deployment_excludes_local_data_but_keeps_the_snapshot():
     ignored = (PROJECT_ROOT / ".vercelignore").read_text(encoding="utf-8")
     assert "deploy" not in ignored
