@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { fetchFilings, prepareFiling } from '../api'
+import { ApiError, fetchFilings, prepareFiling } from '../api'
 import type { FilingSummary } from '../api'
 import { FilingPreparationNotice } from './FilingPreparationNotice'
 
@@ -17,6 +17,7 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
   const [pollError, setPollError] = useState(false)
   const [startingIds, setStartingIds] = useState<string[]>([])
   const [requestErrors, setRequestErrors] = useState<string[]>([])
+  const [operatorOnlyIds, setOperatorOnlyIds] = useState<string[]>([])
   const attemptedRef = useRef(new Set<string>())
   const preparingRef = useRef(new Set<string>())
   const selectionRef = useRef({ selectedId, onSelect })
@@ -86,8 +87,14 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
       if (selectionRef.current.selectedId === selected.filing_id) {
         selectionRef.current.onSelect({ ...selected, ...result })
       }
-    } catch {
-      setRequestErrors(previous => [...previous, selected.filing_id])
+    } catch (reason) {
+      if (reason instanceof ApiError && reason.status === 403) {
+        setOperatorOnlyIds(previous =>
+          previous.includes(selected.filing_id) ? previous : [...previous, selected.filing_id],
+        )
+      } else {
+        setRequestErrors(previous => [...previous, selected.filing_id])
+      }
     } finally {
       preparingRef.current.delete(selected.filing_id)
       setStartingIds(previous => previous.filter(id => id !== selected.filing_id))
@@ -161,6 +168,7 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
         status={selected.status}
         starting={startingIds.includes(selected.filing_id)}
         requestFailed={requestErrors.includes(selected.filing_id)}
+        operatorOnly={operatorOnlyIds.includes(selected.filing_id)}
         refreshFailed={pollError}
         onRetry={() => void prepare(selected)}
         onRefresh={() => {

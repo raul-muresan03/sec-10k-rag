@@ -4,6 +4,7 @@ interface Props {
   status: FilingSummary['status']
   starting: boolean
   requestFailed: boolean
+  operatorOnly: boolean
   refreshFailed: boolean
   onRetry: () => void
   onRefresh: () => void
@@ -19,9 +20,17 @@ function progressMessage(status: FilingSummary['status']): string {
 }
 
 export function FilingPreparationNotice({
-  status, starting, requestFailed, refreshFailed, onRetry, onRefresh,
+  status, starting, requestFailed, operatorOnly, refreshFailed, onRetry, onRefresh,
 }: Props) {
   if (status === 'ready') return null
+
+  if (operatorOnly) {
+    return (
+      <div className="mt-4 text-[.76rem] leading-[1.6] text-[#5c7065]" aria-live="polite">
+        <p className="m-0">New filings are prepared by the operator. This catalog is read-only.</p>
+      </div>
+    )
+  }
 
   const failed = status === 'failed' || requestFailed
   const checkingFailed = refreshFailed && status !== 'unprepared'
