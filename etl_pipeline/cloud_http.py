@@ -27,7 +27,7 @@ async def _post_json(provider: str, url: str, key: str, payload: dict, timeout: 
                     body.extend(chunk)
                 try:
                     result = json.loads(body)
-                except (ValueError, UnicodeError):
+                except (ValueError, UnicodeError, RecursionError):
                     raise ModelInvalidResponse(f"{provider} returned invalid JSON") from None
                 if not isinstance(result, dict):
                     raise ModelInvalidResponse(f"{provider} returned an invalid payload")

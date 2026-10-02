@@ -74,6 +74,7 @@ def test_groq_quota_is_not_retried_and_has_safe_bounded_retry(cloud_config, clou
 
 @pytest.mark.parametrize("reply", [
     httpx.Response(200, content=b"not json test-groq-secret"),
+    httpx.Response(200, content=b'{"nested":' + b"[" * 10_000 + b"0" + b"]" * 10_000 + b"}"),
     response([]), response({}), response({"choices": [None]}),
     response({"choices": [{"message": {"content": " "}, "finish_reason": "stop"}]}),
     response({"choices": [{"message": {"content": "Incomplete"}, "finish_reason": "length"}]}),

@@ -26,6 +26,7 @@ def test_cloud_embeddings_use_cloudflare_without_ollama(cloud_config, cloud_http
     [], [1.0] * 768, [0.0] * 384, [True] + [1.0] * 383,
     [float("nan")] + [1.0] * 383, [float("inf")] + [1.0] * 383,
     ["bad"] + [1.0] * 383, [1e308] * 384,
+    [10 ** 400] + [1.0] * 383,
 ])
 def test_cloud_embeddings_reject_invalid_dimensions_values_and_norms(cloud_config, cloud_http, vector):
     cloud_http(lambda request: httpx.Response(200, content=json.dumps({

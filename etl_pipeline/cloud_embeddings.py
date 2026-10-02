@@ -31,8 +31,14 @@ def embed(texts: list[str], config: ModelConfig, *, deadline: float | None = Non
     if output.get("pooling", "mean") != "mean":
         raise ModelInvalidResponse("cloudflare returned incompatible embedding pooling")
     for vector in vectors:
-        if (not isinstance(vector, list) or len(vector) != CLOUD_EMBEDDING_DIMENSION
-                or any(type(value) not in (int, float) or not isfinite(value) for value in vector)
-                or not 0 < hypot(*vector) < float("inf")):
+        try:
+            valid = (
+                isinstance(vector, list) and len(vector) == CLOUD_EMBEDDING_DIMENSION
+                and all(type(value) in (int, float) and isfinite(value) for value in vector)
+                and 0 < hypot(*vector) < float("inf")
+            )
+        except OverflowError:
+            valid = False
+        if not valid:
             raise ModelInvalidResponse("cloudflare returned an invalid embedding vector")
     return vectors
