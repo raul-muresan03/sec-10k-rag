@@ -184,10 +184,16 @@ def run_evaluation(
         raise ValueError("retrieval-only requires exactly 10 results (top-n=10)")
     config = ModelConfig.from_env(model=model)
     if config.runtime == "cloud":
-        from eval.cloud_eval import run_snapshot_evaluation
+        from eval.cloud_eval import evaluate_snapshot
+        from eval.cloud_provenance import write_evaluation_artifacts
 
-        return run_snapshot_evaluation(split, limit, top_n, config, questions_path, output_directory,
-                                       manifest_path, mode, snapshot_store, question_interval_seconds)
+        payload, records = evaluate_snapshot(split, limit, top_n, config, questions_path, manifest_path,
+                                             mode, snapshot_store, question_interval_seconds)
+        output = output_directory if output_directory is not None else etl_pipeline.DATA_DIR / "eval-runs"
+        results_path = output / f"{payload['run_id']}.jsonl"
+        summary_path = output / f"{payload['run_id']}.summary.json"
+        write_evaluation_artifacts(payload, records, results_path, summary_path)
+        return payload, results_path, summary_path
     if snapshot_store is not None:
         raise ValueError("Local evaluation cannot query a cloud snapshot")
     if question_interval_seconds != 0:

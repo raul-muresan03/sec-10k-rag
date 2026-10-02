@@ -69,7 +69,8 @@ def test_cloud_workflows_stop_before_generation_when_embedding_consumes_budget(
         questions = tmp_path / "budget-questions.jsonl"
         questions.write_text(json.dumps({
             "id": "dev-deadline", "split": "dev", "ticker": "NVDA", "year": 2026,
-            "type": "narrative", "question": question, "answer": "Grounded cloud answer", "evidence": ["NVDA evidence"],
+            "type": "narrative", "question": question, "answer": "Grounded cloud answer",
+            "evidence": ["NVDA evidence"],
         }) + "\n")
         with pytest.raises(ModelTimeout):
             run_evaluation("dev", None, 5, "openai/gpt-oss-20b", questions_path=questions,
@@ -92,7 +93,8 @@ def test_cloud_evaluator_uses_frozen_snapshot_without_raw_or_reindexing(
     calls = cloud_http(cloud_reply)
     with patch("requests.post", side_effect=AssertionError("Evaluator contacted Ollama")):
         summary, results, _ = run_evaluation("dev", None, 5, "openai/gpt-oss-20b", questions_path=questions,
-                                            manifest_path=local_corpus.manifest_path, output_directory=tmp_path / "runs")
+                                            manifest_path=local_corpus.manifest_path,
+                                            output_directory=tmp_path / "runs")
     assert summary["metrics"]["retrieval"]["hit_at_5"]["hits"] == 1
     assert summary["provenance"]["snapshot_id"] == SnapshotStore(runtime_export).snapshot_id
     assert summary["provenance"]["generation_model"]["provider"] == "groq"
