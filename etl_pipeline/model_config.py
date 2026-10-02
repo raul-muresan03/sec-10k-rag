@@ -19,6 +19,7 @@ class ModelConfig:
     cloudflare_api_token: str = field(default="", repr=False)
     cloudflare_account_id: str = ""
     cloud_timeout_seconds: float = 30.0
+    query_timeout_seconds: float = 60.0
 
     def __post_init__(self) -> None:
         if self.runtime not in ("local", "cloud"):
@@ -26,6 +27,8 @@ class ModelConfig:
         if not self.model.strip():
             raise ValueError("RAG_MODEL must be nonempty")
         if self.runtime == "cloud":
+            if not isfinite(self.query_timeout_seconds) or not 0 < self.query_timeout_seconds <= 90:
+                raise ValueError("RAG_QUERY_TIMEOUT_SECONDS must be positive and at most 90")
             if not isfinite(self.cloud_timeout_seconds) or not 0 < self.cloud_timeout_seconds <= 30:
                 raise ValueError("CLOUD_TIMEOUT_SECONDS must be positive and at most 30")
             if self.model != CLOUD_GENERATION_MODEL:
@@ -55,7 +58,9 @@ class ModelConfig:
 
     def require_local_indexes(self) -> None:
         if self.index_mode != "local":
-            raise RuntimeError("Cloud filing snapshots are not available yet; local Nomic indexes cannot be reused")
+            raise RuntimeError(
+                "Local Nomic indexes cannot be reused with cloud embeddings; use a verified cloud snapshot"
+            )
 
     @classmethod
     def from_env(cls, *, runtime: str | None = None, model: str | None = None) -> "ModelConfig":
@@ -65,6 +70,10 @@ class ModelConfig:
         if selected_runtime != "cloud":
             return cls(runtime=selected_runtime, model=selected_model)
         try:
+            query_timeout = float(os.getenv("RAG_QUERY_TIMEOUT_SECONDS", "60"))
+        except ValueError:
+            raise ValueError("RAG_QUERY_TIMEOUT_SECONDS must be a number") from None
+        try:
             cloud_timeout = float(os.getenv("CLOUD_TIMEOUT_SECONDS", "30"))
         except ValueError:
             raise ValueError("CLOUD_TIMEOUT_SECONDS must be a number") from None
@@ -72,4 +81,4 @@ class ModelConfig:
                    groq_api_key=os.getenv("GROQ_API_KEY", "").strip(),
                    cloudflare_api_token=os.getenv("CLOUDFLARE_API_TOKEN", "").strip(),
                    cloudflare_account_id=os.getenv("CLOUDFLARE_ACCOUNT_ID", "").strip(),
-                   cloud_timeout_seconds=cloud_timeout)
+                   cloud_timeout_seconds=cloud_timeout, query_timeout_seconds=query_timeout)

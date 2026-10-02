@@ -11,6 +11,7 @@ from api.settings import Settings
 from etl_pipeline.chunker import EMBEDDING_MODEL
 from etl_pipeline.embedding_model import installed_models
 from etl_pipeline.filing_store import FilingIndexStore
+from etl_pipeline.runtime_snapshot import SnapshotStore
 from etl_pipeline.ollama import OllamaInvalidResponse, OllamaTimeout, OllamaUnavailable
 from etl_pipeline.model_errors import (
     ModelInputError, ModelInvalidResponse, ModelRateLimited, ModelTimeout, ModelUnavailable,
@@ -27,7 +28,7 @@ def _not_ready(reason: str) -> JSONResponse:
     return JSONResponse(status_code=503, content={"status": "not_ready", "reason": reason})
 
 
-def _register_status_routes(app: FastAPI, index_store: FilingIndexStore, config: Settings) -> None:
+def _register_status_routes(app: FastAPI, index_store: FilingIndexStore | SnapshotStore, config: Settings) -> None:
     @app.get("/api/health")
     async def health() -> dict[str, str]:
         return {"status": "ok"}
@@ -38,6 +39,8 @@ def _register_status_routes(app: FastAPI, index_store: FilingIndexStore, config:
             index_store.catalog()
         except (OSError, ValueError, RuntimeError) as error:
             return _not_ready(f"Filing catalog unavailable: {type(error).__name__}")
+        if isinstance(index_store, SnapshotStore):
+            return {"status": "ready", "snapshot_id": index_store.snapshot_id}
         try:
             models = installed_models()
         except (OllamaUnavailable, OllamaTimeout, OllamaInvalidResponse) as error:
@@ -49,28 +52,31 @@ def _register_status_routes(app: FastAPI, index_store: FilingIndexStore, config:
         return {"status": "ready"}
 
 
-def _register_filing_route(app: FastAPI, index_store: FilingIndexStore, preparation: PreparationService,
+def _register_filing_route(app: FastAPI, index_store: FilingIndexStore | SnapshotStore,
+                           preparation: PreparationService | None,
                            config: Settings) -> None:
     @app.get("/api/filings", response_model=list[FilingSummary])
     def filings() -> list[FilingSummary]:
         try:
-            statuses = preparation.statuses()
+            statuses = preparation.statuses() if preparation is not None else {}
             return [
                 FilingSummary(
                     filing_id=selected_id, ticker=item.ticker,
                     company=COMPANY_NAMES.get(item.ticker, item.ticker),
                     filing_year=item.year, sec_url=item.sec_url or "",
-                    status=statuses[selected_id].status, detail=statuses[selected_id].detail,
+                    status=statuses[selected_id].status if preparation is not None else "ready",
+                    detail=statuses[selected_id].detail if preparation is not None else None,
                 )
                 for selected_id, item in index_store.catalog().items()
-                if config.preparation_access == "browser" or statuses[selected_id].status == "ready"
+                if (preparation is None or config.preparation_access == "browser"
+                    or statuses[selected_id].status == "ready")
             ]
         except (OSError, ValueError, RuntimeError) as error:
             raise HTTPException(status_code=503, detail="Filing catalog unavailable") from error
 
     @app.post("/api/filings/{filing_id}/prepare", response_model=PreparationResult, status_code=202)
     def prepare(filing_id: str) -> PreparationResult:
-        if config.preparation_access == "operator":
+        if config.preparation_access == "operator" or preparation is None:
             raise HTTPException(status_code=403, detail="Filing preparation is operator-only")
         try:
             state = preparation.start(filing_id)
@@ -111,13 +117,21 @@ def _register_chat_route(app: FastAPI, query_service: QueryService) -> None:
             raise HTTPException(status_code=503, detail="Filing index unavailable") from error
 
 
-def create_app(store: FilingIndexStore | None = None, settings: Settings | None = None) -> FastAPI:
+def create_app(store: FilingIndexStore | SnapshotStore | None = None, settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="SEC RAG API")
     config = settings if settings is not None else Settings.from_env()
-    config.models.require_local_indexes()
-    index_store = store if store is not None else FilingIndexStore()
+    if config.models.runtime == "cloud":
+        if store is not None and not isinstance(store, SnapshotStore):
+            raise ValueError("Cloud runtime requires a verified SnapshotStore, not local indexes")
+        index_store = store if store is not None else SnapshotStore.from_env()
+        preparation = None
+    else:
+        if isinstance(store, SnapshotStore):
+            raise ValueError("Local Ollama embeddings cannot query a cloud snapshot")
+        index_store = store if store is not None else FilingIndexStore()
+        preparation = PreparationService(index_store)
     _register_status_routes(app, index_store, config)
-    _register_filing_route(app, index_store, PreparationService(index_store), config)
+    _register_filing_route(app, index_store, preparation, config)
     _register_chat_route(app, QueryService(index_store, config))
     return app
 

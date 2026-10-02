@@ -2,10 +2,11 @@
 
 ## Release boundary
 
-Local filing preparation and chat still use Ollama. The cloud adapters can generate an answer or embed a small batch
-without Ollama, but **cloud filing preparation, retrieval, API startup and evaluation are intentionally unavailable**
-until token-aware chunking and a verified immutable runtime snapshot are delivered. A cloud profile fails before
-loading/rebuilding local Nomic indexes or contacting Ollama. Switching profiles never migrates existing indexes.
+Local filing preparation and chat still use Ollama. Cloud preparation is an explicit offline operator command;
+cloud API/CLI/dev evaluation read verified immutable snapshots, without raw SEC files, Ollama or index writes.
+A cloud profile fails before model calls when the snapshot is missing or incompatible. Switching profiles never
+migrates existing indexes: local Nomic vectors have 768 dimensions; cloud BGE vectors have 384. A laptop running
+the **cloud profile** uses the same Cloudflare embeddings and runtime export as the future Vercel deployment.
 
 ## Configuration
 
@@ -19,13 +20,15 @@ does not receive cloud credentials. Keep Python 3.12 for the deployment target; 
 | Generation provider | Ollama | Groq |
 | `RAG_MODEL` | `gemma3:1b`, or another installed tag | Only `openai/gpt-oss-20b` |
 | Embedding provider/model | Ollama / `nomic-embed-text` | Cloudflare / `@cf/baai/bge-small-en-v1.5` |
-| Index mode | Local verified filing store | Immutable snapshot (not yet implemented) |
+| Index mode | Local verified filing store | Verified immutable snapshot |
 | `FILING_PREPARATION_ACCESS` | `browser` or `operator` | Only `operator` (default for cloud) |
 | `RAG_TOP_N` | Positive, default 5 | 1–10 |
 | `RAG_MAX_CONCURRENT_GENERATIONS` | Positive, default 1 | Per-process only, not a global serverless limit |
 | `OLLAMA_BASE_URL` | Default `http://localhost:11434` | Not used |
 | `OLLAMA_TIMEOUT_SECONDS` | Positive, default 120; discovery uses 5 | Not used |
 | `CLOUD_TIMEOUT_SECONDS` | Not used for requests | Positive and at most 30, default 30 |
+| `RAG_QUERY_TIMEOUT_SECONDS` | Existing per-call Ollama behavior retained | Total query budget, positive and at most 90, default 60 |
+| `RAG_SNAPSHOT_DIR` | Not used | Default `deploy/indexes` |
 
 Cloud also requires backend-only `GROQ_API_KEY`, `CLOUDFLARE_API_TOKEN` and a 32-character hexadecimal
 `CLOUDFLARE_ACCOUNT_ID`. Missing credentials, invalid profiles and unapproved generation models fail clearly.
@@ -42,18 +45,22 @@ provider usage metrics. It requests at most 512 completion tokens, excludes reas
 or truncated responses, and limits returned answers to 8,192 characters. Cloud questions are at most 2,000 UTF-8 bytes;
 context is at most 10 chunks and 16,000 UTF-8 bytes. Oversized input fails rather than silently removing evidence.
 
-`paragraphs_to_embeddings(texts, config=...)` and `text_to_embedding(text, config=...)` use the same Cloudflare model
-and explicit `mean` pooling. Batches contain 1–100 nonblank texts. **The provisional per-text limit is 480 UTF-8 bytes,
-not 480 tokens.** This deliberately restrictive guard is not the final tokenizer contract. Full document chunking,
-query prefixes, normalization and tokenizer validation belong to the snapshot release. Returned vectors are unchanged;
-each must have exactly 384 finite numeric entries, a finite nonzero norm and the expected count/shape/pooling.
+Cloud document embeddings use explicit `mean` pooling. The bundled, checksummed upstream BGE WordPiece tokenizer
+counts at most **480 content tokens**, with truncation disabled. The complete input, including special tokens and
+the query instruction, must fit 512 tokens. Batches contain 1–100 nonblank texts and at most 8,192 final input tokens.
+Token-aware chunking splits initial paragraphs and checks semantic merges against the same content budget.
+Runtime question embeddings add `Represent this sentence for searching relevant passages: `; documents have no prefix.
+Returned vectors are stored unchanged (provider passthrough); retrieval computes stable cosine similarity.
+Each vector must have exactly 384 finite numeric entries, a finite nonzero norm and the expected count/shape/pooling.
+Equal dimensions alone do not establish compatibility: the reader also checks model, provider, pooling, formatting,
+normalization and tokenizer identity. Direct `text_to_embedding` remains a document-format embedding primitive;
+the snapshot query interface owns query formatting and cache isolation.
 
 Cloud requests use HTTPX without a model SDK, do not follow redirects or environment HTTP proxies, and never retry
 automatically. The wall-clock timeout covers connection, headers and response body; bodies are limited to 2 MiB.
-Both public model interfaces accept the same optional absolute `time.monotonic()` deadline so a caller can constrain
-embedding plus generation to a single budget. The complete cloud query caller/client budget is wired with the snapshot
-release; this adapter release does not claim that a full cloud API request already works.
-The owner explicitly deferred API/CLI/evaluation deadline orchestration to that release. Local Ollama retains its
+The shared cloud query interface propagates one absolute `time.monotonic()` deadline through retrieval, question
+embedding and generation, and checks it before/after expensive stages. API, CLI and dev evaluation all use this
+interface. Cached embeddings do not bypass an expired deadline. Local Ollama retains its
 existing per-call timeouts; those do not guarantee that embedding plus generation finishes within the client's
 125-second budget. Do not treat the current local setup as a production cloud timeout contract.
 
@@ -66,7 +73,7 @@ are clamped to 1–300 seconds; missing/invalid hints default to 60. A retry hin
 CLI failures exit with a clear error and do not append a partial query log; evaluation failures do not publish a partial
 result. Missing or incompatible filing indexes remain a separate unavailable condition.
 
-## Verification and next gate
+## Verification and deployment boundary
 
 Offline Python tests cover local/cloud configuration, request payloads, output/vector validation, timeout cancellation,
 shared deadlines, response size, quota hints, safe errors and refusal to reuse local indexes. They do not prove live
@@ -78,6 +85,9 @@ special tokens/prefixes, pooling, normalization and tokenizer. Rebuild into a se
 indexes, and compare only the 24 dev questions. Reserve the 16 test questions for final evaluation. Runtime snapshots
 must record embedding identity/configuration and reject incompatible vectors, even if their dimensions happen to match.
 Do not invent an immutable model revision when the provider does not expose one.
+
+The runtime snapshot format and reproducible operator commands are described in [CLOUD_INDEXES.md](CLOUD_INDEXES.md).
+Local cloud smoke checks do not prove Vercel bundle size, routing, concurrency, quotas, promotion or rollback.
 
 Provider references checked on 2026-10-02:
 - [Groq GPT OSS 20B](https://console.groq.com/docs/model/openai/gpt-oss-20b)

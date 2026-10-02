@@ -1,19 +1,22 @@
-"""Cloudflare embedding adapter; full token-aware indexing is delivered separately."""
+"""Cloudflare embeddings with pinned token limits and explicit mean pooling."""
 
 from etl_pipeline.cloud_http import post_json
 from math import hypot, isfinite
 
 from etl_pipeline.model_config import CLOUD_EMBEDDING_DIMENSION, ModelConfig
 from etl_pipeline.model_errors import ModelInputError, ModelInvalidResponse
+from etl_pipeline.cloud_tokens import BATCH_TEXTS, BATCH_TOKENS, token_count, validated_input
 
 
-def embed(texts: list[str], config: ModelConfig, *, deadline: float | None = None) -> list[list[float]]:
-    if not 1 <= len(texts) <= 100:
+def embed(texts: list[str], config: ModelConfig, *, deadline: float | None = None,
+          query: bool = False) -> list[list[float]]:
+    if config.runtime != "cloud":
+        raise ValueError("Cloud embeddings require the cloud profile")
+    if not 1 <= len(texts) <= BATCH_TEXTS:
         raise ModelInputError("Cloud embedding batch must contain 1 to 100 texts")
-    if any(not isinstance(text, str) or not text.strip() or len(text.encode("utf-8")) > 480 for text in texts):
-        raise ModelInputError(
-            "Cloud embedding input must be nonempty and at most 480 UTF-8 bytes pending token validation"
-        )
+    texts = [validated_input(text, query=query) for text in texts]
+    if sum(token_count(text) for text in texts) > BATCH_TOKENS:
+        raise ModelInputError("Cloud embedding batch exceeds 8192 tokens")
     endpoint = f"https://api.cloudflare.com/client/v4/accounts/{config.cloudflare_account_id}/ai/run/"
     result = post_json(
         "cloudflare", endpoint + config.embedding_model,

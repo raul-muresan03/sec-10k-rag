@@ -22,6 +22,15 @@ def test_cloud_embeddings_use_cloudflare_without_ollama(cloud_config, cloud_http
     assert json.loads(calls[0].content) == {"text": ["first", "second"], "pooling": "mean"}
 
 
+def test_cloud_embeddings_accept_long_text_within_the_token_budget(cloud_config, cloud_http):
+    text = "revenue " * 480
+    calls = cloud_http(lambda request: httpx.Response(200, json={
+        "success": True, "result": {"data": [[1.0] + [0.0] * 383]},
+    }))
+    assert len(paragraphs_to_embeddings([text], config=cloud_config)[0]) == 384
+    assert json.loads(calls[0].content)["text"] == [text]
+
+
 @pytest.mark.parametrize("vector", [
     [], [1.0] * 768, [0.0] * 384, [True] + [1.0] * 383,
     [float("nan")] + [1.0] * 383, [float("inf")] + [1.0] * 383,
@@ -50,13 +59,28 @@ def test_cloud_embeddings_validate_envelope_count_shape_and_pooling(cloud_config
     assert "secret" not in str(failure.value)
 
 
-@pytest.mark.parametrize("texts", [[], [""], ["first"] * 101, ["a" * 481], ["🙂" * 121]],
-                         ids=["empty-batch", "blank", "batch-size", "input-size", "unicode"])
+@pytest.mark.parametrize("texts", [[], [""], ["first"] * 101, ["revenue " * 481], ["中" * 481],
+                                   ["revenue " * 480] * 18],
+                         ids=["empty-batch", "blank", "batch-size", "input-size", "unicode", "batch-tokens"])
 def test_cloud_embeddings_reject_unbounded_batches_before_http(cloud_config, cloud_http, texts):
     calls = cloud_http(lambda request: pytest.fail("Invalid batch reached the cloud"))
     with pytest.raises(ModelInputError):
         paragraphs_to_embeddings(texts, config=cloud_config)
     assert not calls
+
+
+def test_cloud_query_counts_its_prefix_and_special_tokens(cloud_config, cloud_http):
+    from etl_pipeline.cloud_embeddings import embed
+
+    calls = cloud_http(lambda request: httpx.Response(200, json={
+        "success": True, "result": {"data": [[1.0] + [0.0] * 383]},
+    }))
+    embed(["revenue " * 480], cloud_config, query=True)
+    sent = json.loads(calls[0].content)["text"][0]
+    assert sent.startswith("Represent this sentence for searching relevant passages: revenue ")
+    with pytest.raises(ModelInputError):
+        embed(["revenue " * 481], cloud_config, query=True)
+    assert len(calls) == 1
 
 
 def test_question_embedding_uses_the_same_cloud_configuration(cloud_config, cloud_http):

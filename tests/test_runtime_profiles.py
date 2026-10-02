@@ -13,7 +13,7 @@ from eval.run_eval import run_evaluation
 
 
 @pytest.fixture
-def cloud_environment(monkeypatch, cloud_config):
+def cloud_environment(monkeypatch, cloud_config, tmp_path):
     monkeypatch.setenv("RAG_RUNTIME", "cloud")
     monkeypatch.delenv("RAG_MODEL", raising=False)
     monkeypatch.setenv("GROQ_API_KEY", cloud_config.groq_api_key)
@@ -21,6 +21,7 @@ def cloud_environment(monkeypatch, cloud_config):
     monkeypatch.setenv("CLOUDFLARE_ACCOUNT_ID", cloud_config.cloudflare_account_id)
     monkeypatch.setenv("OLLAMA_BASE_URL", "not-a-url")
     monkeypatch.setenv("OLLAMA_TIMEOUT_SECONDS", "invalid")
+    monkeypatch.setenv("RAG_SNAPSHOT_DIR", str(tmp_path / "missing-snapshot"))
 
 
 def test_cloud_api_settings_do_not_require_ollama_configuration(cloud_environment):
@@ -34,7 +35,7 @@ def test_cloud_api_settings_do_not_require_ollama_configuration(cloud_environmen
 def test_cloud_api_cannot_start_with_local_indexes_or_make_startup_requests(cloud_environment, cloud_http):
     calls = cloud_http(lambda request: pytest.fail("Startup contacted a model"))
     with patch("requests.get", side_effect=AssertionError("Startup contacted Ollama")):
-        with pytest.raises(RuntimeError, match="Cloud filing snapshots"):
+        with pytest.raises(ValueError, match="Snapshot file is missing"):
             create_app()
     assert not calls
 
@@ -46,13 +47,13 @@ def test_cloud_cli_refuses_local_index_reuse_before_any_http(cloud_environment, 
         with pytest.raises(SystemExit) as failure:
             ask.main()
     assert failure.value.code == 2
-    assert "Cloud filing snapshots" in capsys.readouterr().err
+    assert "Snapshot file is missing" in capsys.readouterr().err
     assert not calls
 
 
 def test_cloud_evaluation_refuses_local_rebuild_before_creating_artifacts(cloud_environment, tmp_path, cloud_http):
     calls = cloud_http(lambda request: pytest.fail("Evaluation contacted a model before snapshot validation"))
-    with pytest.raises(RuntimeError, match="Cloud filing snapshots"):
+    with pytest.raises(ValueError, match="Snapshot file is missing"):
         run_evaluation("dev", 1, 5, "openai/gpt-oss-20b", output_directory=tmp_path / "results")
     assert not (tmp_path / "results").exists()
     assert not calls
@@ -62,7 +63,7 @@ def test_cloud_chunker_cannot_rebuild_into_a_local_index(cloud_environment, tmp_
     source = tmp_path / "cleaned.txt"
     source.write_text("evidence")
     calls = cloud_http(lambda request: pytest.fail("Legacy chunker contacted a cloud model"))
-    with pytest.raises(RuntimeError, match="Cloud filing snapshots"):
+    with pytest.raises(RuntimeError, match="Local Nomic indexes"):
         chunk_10K(str(source), output_dir=tmp_path)
     assert sorted(path.name for path in tmp_path.iterdir()) == ["cleaned.txt"]
     assert not calls
@@ -74,7 +75,7 @@ def test_cloud_operator_cli_stops_before_downloading_or_preparing(cloud_environm
         with pytest.raises(SystemExit) as failure:
             prepare_filings.main()
     assert failure.value.code == 2
-    assert "Cloud filing snapshots" in capsys.readouterr().err
+    assert "Local Nomic indexes" in capsys.readouterr().err
 
 
 def test_settings_keep_injected_local_model_identity_consistent():

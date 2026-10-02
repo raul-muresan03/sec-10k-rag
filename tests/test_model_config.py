@@ -71,3 +71,8 @@ def test_invalid_cloud_timeout_does_not_echo_its_value(monkeypatch):
     with pytest.raises(ValueError, match="CLOUD_TIMEOUT_SECONDS") as failure:
         ModelConfig.from_env()
     assert "private-value" not in str(failure.value)
+
+
+def test_local_profile_ignores_the_cloud_query_deadline_setting(monkeypatch):
+    monkeypatch.setenv("RAG_QUERY_TIMEOUT_SECONDS", "not-a-local-setting")
+    assert ModelConfig.from_env(runtime="local").runtime == "local"

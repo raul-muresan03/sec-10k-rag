@@ -1,7 +1,7 @@
-# Local live API
+# Live API
 
 The FastAPI service answers independent questions about one of the six manifest-verified dev filings. It reads
-complete, filing-scoped indexes and calls Ollama for the question embedding and answer. Saved evaluation artifacts
+complete, filing-scoped indexes and uses the explicitly selected local or cloud providers. Saved evaluation artifacts
 under `demo/` and `eval/` are separate from these live responses and are not served by the frontend.
 
 For the Docker Compose workflow (including automatic preparation when a filing is selected), see the
@@ -82,6 +82,15 @@ Provider quotas return 429 with a bounded `Retry-After` header; the backend does
 Model refusals are successful answers and must be evaluated separately from automatic retrieval metrics.
 
 `RAG_RUNTIME=local` is the default and the explicit Compose profile. `RAG_RUNTIME=cloud` validates backend-only Groq
-and Cloudflare settings, defaults preparation access to `operator`, and refuses API startup until the immutable cloud
-filing snapshot reader is implemented. It does not reuse Nomic indexes or contact Ollama. Provider adapter configuration
-and the remaining compatibility gates are documented in [MODEL_PROVIDERS.md](../MODEL_PROVIDERS.md).
+and Cloudflare settings, defaults preparation access to `operator`, and reads a verified immutable export selected by
+`RAG_SNAPSHOT_DIR` (default `deploy/indexes`). Missing or incompatible exports fail startup. Cloud readiness checks
+the loaded export without model requests; the catalog contains only its ready dev filings, and HTTP preparation always
+returns 403. No raw submissions, Ollama, preparation workers or runtime writes are needed.
+
+Cloud retrieval and generation share one absolute `RAG_QUERY_TIMEOUT_SECONDS` deadline (default 60, maximum 90),
+in addition to each provider's maximum 30-second timeout. An expired budget prevents further provider calls, including
+generation after slow embeddings. The API client has a 125-second timeout; Vercel duration/routing is a separate
+packaging gate, not demonstrated by a local API run. Local Ollama retains its existing per-call timeouts.
+
+See [MODEL_PROVIDERS.md](../MODEL_PROVIDERS.md) and [CLOUD_INDEXES.md](../CLOUD_INDEXES.md) for configuration,
+offline preparation and the snapshot compatibility contract.

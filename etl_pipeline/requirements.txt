@@ -10,5 +10,6 @@ python-dotenv==1.2.2
 requests==2.34.2
 sec-edgar-downloader==5.1.0
 soupsieve==2.9.2
+tokenizers==0.23.2
 typing_extensions==4.16.0
 urllib3==2.7.0
