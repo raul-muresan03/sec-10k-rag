@@ -5,23 +5,18 @@ import json
 
 import httpx
 
-from etl_pipeline.model_errors import ModelInvalidResponse, ModelRateLimited, ModelTimeout, ModelUnavailable
+from etl_pipeline.model_errors import (
+    ModelInvalidResponse, ModelRateLimited, ModelTimeout, ModelUnavailable, retry_after_seconds,
+)
 
 MAX_RESPONSE_BYTES = 2 * 1024 * 1024
-
-def _retry_after(value: str) -> int:
-    try:
-        return max(1, min(300, int(value)))
-    except ValueError:
-        return 60
-
 
 async def _post_json(provider: str, url: str, key: str, payload: dict, timeout: float) -> dict:
     async with asyncio.timeout(timeout):
         async with httpx.AsyncClient(timeout=timeout, follow_redirects=False, trust_env=False) as client:
             async with client.stream("POST", url, headers={"Authorization": f"Bearer {key}"}, json=payload) as reply:
                 if reply.status_code == 429:
-                    raise ModelRateLimited(provider, _retry_after(reply.headers.get("Retry-After", "")))
+                    raise ModelRateLimited(provider, retry_after_seconds(reply.headers.get("Retry-After", "")))
                 if reply.status_code != 200:
                     raise ModelUnavailable(f"{provider} returned HTTP {reply.status_code}")
                 body = bytearray()

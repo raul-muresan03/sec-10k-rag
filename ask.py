@@ -53,14 +53,20 @@ def main() -> None:
 
     print(f"Retrieving the top {args.top_n} relevant chunks...", flush=True)
     retrieval_start = time.perf_counter()
-    chunks = get_most_similar_chunks(args.question, args.top_n, index_path)
+    try:
+        chunks = get_most_similar_chunks(args.question, args.top_n, index_path)
+    except (OSError, ValueError, RuntimeError) as error:
+        parser.error(str(error))
     retrieval_end = time.perf_counter()
     retrieval_seconds = retrieval_end - retrieval_start
     print(f"Retrieved {len(chunks)} chunks in {retrieval_seconds:.2f}s.", flush=True)
 
     print(f"Generating an answer with {args.model}...", flush=True)
     generation_start = time.perf_counter()
-    answer, ollama_metrics = get_llm_response(args.question, chunks, args.model)
+    try:
+        answer, ollama_metrics = get_llm_response(args.question, chunks, args.model)
+    except (ValueError, RuntimeError) as error:
+        parser.error(str(error))
     generation_end = time.perf_counter()
     generation_seconds = generation_end - generation_start
     print(f"Generation completed in {generation_seconds:.2f}s.")

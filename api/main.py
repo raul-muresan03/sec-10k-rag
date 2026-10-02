@@ -12,6 +12,9 @@ from etl_pipeline.chunker import EMBEDDING_MODEL
 from etl_pipeline.embedding_model import installed_models
 from etl_pipeline.filing_store import FilingIndexStore
 from etl_pipeline.ollama import OllamaInvalidResponse, OllamaTimeout, OllamaUnavailable
+from etl_pipeline.model_errors import (
+    ModelInputError, ModelInvalidResponse, ModelRateLimited, ModelTimeout, ModelUnavailable,
+)
 
 
 COMPANY_NAMES = {
@@ -88,12 +91,22 @@ def _register_chat_route(app: FastAPI, query_service: QueryService) -> None:
             raise HTTPException(status_code=404, detail="Unknown filing_id") from error
         except AtCapacity as error:
             raise HTTPException(status_code=503, detail="Generation capacity reached") from error
-        except OllamaTimeout as error:
-            raise HTTPException(status_code=504, detail="Ollama timed out") from error
-        except OllamaInvalidResponse as error:
-            raise HTTPException(status_code=502, detail="Ollama returned an invalid response") from error
-        except OllamaUnavailable as error:
-            raise HTTPException(status_code=503, detail="Ollama unavailable") from error
+        except ModelRateLimited as error:
+            raise HTTPException(status_code=429, detail="Model quota reached",
+                                headers={"Retry-After": str(error.retry_after)}) from error
+        except ModelInputError as error:
+            raise HTTPException(status_code=422, detail="Question or context exceeds model input limits") from error
+        except ModelTimeout as error:
+            detail = "Ollama timed out" if isinstance(error, OllamaTimeout) else "Model provider timed out"
+            raise HTTPException(status_code=504, detail=detail) from error
+        except ModelInvalidResponse as error:
+            detail = "Ollama returned an invalid response" if isinstance(error, OllamaInvalidResponse) else (
+                "Model provider returned an invalid response"
+            )
+            raise HTTPException(status_code=502, detail=detail) from error
+        except ModelUnavailable as error:
+            detail = "Ollama unavailable" if isinstance(error, OllamaUnavailable) else "Model provider unavailable"
+            raise HTTPException(status_code=503, detail=detail) from error
         except (OSError, ValueError, RuntimeError) as error:
             raise HTTPException(status_code=503, detail="Filing index unavailable") from error
 

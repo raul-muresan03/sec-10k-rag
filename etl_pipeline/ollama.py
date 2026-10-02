@@ -7,17 +7,20 @@ from urllib.parse import urlsplit
 
 import requests
 from urllib3.exceptions import ReadTimeoutError
+from etl_pipeline.model_errors import (
+    ModelInvalidResponse, ModelRateLimited, ModelTimeout, ModelUnavailable, retry_after_seconds,
+)
 
 
-class OllamaUnavailable(RuntimeError):
+class OllamaUnavailable(ModelUnavailable):
     pass
 
 
-class OllamaTimeout(RuntimeError):
+class OllamaTimeout(ModelTimeout):
     pass
 
 
-class OllamaInvalidResponse(RuntimeError):
+class OllamaInvalidResponse(ModelInvalidResponse):
     pass
 
 
@@ -37,6 +40,8 @@ def timeout_seconds() -> float:
 
 
 def _json_response(response: requests.Response, endpoint: str) -> dict:
+    if response.status_code == 429:
+        raise ModelRateLimited("ollama", retry_after_seconds(response.headers.get("Retry-After", "")))
     if response.status_code != 200:
         raise OllamaUnavailable(f"Ollama {endpoint} returned HTTP {response.status_code}")
     try:

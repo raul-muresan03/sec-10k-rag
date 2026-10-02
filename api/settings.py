@@ -36,6 +36,8 @@ class Settings:
         capacity = int(os.getenv("RAG_MAX_CONCURRENT_GENERATIONS", "1"))
         default_access = "operator" if models.runtime == "cloud" else "browser"
         preparation_access = os.getenv("FILING_PREPARATION_ACCESS", default_access).strip().lower()
+        if preparation_access not in ("browser", "operator"):
+            raise ValueError("FILING_PREPARATION_ACCESS must be browser or operator")
         if models.runtime == "local":
             base_url()
             timeout_seconds()
