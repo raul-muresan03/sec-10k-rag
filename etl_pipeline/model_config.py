@@ -62,8 +62,14 @@ class ModelConfig:
         selected_runtime = (os.getenv("RAG_RUNTIME", "local") if runtime is None else runtime).strip()
         default_model = CLOUD_GENERATION_MODEL if selected_runtime == "cloud" else "gemma3:1b"
         selected_model = (os.getenv("RAG_MODEL", default_model) if model is None else model).strip()
+        if selected_runtime != "cloud":
+            return cls(runtime=selected_runtime, model=selected_model)
+        try:
+            cloud_timeout = float(os.getenv("CLOUD_TIMEOUT_SECONDS", "30"))
+        except ValueError:
+            raise ValueError("CLOUD_TIMEOUT_SECONDS must be a number") from None
         return cls(runtime=selected_runtime, model=selected_model,
                    groq_api_key=os.getenv("GROQ_API_KEY", "").strip(),
                    cloudflare_api_token=os.getenv("CLOUDFLARE_API_TOKEN", "").strip(),
                    cloudflare_account_id=os.getenv("CLOUDFLARE_ACCOUNT_ID", "").strip(),
-                   cloud_timeout_seconds=float(os.getenv("CLOUD_TIMEOUT_SECONDS", "30")))
+                   cloud_timeout_seconds=cloud_timeout)

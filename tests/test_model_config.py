@@ -57,3 +57,17 @@ def test_cloud_timeout_must_fit_the_request_budget(monkeypatch, timeout, cloud_c
     monkeypatch.setenv("CLOUD_TIMEOUT_SECONDS", timeout)
     with pytest.raises(ValueError, match="CLOUD_TIMEOUT_SECONDS"):
         ModelConfig.from_env()
+
+
+def test_local_profile_ignores_irrelevant_cloud_configuration(monkeypatch):
+    monkeypatch.setenv("RAG_RUNTIME", "local")
+    monkeypatch.setenv("CLOUD_TIMEOUT_SECONDS", "private-value-not-a-number")
+    assert ModelConfig.from_env().runtime == "local"
+
+
+def test_invalid_cloud_timeout_does_not_echo_its_value(monkeypatch):
+    monkeypatch.setenv("RAG_RUNTIME", "cloud")
+    monkeypatch.setenv("CLOUD_TIMEOUT_SECONDS", "private-value-not-a-number")
+    with pytest.raises(ValueError, match="CLOUD_TIMEOUT_SECONDS") as failure:
+        ModelConfig.from_env()
+    assert "private-value" not in str(failure.value)
