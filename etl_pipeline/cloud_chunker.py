@@ -1,6 +1,7 @@
 """Token-bounded semantic chunking for offline cloud preparation only."""
 
-from etl_pipeline.chunker import CHUNK_SEPARATOR, MERGE_SIMILARITY_THRESHOLD, get_similarity_score
+from etl_pipeline.chunker import CHUNK_SEPARATOR, MERGE_SIMILARITY_THRESHOLD
+from etl_pipeline.cloud_cosine import cosine
 from etl_pipeline.cloud_embeddings import embed
 from etl_pipeline.cloud_tokens import BATCH_TEXTS, BATCH_TOKENS, CONTENT_TOKENS, token_count, tokenizer
 from etl_pipeline.model_config import ModelConfig
@@ -48,7 +49,7 @@ def chunk_document(document: str, config: ModelConfig) -> tuple[list[str], list[
     current = paragraphs[0]
     for position, following in enumerate(paragraphs[1:]):
         combined = current + CHUNK_SEPARATOR + following
-        similar = get_similarity_score(vectors[position], vectors[position + 1]) >= MERGE_SIMILARITY_THRESHOLD
+        similar = cosine(vectors[position], vectors[position + 1]) >= MERGE_SIMILARITY_THRESHOLD
         if similar and len(combined) <= 8000 and token_count(combined, special_tokens=False) <= CONTENT_TOKENS:
             current = combined
         else:

@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from copy import deepcopy
 from pathlib import Path
+import os
 
 from etl_pipeline.snapshot_format import (
     DEFAULT_SNAPSHOT_ROOT, MAX_MANIFEST_BYTES, parse_json, read_bounded, read_index, validate_manifest,
@@ -41,6 +42,10 @@ class SnapshotStore:
             )
             self._indexes[item.filing_id] = read_index(root, entry)
             self._filings[item.filing_id] = item
+
+    @classmethod
+    def from_env(cls) -> "SnapshotStore":
+        return cls(Path(os.getenv("RAG_SNAPSHOT_DIR", str(DEFAULT_SNAPSHOT_ROOT))))
 
     @property
     def manifest(self) -> dict:

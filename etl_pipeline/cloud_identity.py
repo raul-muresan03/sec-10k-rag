@@ -34,7 +34,7 @@ def embedding_configuration() -> dict:
 
 def index_configuration() -> dict:
     names = ("parser.py", "cleaner.py", "chunker.py", "cloud_chunker.py", "cloud_embeddings.py",
-             "cloud_tokens.py", "cloud_identity.py", "cloud_indexing.py")
+             "cloud_tokens.py", "cloud_cosine.py", "cloud_identity.py", "cloud_indexing.py")
     return {
         "embedding": embedding_configuration(),
         "chunking": {"strategy": "token_bounded_adjacent_cosine", "separator": CHUNK_SEPARATOR,

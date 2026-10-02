@@ -10,6 +10,8 @@ from api.settings import Settings
 from etl_pipeline.filing_store import FilingIndexStore
 from etl_pipeline.rag_engine import get_llm_response
 from etl_pipeline.vector_store import get_most_similar_chunks
+from etl_pipeline.runtime_snapshot import SnapshotStore
+from etl_pipeline.snapshot_query import query_snapshot
 
 
 class AtCapacity(RuntimeError):
@@ -17,7 +19,7 @@ class AtCapacity(RuntimeError):
 
 
 class QueryService:
-    def __init__(self, store: FilingIndexStore, settings: Settings):
+    def __init__(self, store: FilingIndexStore | SnapshotStore, settings: Settings):
         self.store = store
         self.settings = settings
         self.generation_slots = BoundedSemaphore(settings.max_concurrent_generations)
@@ -33,18 +35,25 @@ class QueryService:
 
     def answer(self, filing_id: str, question: str) -> ChatResponse:
         started = time.perf_counter()
+        deadline = time.monotonic() + self.settings.models.query_timeout_seconds
         filing = self.store.resolve_id(filing_id)
 
-        retrieval_start = time.perf_counter()
-        chunks = get_most_similar_chunks(question, self.settings.top_n, filing.index_path)
-        retrieval_seconds = time.perf_counter() - retrieval_start
+        if isinstance(self.store, SnapshotStore):
+            result = query_snapshot(self.store, filing_id, question, self.settings.top_n,
+                                    self.settings.models, deadline=deadline)
+            chunks, answer = result.chunks, result.answer
+            retrieval_seconds, generation_seconds = result.retrieval_seconds, result.generation_seconds
+        else:
+            retrieval_start = time.perf_counter()
+            chunks = get_most_similar_chunks(question, self.settings.top_n, filing.index_path)
+            retrieval_seconds = time.perf_counter() - retrieval_start
 
-        generation_start = time.perf_counter()
-        answer, _ = get_llm_response(question, chunks, self.settings.model)
-        generation_seconds = time.perf_counter() - generation_start
+            generation_start = time.perf_counter()
+            answer, _ = get_llm_response(question, chunks, self.settings.model)
+            generation_seconds = time.perf_counter() - generation_start
 
         return ChatResponse(
-            answer=answer, filing_id=filing.filing_id, model=self.settings.model,
+            answer=answer or "", filing_id=filing.filing_id, model=self.settings.model,
             retrieved_chunks=[
                 RetrievedChunk(rank=rank, score=score, text=text)
                 for rank, (score, text) in enumerate(chunks, start=1)

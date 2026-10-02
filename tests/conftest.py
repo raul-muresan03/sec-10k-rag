@@ -44,6 +44,20 @@ def cloud_http(monkeypatch):
 
 
 @pytest.fixture
+def runtime_export(local_corpus, cloud_config, cloud_http, tmp_path):
+    from etl_pipeline.cloud_indexing import prepare_snapshot
+
+    cloud_http(lambda request: httpx.Response(200, json={
+        "success": True, "result": {"data": [
+            [1.0] + [0.0] * 383 for _ in json.loads(request.content)["text"]
+        ]},
+    }))
+    export = tmp_path / "export"
+    prepare_snapshot(local_corpus.manifest_path, tmp_path / "cloud-indexes", export, cloud_config)
+    return export
+
+
+@pytest.fixture
 def local_corpus(tmp_path):
     return filing_corpus(tmp_path)
 

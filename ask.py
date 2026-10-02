@@ -10,6 +10,8 @@ from etl_pipeline.rag_engine import get_llm_response
 from etl_pipeline.model_config import ModelConfig
 from etl_pipeline.filing_store import FilingIndexStore
 from etl_pipeline.vector_store import get_most_similar_chunks
+from etl_pipeline.runtime_snapshot import SnapshotStore
+from etl_pipeline.snapshot_query import query_snapshot
 
 DEFAULT_MODEL = "gemma3:1b"
 DEFAULT_TOP_N = 5
@@ -25,7 +27,20 @@ def _append_query_log(record: dict) -> None:
         print(f"Warning: query could not be logged: {error}")
 
 
-def main(*, store: FilingIndexStore | None = None) -> None:
+def _ask_cloud(args: argparse.Namespace, config: ModelConfig, store: FilingIndexStore | SnapshotStore | None) -> None:
+    deadline = time.monotonic() + config.query_timeout_seconds
+    if store is not None and not isinstance(store, SnapshotStore):
+        raise ValueError("Cloud CLI requires a verified snapshot, not local indexes")
+    snapshot = store if store is not None else SnapshotStore.from_env()
+    filing = snapshot.resolve(args.ticker, args.year)
+    result = query_snapshot(snapshot, filing.filing_id, args.question, args.top_n, config, deadline=deadline)
+    print(f"Snapshot: {snapshot.snapshot_id}")
+    print(f"Retrieval: {result.retrieval_seconds:.2f}s; generation: {result.generation_seconds:.2f}s")
+    print("\nAnswer:")
+    print(result.answer)
+
+
+def main(*, store: FilingIndexStore | SnapshotStore | None = None) -> None:
     parser = argparse.ArgumentParser(description="Ask a question about the indexed SEC filing.")
     parser.add_argument("question", help="Question to answer from the filing")
     parser.add_argument("--top-n", type=int, default=DEFAULT_TOP_N, help="Number of chunks to retrieve")
@@ -44,11 +59,15 @@ def main(*, store: FilingIndexStore | None = None) -> None:
 
     try:
         config = ModelConfig.from_env(model=args.model)
-        config.require_local_indexes()
+        if config.runtime == "cloud":
+            _ask_cloud(args, config, store)
+            return
+        if isinstance(store, SnapshotStore):
+            raise ValueError("Local Ollama embeddings cannot query a cloud snapshot")
         args.model = config.model
         index_path = (ensure_index(ticker, args.year) if store is None
                       else store.prepare_selected(ticker, args.year).index_path)
-    except (RuntimeError, ValueError) as error:
+    except (OSError, RuntimeError, ValueError, KeyError) as error:
         parser.error(str(error))
 
     print(f"Vector store: {index_path}", flush=True)

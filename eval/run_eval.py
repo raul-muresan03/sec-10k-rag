@@ -15,6 +15,7 @@ from eval.retrieval_metrics import evidence_found, normalize_text, score_retriev
 from eval.runtime_metrics import runtime_environment, summarize_ollama, summarize_stage_timings
 from etl_pipeline.rag_engine import get_llm_response
 from etl_pipeline.model_config import ModelConfig
+from etl_pipeline.runtime_snapshot import SnapshotStore
 from etl_pipeline.vector_store import get_most_similar_chunks
 
 
@@ -172,6 +173,8 @@ def run_evaluation(
     output_directory: Path | None = None,
     manifest_path: Path = MANIFEST_PATH,
     mode: str = "full",
+    snapshot_store: SnapshotStore | None = None,
+    question_interval_seconds: float = 0.0,
 ) -> tuple[dict[str, Any], Path, Path]:
     if mode not in MODES:
         raise ValueError(f"mode must be one of: {', '.join(sorted(MODES))}")
@@ -179,7 +182,16 @@ def run_evaluation(
         raise ValueError("top-n must be greater than zero")
     if mode == "retrieval-only" and top_n != RETRIEVAL_TOP_N:
         raise ValueError("retrieval-only requires exactly 10 results (top-n=10)")
-    ModelConfig.from_env(model=model).require_local_indexes()
+    config = ModelConfig.from_env(model=model)
+    if config.runtime == "cloud":
+        from eval.cloud_eval import run_snapshot_evaluation
+
+        return run_snapshot_evaluation(split, limit, top_n, config, questions_path, output_directory,
+                                       manifest_path, mode, snapshot_store, question_interval_seconds)
+    if snapshot_store is not None:
+        raise ValueError("Local evaluation cannot query a cloud snapshot")
+    if question_interval_seconds != 0:
+        raise ValueError("Question pacing is only supported by cloud snapshot evaluation")
     questions_hash = hash_file(questions_path)
     questions = load_questions(questions_path, split, limit)
     if questions_hash != hash_file(questions_path):
@@ -333,6 +345,8 @@ def main() -> None:
     parser.add_argument("--model")
     parser.add_argument("--questions", type=Path, default=QUESTIONS_PATH)
     parser.add_argument("--manifest", type=Path, default=MANIFEST_PATH)
+    parser.add_argument("--question-interval-seconds", type=float, default=0.0,
+                        help="Cloud-only interval between dev questions; waiting is outside each query deadline")
     args = parser.parse_args()
 
     try:
@@ -348,6 +362,7 @@ def main() -> None:
             questions_path=args.questions,
             manifest_path=args.manifest,
             mode=args.mode,
+            question_interval_seconds=args.question_interval_seconds,
         )
     except (OSError, ValueError, RuntimeError) as error:
         parser.error(str(error))
