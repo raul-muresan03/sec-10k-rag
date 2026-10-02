@@ -65,3 +65,29 @@ rejected by this public dev-snapshot workflow. Evaluation output remains separat
 The export is outside static assets. If committed to a public repository, its text is still visible in Git; "private"
 means not served as a web asset. Vercel packaging, exposure checks, production publication and rollback are separate
 deployment gates. Do not infer deployment readiness from a successful local cloud chat.
+
+## Verified dev release
+
+Snapshot `9b77d19945eb0d8000d1137d5be2ff6ffda03c8ea7e5f641ee4298039f4e00d8`, built 2026-10-02 from
+code `d980353` with Cloudflare `@cf/baai/bge-small-en-v1.5` (384 dimensions, explicit `mean` pooling,
+provider-passthrough vectors). All six dev filings, 2,869 chunks total:
+
+| Filing | Chunks | Compressed | Expanded |
+| --- | --- | --- | --- |
+| ADBE 2018 | 547 | 931.0 KiB | 4153.9 KiB |
+| AMZN 2021 | 396 | 671.3 KiB | 2987.7 KiB |
+| F 2014 | 828 | 1415.4 KiB | 6287.1 KiB |
+| NVDA 2026 | 453 | 786.7 KiB | 3466.5 KiB |
+| PFE 2015 | 197 | 348.8 KiB | 1533.7 KiB |
+| SBUX 2019 | 448 | 774.8 KiB | 3408.1 KiB |
+
+Totals: 4.812 MiB compressed, 21.325 MiB expanded. Local Nomic indexes were neither rewritten nor reused.
+
+Dev retrieval-only run `20261002T133927181691Z-dev-cloud` (frozen export, top-10, all 24 dev questions, no test
+questions used): hit@10 15/18 (0.833), multi-hop complete evidence 6/6, MRR@10 0.520, mean retrieval 0.256 s.
+Three evidences missed the top 10: `nvda-2026-narrative`, `sbux-2019-numeric`, `f-2014-narrative`.
+Live NVIDIA cloud chat returned HTTP 200 in about 0.655 s with Ollama requests forbidden.
+
+Clean API-container sizing (non-root, read-only, network disabled, providers excluded): cold reader 4.292 s,
+peak RSS 110.97 MiB, synthetic per-filing retrieval CPU 0.021–0.088 s. These are not Vercel measurements.
+The 24-question full generation run is deferred to final evaluation to preserve Free quotas for deploy smoke tests.
