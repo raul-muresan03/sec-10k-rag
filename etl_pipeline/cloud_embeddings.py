@@ -7,7 +7,7 @@ from etl_pipeline.model_config import CLOUD_EMBEDDING_DIMENSION, ModelConfig
 from etl_pipeline.model_errors import ModelInputError, ModelInvalidResponse
 
 
-def embed(texts: list[str], config: ModelConfig) -> list[list[float]]:
+def embed(texts: list[str], config: ModelConfig, *, deadline: float | None = None) -> list[list[float]]:
     if not 1 <= len(texts) <= 100:
         raise ModelInputError("Cloud embedding batch must contain 1 to 100 texts")
     if any(not isinstance(text, str) or not text.strip() or len(text.encode("utf-8")) > 480 for text in texts):
@@ -16,6 +16,7 @@ def embed(texts: list[str], config: ModelConfig) -> list[list[float]]:
         "cloudflare",
         f"https://api.cloudflare.com/client/v4/accounts/{config.cloudflare_account_id}/ai/run/{config.embedding_model}",
         config.cloudflare_api_token, {"text": texts, "pooling": "mean"}, timeout=config.cloud_timeout_seconds,
+        deadline=deadline,
     )
     output = result.get("result")
     if result.get("success") is not True or not isinstance(output, dict):

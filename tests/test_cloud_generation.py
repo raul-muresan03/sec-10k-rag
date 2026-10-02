@@ -10,6 +10,7 @@ from etl_pipeline.model_errors import (
     ModelInputError, ModelInvalidResponse, ModelRateLimited, ModelTimeout, ModelUnavailable,
 )
 from etl_pipeline.rag_engine import get_llm_response
+from etl_pipeline.chunker import text_to_embedding
 
 
 def response(payload, status=200, headers=None):
@@ -128,3 +129,27 @@ def test_cloud_response_body_is_bounded_and_closed(cloud_config, cloud_http):
     with pytest.raises(ModelInvalidResponse, match="size"):
         get_llm_response("Revenue?", [], cloud_config.model, config=cloud_config)
     assert closed == [True]
+
+
+def test_cloud_embedding_and_generation_share_one_deadline(cloud_config, cloud_http):
+    async def send(request):
+        if request.url.host == "api.cloudflare.com":
+            await asyncio.sleep(0.02)
+            return httpx.Response(200, json={"success": True, "result": {"data": [[1.0] * 384]}})
+        await asyncio.sleep(10)
+
+    calls = cloud_http(send)
+    started = time.monotonic()
+    deadline = started + 0.3
+    text_to_embedding("Revenue?", config=cloud_config, deadline=deadline)
+    with pytest.raises(ModelTimeout):
+        get_llm_response("Revenue?", [], cloud_config.model, config=cloud_config, deadline=deadline)
+    assert time.monotonic() - started < 1
+    assert len(calls) == 2
+
+
+def test_expired_cloud_deadline_does_not_start_a_request(cloud_config, cloud_http):
+    calls = cloud_http(lambda request: pytest.fail("Expired request reached the cloud"))
+    with pytest.raises(ModelTimeout):
+        get_llm_response("Revenue?", [], cloud_config.model, config=cloud_config, deadline=time.monotonic() - 1)
+    assert not calls

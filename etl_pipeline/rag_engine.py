@@ -31,7 +31,7 @@ def get_llm_response(
     user_prompt: str,
     chunks: List[Tuple[float, str]],
     ollama_llm_model_name: str,
-    *, config: ModelConfig | None = None,
+    *, config: ModelConfig | None = None, deadline: float | None = None,
 ) -> Tuple[str, dict]:
     config = config if config is not None else ModelConfig.from_env(model=ollama_llm_model_name)
     chunks_text: List[str] = []
@@ -51,7 +51,7 @@ def get_llm_response(
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": f"Context: {combined_chunks}\n\nQuestion: {user_prompt}"},
             ], "max_completion_tokens": 512, "include_reasoning": False},
-            timeout=config.cloud_timeout_seconds,
+            timeout=config.cloud_timeout_seconds, deadline=deadline,
         )
         try:
             choice = result["choices"][0]

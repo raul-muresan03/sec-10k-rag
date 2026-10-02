@@ -37,10 +37,11 @@ def get_similarity_score(first: List[float], second: List[float]) -> float:
     cosine_similarity = dot_product / (magnitude_first * magnitude_second)
     return cosine_similarity
 
-def paragraphs_to_embeddings(paragraphs: List[str], *, config: ModelConfig | None = None) -> List[List[float]]:
+def paragraphs_to_embeddings(paragraphs: List[str], *, config: ModelConfig | None = None,
+                             deadline: float | None = None) -> List[List[float]]:
     config = config if config is not None else ModelConfig.from_env()
     if config.runtime == "cloud":
-        return embed(paragraphs, config)
+        return embed(paragraphs, config, deadline=deadline)
     data = {
         "model": EMBEDDING_MODEL,
         "input": paragraphs,
@@ -62,10 +63,11 @@ def paragraphs_to_embeddings(paragraphs: List[str], *, config: ModelConfig | Non
     return embeddings
 
 
-def text_to_embedding(paragraph: str, *, config: ModelConfig | None = None) -> List[float]:
+def text_to_embedding(paragraph: str, *, config: ModelConfig | None = None,
+                      deadline: float | None = None) -> List[float]:
     if config is None:
         return paragraphs_to_embeddings([paragraph])[0]
-    return paragraphs_to_embeddings([paragraph], config=config)[0]
+    return paragraphs_to_embeddings([paragraph], config=config, deadline=deadline)[0]
 
 def _get_all_paragraphs(document: str) -> List[str]:
     paragraphs = []

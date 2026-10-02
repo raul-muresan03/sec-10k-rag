@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import time
 
 import httpx
 
@@ -33,7 +34,12 @@ async def _post_json(provider: str, url: str, key: str, payload: dict, timeout: 
                 return result
 
 
-def post_json(provider: str, url: str, key: str, payload: dict, *, timeout: float = 30.0) -> dict:
+def post_json(provider: str, url: str, key: str, payload: dict, *, timeout: float = 30.0,
+              deadline: float | None = None) -> dict:
+    if deadline is not None:
+        timeout = min(timeout, deadline - time.monotonic())
+    if timeout <= 0:
+        raise ModelTimeout(f"{provider} request deadline exceeded")
     try:
         return asyncio.run(_post_json(provider, url, key, payload, timeout))
     except (TimeoutError, httpx.TimeoutException):
