@@ -11,10 +11,12 @@ def embed(texts: list[str], config: ModelConfig, *, deadline: float | None = Non
     if not 1 <= len(texts) <= 100:
         raise ModelInputError("Cloud embedding batch must contain 1 to 100 texts")
     if any(not isinstance(text, str) or not text.strip() or len(text.encode("utf-8")) > 480 for text in texts):
-        raise ModelInputError("Cloud embedding input must be nonempty and at most 480 UTF-8 bytes pending token validation")
+        raise ModelInputError(
+            "Cloud embedding input must be nonempty and at most 480 UTF-8 bytes pending token validation"
+        )
+    endpoint = f"https://api.cloudflare.com/client/v4/accounts/{config.cloudflare_account_id}/ai/run/"
     result = post_json(
-        "cloudflare",
-        f"https://api.cloudflare.com/client/v4/accounts/{config.cloudflare_account_id}/ai/run/{config.embedding_model}",
+        "cloudflare", endpoint + config.embedding_model,
         config.cloudflare_api_token, {"text": texts, "pooling": "mean"}, timeout=config.cloud_timeout_seconds,
         deadline=deadline,
     )
