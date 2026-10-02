@@ -65,8 +65,6 @@ def paragraphs_to_embeddings(paragraphs: List[str], *, config: ModelConfig | Non
 
 def text_to_embedding(paragraph: str, *, config: ModelConfig | None = None,
                       deadline: float | None = None) -> List[float]:
-    if config is None:
-        return paragraphs_to_embeddings([paragraph])[0]
     return paragraphs_to_embeddings([paragraph], config=config, deadline=deadline)[0]
 
 def _get_all_paragraphs(document: str) -> List[str]:

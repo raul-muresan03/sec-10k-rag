@@ -153,3 +153,17 @@ def test_expired_cloud_deadline_does_not_start_a_request(cloud_config, cloud_htt
     with pytest.raises(ModelTimeout):
         get_llm_response("Revenue?", [], cloud_config.model, config=cloud_config, deadline=time.monotonic() - 1)
     assert not calls
+
+
+def test_environment_selected_cloud_embedding_preserves_deadline(cloud_config, cloud_http, monkeypatch):
+    for name, value in {
+        "RAG_RUNTIME": "cloud", "RAG_MODEL": cloud_config.model,
+        "GROQ_API_KEY": cloud_config.groq_api_key,
+        "CLOUDFLARE_API_TOKEN": cloud_config.cloudflare_api_token,
+        "CLOUDFLARE_ACCOUNT_ID": cloud_config.cloudflare_account_id,
+    }.items():
+        monkeypatch.setenv(name, value)
+    calls = cloud_http(lambda request: pytest.fail("Expired environment-selected request reached the cloud"))
+    with pytest.raises(ModelTimeout):
+        text_to_embedding("Revenue?", deadline=time.monotonic() - 1)
+    assert not calls
