@@ -1,8 +1,9 @@
 import json
 import sys
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
+import requests
 
 import ask
 
@@ -128,3 +129,19 @@ def test_main_rejects_year_outside_edgar_range(monkeypatch, capsys, ensure_index
     assert error.value.code == 2
     assert "year must be between" in capsys.readouterr().err
     ensure_index.assert_not_called()
+
+
+@pytest.mark.parametrize("quota", [True, False])
+def test_cli_reports_provider_failure_without_saving_a_partial_answer(
+    data_directory, monkeypatch, capsys, local_corpus, local_models, quota,
+):
+    local_corpus.prepare_selected("NVDA", 2026)
+    monkeypatch.setattr(sys, "argv", ["ask.py", "Revenue?", "--ticker", "NVDA", "--year", "2026"])
+    upstream = Mock(status_code=429, headers={"Retry-After": "12"}) if quota else requests.Timeout()
+    with patch("requests.post", **({"return_value": upstream} if quota else {"side_effect": upstream})) as post:
+        with pytest.raises(SystemExit) as failure:
+            ask.main(store=local_corpus)
+    assert failure.value.code == 2
+    assert ("retry in 12s" if quota else "timed out") in capsys.readouterr().err
+    assert not (data_directory / ask.QUERY_LOG_FILENAME).exists()
+    assert post.call_count == 1

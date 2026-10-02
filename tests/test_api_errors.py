@@ -56,3 +56,23 @@ def test_chat_classifies_invalid_ollama_embedding_as_bad_gateway(tmp_path, embed
 
     assert result.status_code == 502
     assert result.json()["detail"] == "Ollama returned an invalid response"
+
+
+@pytest.mark.parametrize("stage", ["embedding", "generation"])
+def test_chat_exposes_provider_quota_with_bounded_retry_without_retries(local_corpus, local_models, stage):
+    filing = local_corpus.prepare_selected("NVDA", 2026)
+
+    def send(*, url, json, timeout):
+        if stage == "embedding" or url.endswith("/api/generate"):
+            return Mock(status_code=429, headers={"Retry-After": "99999"})
+        reply = Mock(status_code=200)
+        reply.json.return_value = {"embeddings": [[1.0, 0.0]]}
+        return reply
+
+    with patch("requests.post", side_effect=send) as post:
+        with TestClient(create_app(store=local_corpus)) as client:
+            result = client.post("/api/chat", json={"filing_id": filing.filing_id, "question": "Revenue?"})
+    assert result.status_code == 429
+    assert result.headers["Retry-After"] == "300"
+    assert result.json()["detail"] == "Model quota reached"
+    assert post.call_count == (1 if stage == "embedding" else 2)

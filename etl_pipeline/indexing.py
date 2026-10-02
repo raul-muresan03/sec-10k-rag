@@ -10,6 +10,7 @@ from etl_pipeline.cleaner import clean_10K
 from etl_pipeline.filings import VerifiedFiling, hash_file
 from etl_pipeline.parser import parse_10K
 from etl_pipeline.vector_store import load_index
+from etl_pipeline.model_config import ModelConfig
 
 
 INDEX_SOURCE_FILES = ("parser.py", "cleaner.py", "chunker.py", "indexing.py", "vector_store.py")
@@ -32,6 +33,7 @@ def index_configuration(embedding_digest: str | None = None) -> dict:
 
 def build_index(filing: VerifiedFiling, directory: Path) -> dict:
     """Build from a verified filing in a caller-owned empty directory."""
+    ModelConfig.from_env().require_local_indexes()
     if hash_file(filing.path) != filing.sha256:
         raise ValueError(f"Filing changed before indexing: {filing.path}")
     parsed = directory / "output_parser.txt"

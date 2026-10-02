@@ -99,9 +99,6 @@ export async function fetchFilings(signal: AbortSignal): Promise<FilingSummary[]
   if (!Array.isArray(data) || !data.every(isFiling)) {
     throw new ApiError(response.status, 'We couldn’t load the available filings. Please try again.')
   }
-  if (data.length === 0) {
-    throw new ApiError(response.status, 'No filings are available right now.')
-  }
   return data
 }
 

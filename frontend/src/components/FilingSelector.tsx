@@ -118,7 +118,11 @@ export function FilingSelector({ selectedId, onSelect }: Props) {
     )
   }
 
-  if (!selected) return null
+  if (!selected) {
+    return <p className="mt-0 text-[.8rem] leading-[1.6] text-[#62746e]" role="status">
+      No prepared filings are available yet. Please check back later.
+    </p>
+  }
 
   return (
     <div className="min-w-0">

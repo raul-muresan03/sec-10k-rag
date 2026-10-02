@@ -11,6 +11,7 @@ services:
   api:
     build: .
     environment:
+      RAG_RUNTIME: local
       OLLAMA_BASE_URL: http://ollama:11434
       OLLAMA_TIMEOUT_SECONDS: ${OLLAMA_TIMEOUT_SECONDS:-120}
       SEC_API_EMAIL: ${SEC_API_EMAIL:-}
@@ -18,6 +19,7 @@ services:
       RAG_MODEL: ${RAG_MODEL:-gemma3:1b}
       RAG_TOP_N: ${RAG_TOP_N:-5}
       RAG_MAX_CONCURRENT_GENERATIONS: ${RAG_MAX_CONCURRENT_GENERATIONS:-1}
+      FILING_PREPARATION_ACCESS: ${FILING_PREPARATION_ACCESS:-browser}
     volumes:
       - filings:/app/data
     depends_on:

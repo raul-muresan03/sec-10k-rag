@@ -1,6 +1,8 @@
 from typing import List, Tuple
 
 from etl_pipeline.ollama import OllamaInvalidResponse, post_json
+from etl_pipeline import groq
+from etl_pipeline.model_config import ModelConfig
 from etl_pipeline.vector_store import get_most_similar_chunks
 
 SYSTEM_PROMPT = (
@@ -27,8 +29,12 @@ OLLAMA_METRIC_FIELDS = (
 def get_llm_response(
     user_prompt: str,
     chunks: List[Tuple[float, str]],
-    ollama_llm_model_name: str,
+    model_name: str,
+    *, config: ModelConfig | None = None, deadline: float | None = None,
 ) -> Tuple[str, dict]:
+    config = config if config is not None else ModelConfig.from_env(model=model_name)
+    if config.runtime == "cloud":
+        return groq.generate(user_prompt, chunks, SYSTEM_PROMPT, config, deadline=deadline)
     chunks_text: List[str] = []
     for _, text in chunks:
         chunks_text.append(text)
@@ -36,7 +42,7 @@ def get_llm_response(
     combined_chunks = "\n".join(chunks_text)
 
     data = {
-        "model": ollama_llm_model_name,
+        "model": model_name,
         "prompt": f"{SYSTEM_PROMPT} Context: {combined_chunks} \n\n Use Question: {user_prompt}",
         "stream": False
     }

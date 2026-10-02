@@ -41,6 +41,20 @@ request for a queued or ready filing is safe. The raw SEC submission and prepare
 is in process memory and an interrupted preparation can be retried. `SEC_API_EMAIL` is required for downloads.
 Only manifest-pinned dev IDs are accepted by this endpoint.
 
+With `FILING_PREPARATION_ACCESS=operator`, `/api/filings` lists only prepared filings and the prepare endpoint
+always returns 403. This is the intended public application mode; it does not authenticate an operator through
+HTTP. The operator uses a shell on the host (and the same named data volume) to prepare a filing instead:
+
+```sh
+docker compose run --rm --no-deps api python -m api.prepare_filings --filing-id 1045810-0001045810-26-000021
+# Omit --filing-id to prepare every manifest-pinned dev filing.
+```
+
+Start Ollama and install both models first (`docker compose up -d ollama models`); set `SEC_API_EMAIL` to a valid
+contact address in `.env` before downloading. Run the command from the repository root. The public catalog stays
+empty until the first index is ready. Do not expose the Compose development port or leave the default `browser`
+mode enabled on an internet-facing service; this setting does not provide TLS, rate limiting, or host security.
+
 ```sh
 curl http://127.0.0.1:8000/api/filings
 curl -X POST http://127.0.0.1:8000/api/chat \
@@ -59,7 +73,15 @@ conversation history.
 `OLLAMA_TIMEOUT_SECONDS` defaults to 120 for embed/generate; model discovery uses five seconds. The server owns
 `RAG_MODEL` (`gemma3:1b`), `RAG_TOP_N` (5), and `RAG_MAX_CONCURRENT_GENERATIONS` (1 per API process). Clients cannot
 override them per question. The service does not prepare indexes during a chat request.
+`FILING_PREPARATION_ACCESS` defaults to `browser` for local use; `operator` disables HTTP preparation and limits
+the catalog to ready filings. Invalid values fail at startup.
 
 Invalid requests return 422; an unknown filing ID returns 404. Ollama failure or missing indexes return 503,
 generation capacity returns 503, an invalid Ollama response returns 502, and a request timeout returns 504.
+Provider quotas return 429 with a bounded `Retry-After` header; the backend does not retry automatically.
 Model refusals are successful answers and must be evaluated separately from automatic retrieval metrics.
+
+`RAG_RUNTIME=local` is the default and the explicit Compose profile. `RAG_RUNTIME=cloud` validates backend-only Groq
+and Cloudflare settings, defaults preparation access to `operator`, and refuses API startup until the immutable cloud
+filing snapshot reader is implemented. It does not reuse Nomic indexes or contact Ollama. Provider adapter configuration
+and the remaining compatibility gates are documented in [MODEL_PROVIDERS.md](../MODEL_PROVIDERS.md).

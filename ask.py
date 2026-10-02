@@ -7,6 +7,8 @@ import etl_pipeline
 from etl_pipeline.ingest import EARLIEST_EDGAR_YEAR
 from etl_pipeline.pipeline import ensure_index
 from etl_pipeline.rag_engine import get_llm_response
+from etl_pipeline.model_config import ModelConfig
+from etl_pipeline.filing_store import FilingIndexStore
 from etl_pipeline.vector_store import get_most_similar_chunks
 
 DEFAULT_MODEL = "gemma3:1b"
@@ -23,11 +25,11 @@ def _append_query_log(record: dict) -> None:
         print(f"Warning: query could not be logged: {error}")
 
 
-def main() -> None:
+def main(*, store: FilingIndexStore | None = None) -> None:
     parser = argparse.ArgumentParser(description="Ask a question about the indexed SEC filing.")
     parser.add_argument("question", help="Question to answer from the filing")
     parser.add_argument("--top-n", type=int, default=DEFAULT_TOP_N, help="Number of chunks to retrieve")
-    parser.add_argument("--model", default=DEFAULT_MODEL, help="Ollama model used to generate the answer")
+    parser.add_argument("--model", help="Generation model for the selected RAG_RUNTIME profile")
     parser.add_argument("--ticker", required=True, help="Stock ticker of the company to query")
     parser.add_argument("--year", type=int, required=True, help="SEC filing year")
     args = parser.parse_args()
@@ -41,7 +43,11 @@ def main() -> None:
         parser.error(f"year must be between {EARLIEST_EDGAR_YEAR} and {current_year}")
 
     try:
-        index_path = ensure_index(ticker, args.year)
+        config = ModelConfig.from_env(model=args.model)
+        config.require_local_indexes()
+        args.model = config.model
+        index_path = (ensure_index(ticker, args.year) if store is None
+                      else store.prepare_selected(ticker, args.year).index_path)
     except (RuntimeError, ValueError) as error:
         parser.error(str(error))
 
@@ -49,14 +55,20 @@ def main() -> None:
 
     print(f"Retrieving the top {args.top_n} relevant chunks...", flush=True)
     retrieval_start = time.perf_counter()
-    chunks = get_most_similar_chunks(args.question, args.top_n, index_path)
+    try:
+        chunks = get_most_similar_chunks(args.question, args.top_n, index_path)
+    except (OSError, ValueError, RuntimeError) as error:
+        parser.error(str(error))
     retrieval_end = time.perf_counter()
     retrieval_seconds = retrieval_end - retrieval_start
     print(f"Retrieved {len(chunks)} chunks in {retrieval_seconds:.2f}s.", flush=True)
 
     print(f"Generating an answer with {args.model}...", flush=True)
     generation_start = time.perf_counter()
-    answer, ollama_metrics = get_llm_response(args.question, chunks, args.model)
+    try:
+        answer, ollama_metrics = get_llm_response(args.question, chunks, args.model)
+    except (ValueError, RuntimeError) as error:
+        parser.error(str(error))
     generation_end = time.perf_counter()
     generation_seconds = generation_end - generation_start
     print(f"Generation completed in {generation_seconds:.2f}s.")

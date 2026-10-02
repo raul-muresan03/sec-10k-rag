@@ -1,5 +1,22 @@
 # ETL performance results
 
+## Deployment reconnaissance — 2026-09-29 (not a VPS benchmark)
+
+- Source: Ford 2014 dev filing `0000037996-14-000010` (72,279,811 bytes), already downloaded and verified locally.
+- Machine: 16-thread Ryzen 7 7435HS, 23 GiB RAM, GeForce RTX 4050 Laptop GPU; local Ollama models already installed.
+- New index root in `/tmp/opencode`; `FilingIndexStore.prepare_selected("F", 2014)` with a warm local Ollama service,
+  timed using `/usr/bin/time`. One run: 29.90 s wall, 10.19 s Python user CPU, 0.51 s Python system CPU,
+  218,876 KiB peak Python RSS. The new index occupied 11 MiB (`du -sh`). Python RSS and CPU **exclude** Ollama;
+  model CPU/RAM/VRAM under load were not sampled. A previous index directory for the same filing occupied 32 MiB
+  because it retained three 11 MiB index versions; budget space for retained versions and the raw submission.
+- Native API, `RAG_MAX_CONCURRENT_GENERATIONS=1`: one warm-up Ford dev question returned 200 in 8.16 s; four
+  different Ford dev questions started together resulted in one 200 (1.16 s) and three immediate 503 responses.
+  This probes overload behavior, not answer quality or a sustained throughput/latency target. No held-out test
+  questions were used.
+
+These observations do not size a CPU-only VPS. Before a public release, repeat cold preparation and concurrent
+chat measurements on the intended host and capture whole-service memory, CPU, disk and sustained latency.
+
 ## Initial baseline — 2026-09-15
 
 - Branch: `perf/etl`

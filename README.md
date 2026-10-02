@@ -18,6 +18,7 @@ Implemented:
 - Store verified, versioned filing-scoped indexes locally in JSON
 - Retrieve chunks with brute-force cosine similarity
 - Generate an answer with a local Ollama model
+- Select explicit local/cloud model profiles; test Groq generation and Cloudflare embedding adapters offline
 - Answer filing-scoped questions through the [live API](api/README.md) or the chat interface
 - Validate saved dev answers, evidence, and retrieval metrics in internal evaluation artifacts
 - Prepare the six dev filings with `python3 -m etl_pipeline.filing_store` or prepare one through `ask.py`
@@ -29,7 +30,8 @@ Not implemented:
 - Claim-level citations to exact locations in a filing (the interface shows source passages and a link to the full filing)
 - Confidence scores or similarity thresholds
 - Cross-filing, multi-company, or year-over-year answers; each query selects one filing
-- Pinecone, LangChain, cloud LLM providers, or hybrid search
+- Cloud-compatible filing snapshots or a complete cloud query/deployment workflow
+- Pinecone, LangChain, or hybrid search
 
 ## How It Works
 
@@ -46,7 +48,7 @@ Index preparation keeps intermediate artifacts in a temporary directory rather t
 
 ## Requirements
 
-- Python 3.10 or newer
+- Python 3.12 recommended (cloud adapters require Python 3.11 or newer)
 - [Ollama](https://ollama.com/) running at `http://localhost:11434`
 - The manifest-listed raw filings at their recorded `data/sec-edgar-filings/` paths
 - Network access and a contact email only when obtaining SEC submissions separately
@@ -81,6 +83,12 @@ are not part of this flow. If preparation fails, use **Try again** beside the se
 be checked, use **Check again**. Only the web port is exposed, bound to localhost by default; the API and Ollama are
 internal Compose services.
 
+`FILING_PREPARATION_ACCESS=operator` changes the API to list only prepared filings and return 403 for all HTTP
+preparation requests. Prepare from an operator shell as described in [api/README.md](api/README.md). If no filing
+has been prepared, the chat view says so. This is a component of public deployment, **not** a complete public
+configuration: the Compose default still binds the web port to localhost and does not set up HTTPS or request
+rate limits. Do not expose the development setup to the internet by changing `WEB_BIND_ADDRESS` alone.
+
 Subsequent starts use the same `docker compose up` (add `-d` for background, or `--build` after code changes)
 and stop with:
 
@@ -101,6 +109,18 @@ of RAM. The one-filing data volume used 17 MiB and the two-model volume 1.1 GiB;
 occupied about 10.6 GB locally. These are observations from one machine, not a VPS sizing target.
 
 The commands below describe the alternative native Python/Vite setup.
+
+## Model profiles
+
+`RAG_RUNTIME=local` is the default; Compose explicitly uses this profile. Ollama remains responsible for indexing,
+question embeddings and generation. Native Python commands read exported environment variables, not `.env` automatically.
+`RAG_MODEL` now sets the CLI default as well as the API; `--model` overrides it for CLI/evaluation.
+
+The explicit `cloud` profile selects Groq `openai/gpt-oss-20b` and Cloudflare `@cf/baai/bge-small-en-v1.5`.
+It never falls back to Ollama or a different model. **This release implements provider adapters, not a deployable cloud
+application:** API startup, preparation, `ask.py` and evaluation refuse cloud mode until compatible immutable filing
+snapshots are implemented. Existing Nomic indexes cannot be reused. See [MODEL_PROVIDERS.md](MODEL_PROVIDERS.md) for
+configuration, bounds, errors and remaining compatibility gates. No live cloud-provider result is claimed by mock tests.
 
 ## Setup
 
@@ -203,7 +223,7 @@ Chunks have no page or section metadata, so generated answers cannot provide cla
 
 ## Tests
 
-The automated tests isolate filesystem writes with temporary directories and mock SEC and Ollama network calls.
+The automated tests isolate filesystem writes with temporary directories and mock SEC, Ollama, Groq and Cloudflare HTTP.
 
 ```bash
 python3 -m pytest -q

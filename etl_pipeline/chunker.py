@@ -6,6 +6,8 @@ from pathlib import Path
 
 import etl_pipeline
 from etl_pipeline.ollama import OllamaInvalidResponse, post_json
+from etl_pipeline.model_config import ModelConfig
+from etl_pipeline.cloud_embeddings import embed
 
 EMBEDDING_BATCH_SIZE = int(os.getenv("EMBEDDING_BATCH_SIZE", "512"))
 EMBEDDING_MODEL = "nomic-embed-text"
@@ -35,7 +37,11 @@ def get_similarity_score(first: List[float], second: List[float]) -> float:
     cosine_similarity = dot_product / (magnitude_first * magnitude_second)
     return cosine_similarity
 
-def paragraphs_to_embeddings(paragraphs: List[str]) -> List[List[float]]:
+def paragraphs_to_embeddings(paragraphs: List[str], *, config: ModelConfig | None = None,
+                             deadline: float | None = None) -> List[List[float]]:
+    config = config if config is not None else ModelConfig.from_env()
+    if config.runtime == "cloud":
+        return embed(paragraphs, config, deadline=deadline)
     data = {
         "model": EMBEDDING_MODEL,
         "input": paragraphs,
@@ -57,8 +63,9 @@ def paragraphs_to_embeddings(paragraphs: List[str]) -> List[List[float]]:
     return embeddings
 
 
-def text_to_embedding(paragraph: str) -> List[float]:
-    return paragraphs_to_embeddings([paragraph])[0]
+def text_to_embedding(paragraph: str, *, config: ModelConfig | None = None,
+                      deadline: float | None = None) -> List[float]:
+    return paragraphs_to_embeddings([paragraph], config=config, deadline=deadline)[0]
 
 def _get_all_paragraphs(document: str) -> List[str]:
     paragraphs = []
@@ -88,6 +95,7 @@ def _get_all_paragraphs_lengths(paragraphs: List[str]) -> List[int]:
     return lengths
 
 def chunk_10K(file_path: str, output_dir: Path | None = None) -> List[str]:
+    ModelConfig.from_env().require_local_indexes()
     output_dir = output_dir if output_dir is not None else etl_pipeline.DATA_DIR
     with open(file_path, "r") as f:
         document = f.read()
