@@ -1,0 +1,17 @@
+.git
+.env
+.venv/
+venv/
+data/
+resurse/
+demo/
+tests/
+scripts/
+perf/
+frontend/node_modules/
+frontend/dist/
+__pycache__/
+*.pyc
+.pytest_cache/
+Dockerfile
+compose.yaml

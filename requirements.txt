@@ -1,0 +1,2 @@
+-r etl_pipeline/requirements.txt
+-r requirements-api.txt
