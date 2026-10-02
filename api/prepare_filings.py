@@ -4,14 +4,16 @@ import argparse
 
 from etl_pipeline.filing_download import download_verified
 from etl_pipeline.filing_store import FilingIndexStore
+from etl_pipeline.model_config import ModelConfig
 
 
-def main() -> None:
+def main(*, store: FilingIndexStore | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--filing-id", help="Prepare one filing; omit to prepare all dev filings")
     args = parser.parse_args()
     try:
-        store = FilingIndexStore()
+        ModelConfig.from_env().require_local_indexes()
+        store = store if store is not None else FilingIndexStore()
     except (ValueError, RuntimeError) as error:
         parser.error(str(error))
     catalog = store.catalog()

@@ -59,8 +59,8 @@ def test_chat_classifies_invalid_ollama_embedding_as_bad_gateway(tmp_path, embed
 
 
 @pytest.mark.parametrize("stage", ["embedding", "generation"])
-def test_chat_exposes_provider_quota_with_bounded_retry_without_retries(tmp_path, stage):
-    filing = prepared_filing(tmp_path, "NVDA")
+def test_chat_exposes_provider_quota_with_bounded_retry_without_retries(local_corpus, local_models, stage):
+    filing = local_corpus.prepare_selected("NVDA", 2026)
 
     def send(*, url, json, timeout):
         if stage == "embedding" or url.endswith("/api/generate"):
@@ -70,7 +70,7 @@ def test_chat_exposes_provider_quota_with_bounded_retry_without_retries(tmp_path
         return reply
 
     with patch("requests.post", side_effect=send) as post:
-        with TestClient(create_app(store=Catalog([filing]))) as client:
+        with TestClient(create_app(store=local_corpus)) as client:
             result = client.post("/api/chat", json={"filing_id": filing.filing_id, "question": "Revenue?"})
     assert result.status_code == 429
     assert result.headers["Retry-After"] == "300"

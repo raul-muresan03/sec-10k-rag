@@ -8,6 +8,7 @@ from etl_pipeline.ingest import EARLIEST_EDGAR_YEAR
 from etl_pipeline.pipeline import ensure_index
 from etl_pipeline.rag_engine import get_llm_response
 from etl_pipeline.model_config import ModelConfig
+from etl_pipeline.filing_store import FilingIndexStore
 from etl_pipeline.vector_store import get_most_similar_chunks
 
 DEFAULT_MODEL = "gemma3:1b"
@@ -24,7 +25,7 @@ def _append_query_log(record: dict) -> None:
         print(f"Warning: query could not be logged: {error}")
 
 
-def main() -> None:
+def main(*, store: FilingIndexStore | None = None) -> None:
     parser = argparse.ArgumentParser(description="Ask a question about the indexed SEC filing.")
     parser.add_argument("question", help="Question to answer from the filing")
     parser.add_argument("--top-n", type=int, default=DEFAULT_TOP_N, help="Number of chunks to retrieve")
@@ -45,7 +46,8 @@ def main() -> None:
         config = ModelConfig.from_env(model=args.model)
         config.require_local_indexes()
         args.model = config.model
-        index_path = ensure_index(ticker, args.year)
+        index_path = (ensure_index(ticker, args.year) if store is None
+                      else store.prepare_selected(ticker, args.year).index_path)
     except (RuntimeError, ValueError) as error:
         parser.error(str(error))
 
