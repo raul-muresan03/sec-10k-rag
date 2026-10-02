@@ -221,6 +221,10 @@ export function ChatView() {
             <p className="mt-2 mb-0 text-center text-[.68rem] text-[#829089]">
               Enter to send · Shift+Enter for a new line · Chats reset when you refresh
             </p>
+            <p className="mt-1 mb-0 text-center text-[.68rem] text-[#829089]">
+              Demo over six prepared 10-K filings · Questions and retrieved passages are sent to cloud
+              model providers
+            </p>
           </div>
         </form>
       </div>
