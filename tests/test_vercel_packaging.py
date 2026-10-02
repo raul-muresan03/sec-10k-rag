@@ -64,6 +64,23 @@ def test_build_and_runtime_keys_live_inside_services():
         assert key not in config
 
 
+def test_main_branch_skips_vercel_auto_builds():
+    import os
+    import subprocess
+
+    for name, service in services().items():
+        command = service["ignoreCommand"]
+        assert "VERCEL_GIT_COMMIT_REF" in command and "main" in command, name
+        main = subprocess.run(["sh", "-c", command], capture_output=True, env=os.environ | {
+            "VERCEL_GIT_COMMIT_REF": "main",
+        })
+        branch = subprocess.run(["sh", "-c", command], capture_output=True, env=os.environ | {
+            "VERCEL_GIT_COMMIT_REF": "fix",
+        })
+        assert main.returncode == 0, name
+        assert branch.returncode != 0, name
+
+
 def test_root_requirements_pin_every_runtime_dependency():
     root = (PROJECT_ROOT / "requirements.txt").read_text(encoding="utf-8")
     assert "etl_pipeline/requirements.txt" in root and "requirements-api.txt" in root
@@ -91,6 +108,12 @@ def test_deployment_excludes_local_data_but_keeps_the_snapshot():
     assert "deploy" not in ignored
     for entry in ("data/", "resurse/", "tests/", "demo/"):
         assert entry in ignored
+
+
+def test_committed_snapshot_is_releasable():
+    store = SnapshotStore(PROJECT_ROOT / "deploy" / "indexes")
+    assert len(store.prepared()) == 6
+    assert len(store.snapshot_id) == 64
 
 
 def test_snapshot_directory_is_selectable_without_code_changes(runtime_export, monkeypatch):

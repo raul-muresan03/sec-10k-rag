@@ -3,12 +3,14 @@
   "services": {
     "web": {
       "root": "frontend",
-      "framework": "vite"
+      "framework": "vite",
+      "ignoreCommand": "[ \"$VERCEL_GIT_COMMIT_REF\" = \"main\" ]"
     },
     "api": {
       "root": ".",
       "runtime": "python",
       "entrypoint": "api.main:app",
+      "ignoreCommand": "[ \"$VERCEL_GIT_COMMIT_REF\" = \"main\" ]",
       "functions": {
         "api/main.py": {
           "maxDuration": 120,
