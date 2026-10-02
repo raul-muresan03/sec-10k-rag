@@ -100,8 +100,9 @@ def _register_chat_route(app: FastAPI, query_service: QueryService) -> None:
 
 def create_app(store: FilingIndexStore | None = None, settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="SEC RAG API")
-    index_store = store if store is not None else FilingIndexStore()
     config = settings if settings is not None else Settings.from_env()
+    config.models.require_local_indexes()
+    index_store = store if store is not None else FilingIndexStore()
     _register_status_routes(app, index_store, config)
     _register_filing_route(app, index_store, PreparationService(index_store), config)
     _register_chat_route(app, QueryService(index_store, config))

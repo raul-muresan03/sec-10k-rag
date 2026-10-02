@@ -14,6 +14,7 @@ from eval.provenance import (
 from eval.retrieval_metrics import evidence_found, normalize_text, score_retrieval, summarize_retrieval
 from eval.runtime_metrics import runtime_environment, summarize_ollama, summarize_stage_timings
 from etl_pipeline.rag_engine import get_llm_response
+from etl_pipeline.model_config import ModelConfig
 from etl_pipeline.vector_store import get_most_similar_chunks
 
 
@@ -178,6 +179,7 @@ def run_evaluation(
         raise ValueError("top-n must be greater than zero")
     if mode == "retrieval-only" and top_n != RETRIEVAL_TOP_N:
         raise ValueError("retrieval-only requires exactly 10 results (top-n=10)")
+    ModelConfig.from_env(model=model).require_local_indexes()
     questions_hash = hash_file(questions_path)
     questions = load_questions(questions_path, split, limit)
     if questions_hash != hash_file(questions_path):
@@ -342,7 +344,7 @@ def main() -> None:
             split=args.split,
             limit=args.limit,
             top_n=RETRIEVAL_TOP_N if args.mode == "retrieval-only" else args.top_n or DEFAULT_TOP_N,
-            model=args.model or DEFAULT_MODEL,
+            model=ModelConfig.from_env(model=args.model).model,
             questions_path=args.questions,
             manifest_path=args.manifest,
             mode=args.mode,

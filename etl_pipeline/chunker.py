@@ -95,6 +95,7 @@ def _get_all_paragraphs_lengths(paragraphs: List[str]) -> List[int]:
     return lengths
 
 def chunk_10K(file_path: str, output_dir: Path | None = None) -> List[str]:
+    ModelConfig.from_env().require_local_indexes()
     output_dir = output_dir if output_dir is not None else etl_pipeline.DATA_DIR
     with open(file_path, "r") as f:
         document = f.read()

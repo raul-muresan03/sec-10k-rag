@@ -10,7 +10,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--filing-id", help="Prepare one filing; omit to prepare all dev filings")
     args = parser.parse_args()
-    store = FilingIndexStore()
+    try:
+        store = FilingIndexStore()
+    except (ValueError, RuntimeError) as error:
+        parser.error(str(error))
     catalog = store.catalog()
     if args.filing_id is not None and args.filing_id not in catalog:
         parser.error("Unknown dev filing ID")

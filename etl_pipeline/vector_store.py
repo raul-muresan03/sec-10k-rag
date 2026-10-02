@@ -3,6 +3,7 @@ from pathlib import Path
 from math import isfinite
 from etl_pipeline.chunker import EMBEDDING_MODEL, text_to_embedding, get_similarity_score
 from etl_pipeline.ollama import OllamaInvalidResponse
+from etl_pipeline.model_config import ModelConfig
 import json
 
 prompt_cache = {}
@@ -31,6 +32,7 @@ def load_index(index_path: Path) -> tuple[list[str], list[list[float]]]:
 def get_most_similar_chunks(
     prompt: str, top_n: int, index_path: Path,
 ) -> List[Tuple[float, str]]:
+    ModelConfig.from_env().require_local_indexes()
     if top_n < 1:
         raise ValueError("top_n must be positive")
     chunks, embeddings = load_index(index_path)

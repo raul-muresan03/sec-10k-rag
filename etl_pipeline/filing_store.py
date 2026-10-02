@@ -17,6 +17,7 @@ from etl_pipeline.filings import (
 )
 from etl_pipeline.indexing import INDEX_FILENAME, build_index, index_configuration
 from etl_pipeline.vector_store import load_index
+from etl_pipeline.model_config import ModelConfig
 
 
 METADATA_FILENAME = "filing.json"
@@ -46,6 +47,7 @@ def _configuration() -> dict:
 
 class FilingIndexStore:
     def __init__(self, manifest_path: Path = MANIFEST_PATH, index_root: Path | None = None):
+        ModelConfig.from_env().require_local_indexes()
         self.manifest_path = manifest_path
         self.index_root = index_root if index_root is not None else etl_pipeline.DATA_DIR / "indexes"
 

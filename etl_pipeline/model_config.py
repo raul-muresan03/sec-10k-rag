@@ -49,6 +49,14 @@ class ModelConfig:
     def embedding_provider(self) -> str:
         return "ollama" if self.runtime == "local" else "cloudflare"
 
+    @property
+    def index_mode(self) -> str:
+        return "local" if self.runtime == "local" else "snapshot"
+
+    def require_local_indexes(self) -> None:
+        if self.index_mode != "local":
+            raise RuntimeError("Cloud filing snapshots are not available yet; local Nomic indexes cannot be reused")
+
     @classmethod
     def from_env(cls, *, runtime: str | None = None, model: str | None = None) -> "ModelConfig":
         selected_runtime = (os.getenv("RAG_RUNTIME", "local") if runtime is None else runtime).strip()
