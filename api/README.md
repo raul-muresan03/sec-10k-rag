@@ -78,4 +78,10 @@ the catalog to ready filings. Invalid values fail at startup.
 
 Invalid requests return 422; an unknown filing ID returns 404. Ollama failure or missing indexes return 503,
 generation capacity returns 503, an invalid Ollama response returns 502, and a request timeout returns 504.
+Provider quotas return 429 with a bounded `Retry-After` header; the backend does not retry automatically.
 Model refusals are successful answers and must be evaluated separately from automatic retrieval metrics.
+
+`RAG_RUNTIME=local` is the default and the explicit Compose profile. `RAG_RUNTIME=cloud` validates backend-only Groq
+and Cloudflare settings, defaults preparation access to `operator`, and refuses API startup until the immutable cloud
+filing snapshot reader is implemented. It does not reuse Nomic indexes or contact Ollama. Provider adapter configuration
+and the remaining compatibility gates are documented in [MODEL_PROVIDERS.md](../MODEL_PROVIDERS.md).
