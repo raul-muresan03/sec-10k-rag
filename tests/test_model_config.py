@@ -46,3 +46,14 @@ def test_cloud_configuration_fails_closed(monkeypatch, overrides, message):
     with pytest.raises(ValueError, match=message) as failure:
         ModelConfig.from_env()
     assert "private-" not in str(failure.value)
+
+
+@pytest.mark.parametrize("timeout", ["0", "nan", "inf", "31"])
+def test_cloud_timeout_must_fit_the_request_budget(monkeypatch, timeout, cloud_config):
+    monkeypatch.setenv("RAG_RUNTIME", "cloud")
+    monkeypatch.setenv("GROQ_API_KEY", cloud_config.groq_api_key)
+    monkeypatch.setenv("CLOUDFLARE_API_TOKEN", cloud_config.cloudflare_api_token)
+    monkeypatch.setenv("CLOUDFLARE_ACCOUNT_ID", cloud_config.cloudflare_account_id)
+    monkeypatch.setenv("CLOUD_TIMEOUT_SECONDS", timeout)
+    with pytest.raises(ValueError, match="CLOUD_TIMEOUT_SECONDS"):
+        ModelConfig.from_env()

@@ -3,6 +3,7 @@
 from dataclasses import dataclass, field
 import os
 import re
+from math import isfinite
 
 
 CLOUD_GENERATION_MODEL = "openai/gpt-oss-20b"
@@ -17,6 +18,7 @@ class ModelConfig:
     groq_api_key: str = field(default="", repr=False)
     cloudflare_api_token: str = field(default="", repr=False)
     cloudflare_account_id: str = ""
+    cloud_timeout_seconds: float = 30.0
 
     def __post_init__(self) -> None:
         if self.runtime not in ("local", "cloud"):
@@ -24,6 +26,8 @@ class ModelConfig:
         if not self.model.strip():
             raise ValueError("RAG_MODEL must be nonempty")
         if self.runtime == "cloud":
+            if not isfinite(self.cloud_timeout_seconds) or not 0 < self.cloud_timeout_seconds <= 30:
+                raise ValueError("CLOUD_TIMEOUT_SECONDS must be positive and at most 30")
             if self.model != CLOUD_GENERATION_MODEL:
                 raise ValueError(f"Cloud RAG_MODEL must be {CLOUD_GENERATION_MODEL}")
             if not self.groq_api_key:
@@ -53,4 +57,5 @@ class ModelConfig:
         return cls(runtime=selected_runtime, model=selected_model,
                    groq_api_key=os.getenv("GROQ_API_KEY", "").strip(),
                    cloudflare_api_token=os.getenv("CLOUDFLARE_API_TOKEN", "").strip(),
-                   cloudflare_account_id=os.getenv("CLOUDFLARE_ACCOUNT_ID", "").strip())
+                   cloudflare_account_id=os.getenv("CLOUDFLARE_ACCOUNT_ID", "").strip(),
+                   cloud_timeout_seconds=float(os.getenv("CLOUD_TIMEOUT_SECONDS", "30")))
