@@ -8,7 +8,7 @@ import time
 
 from etl_pipeline.filings import catalog_filings, hash_file
 from etl_pipeline.model_config import ModelConfig
-from etl_pipeline.runtime_snapshot import SnapshotStore
+from etl_pipeline.runtime_snapshot import SnapshotReader, SnapshotStore
 from etl_pipeline.snapshot_query import query_snapshot
 from eval.cloud_provenance import snapshot_run_payload
 from eval.retrieval_metrics import evidence_found, score_retrieval, summarize_retrieval
@@ -18,7 +18,7 @@ from eval.runtime_metrics import summarize_stage_timings
 @dataclass(frozen=True)
 class EvaluationInputs:
     questions: list[dict]
-    snapshot: SnapshotStore
+    snapshot: SnapshotReader
     selected_ids: set[str]
     questions_path: Path
     questions_sha256: str
@@ -26,7 +26,7 @@ class EvaluationInputs:
     manifest_sha256: str
 
 
-def _load_inputs(questions_path: Path, manifest_path: Path, snapshot: SnapshotStore,
+def _load_inputs(questions_path: Path, manifest_path: Path, snapshot: SnapshotReader,
                  split: str, limit: int | None) -> EvaluationInputs:
     from eval.run_eval import load_questions
 
@@ -49,7 +49,7 @@ def _load_inputs(questions_path: Path, manifest_path: Path, snapshot: SnapshotSt
     )
 
 
-def _question_result(question: dict, snapshot: SnapshotStore, top_n: int, config: ModelConfig,
+def _question_result(question: dict, snapshot: SnapshotReader, top_n: int, config: ModelConfig,
                       mode: str, run_id: str) -> tuple[dict, dict | None]:
     from eval.run_eval import is_abstention
 
@@ -118,7 +118,7 @@ def _provider_usage(results: list[dict]) -> dict[str, int]:
 
 
 def evaluate_snapshot(split: str, limit: int | None, top_n: int, config: ModelConfig, questions_path: Path,
-                       manifest_path: Path, mode: str, store: SnapshotStore | None = None,
+                       manifest_path: Path, mode: str, store: SnapshotReader | None = None,
                        question_interval_seconds: float = 0.0, final: bool = False) -> tuple[dict, list[dict]]:
     if split == "test" and (not final or store is None):
         raise ValueError("Test questions are reserved for final evaluation with explicit frozen indexes")

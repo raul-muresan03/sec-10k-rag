@@ -7,12 +7,12 @@ from pathlib import Path
 import etl_pipeline
 from etl_pipeline.filings import hash_file
 from etl_pipeline.model_config import ModelConfig
-from etl_pipeline.runtime_snapshot import SnapshotStore
+from etl_pipeline.runtime_snapshot import SnapshotReader
 from eval.answer_reviews import RUBRIC_VERSION
 from eval.runtime_metrics import runtime_environment
 
 
-def snapshot_run_payload(run_id: str, config: ModelConfig, snapshot: SnapshotStore, mode: str,
+def snapshot_run_payload(run_id: str, config: ModelConfig, snapshot: SnapshotReader, mode: str,
                          top_n: int, limit: int | None, interval: float, inputs: dict, metrics: dict,
                          split: str = "dev") -> dict:
     return {

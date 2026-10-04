@@ -5,8 +5,8 @@ operator cache only. No test export is published and the public bundle is unchan
 """
 
 import argparse
+from dataclasses import dataclass
 from pathlib import Path
-from types import SimpleNamespace
 
 import etl_pipeline
 from etl_pipeline.cloud_identity import configuration_id, embedding_configuration, index_configuration
@@ -37,6 +37,13 @@ def assert_frozen_behavior() -> dict:
 
 class FrozenTestIndexes:
     """Verified per-filing cloud indexes behind the snapshot query interface."""
+
+    @dataclass(frozen=True)
+    class Reference:
+        filing_id: str
+        ticker: str
+        year: int
+        source_sha256: str
 
     def __init__(self, manifest_path: Path, index_root: Path, config: ModelConfig,
                  selected: set[tuple[str, int]] | None) -> None:
@@ -75,19 +82,19 @@ class FrozenTestIndexes:
     def prepared(self) -> list[VerifiedFiling]:
         return list(self._filings.values())
 
-    def resolve_id(self, selected_id: str) -> SimpleNamespace:
+    def resolve_id(self, selected_id: str) -> Reference:
         return self._reference(self._filings[selected_id])
 
-    def resolve(self, ticker: str, year: int) -> SimpleNamespace:
+    def resolve(self, ticker: str, year: int) -> Reference:
         for filing in self._filings.values():
             if (filing.ticker, filing.year) == (ticker.strip().upper(), year):
                 return self._reference(filing)
         raise KeyError("Unknown frozen test filing")
 
-    @staticmethod
-    def _reference(filing: VerifiedFiling) -> SimpleNamespace:
-        return SimpleNamespace(filing_id=filing_id(filing), ticker=filing.ticker, year=filing.year,
-                               source_sha256=filing.sha256)
+    @classmethod
+    def _reference(cls, filing: VerifiedFiling) -> Reference:
+        return cls.Reference(filing_id=filing_id(filing), ticker=filing.ticker, year=filing.year,
+                             source_sha256=filing.sha256)
 
     def index(self, selected_id: str) -> tuple[tuple[str, ...], tuple[tuple[float, ...], ...]]:
         return self._indexes[selected_id]
