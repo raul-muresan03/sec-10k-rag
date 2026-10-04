@@ -9,7 +9,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import etl_pipeline
-from etl_pipeline.cloud_identity import configuration_id, embedding_configuration
+from etl_pipeline.cloud_identity import configuration_id, embedding_configuration, index_configuration
 from etl_pipeline.cloud_indexing import build_filing_indexes
 from etl_pipeline.filings import MANIFEST_PATH, VerifiedFiling, filing_id
 from etl_pipeline.model_config import ModelConfig
@@ -18,6 +18,21 @@ from etl_pipeline.vector_store import load_index
 from eval.cloud_eval import evaluate_snapshot
 from eval.cloud_provenance import write_evaluation_artifacts
 from eval.run_eval import QUESTIONS_PATH
+
+
+FROZEN_BEHAVIOR_PATH = Path(__file__).with_name("frozen_behavior.v1.json")
+
+
+def assert_frozen_behavior() -> dict:
+    """Refuse test evaluation when indexing behavior drifted from the frozen contract."""
+    import json
+
+    contract = json.loads(FROZEN_BEHAVIOR_PATH.read_text(encoding="utf-8"))
+    current = index_configuration()
+    for section in ("embedding", "chunking"):
+        if current[section] != contract["behavior"][section]:
+            raise ValueError(f"Indexing {section} drifted from the frozen contract; refusing test evaluation")
+    return contract
 
 
 class FrozenTestIndexes:
@@ -84,11 +99,16 @@ def run_final_test_evaluation(top_n: int, config: ModelConfig, questions_path: P
                               selected: set[tuple[str, int]] | None = None) -> tuple[dict, Path, Path]:
     if config.runtime != "cloud":
         raise ValueError("Final cloud evaluation requires the explicit cloud profile")
+    contract = assert_frozen_behavior()
     store = FrozenTestIndexes(manifest_path, index_root, config, selected)
     if not store.prepared():
         raise ValueError("No frozen test filings selected")
     payload, records = evaluate_snapshot("test", None, top_n, config, questions_path, manifest_path,
                                          "full", store, question_interval_seconds, final=True)
+    payload["provenance"]["frozen_behavior"] = {
+        "contract": str(FROZEN_BEHAVIOR_PATH), "snapshot_id": contract["snapshot_id"],
+        "index_config_id": contract["index_config_id"],
+    }
     output = output_directory if output_directory is not None else etl_pipeline.DATA_DIR / "eval-runs"
     results_path = output / f"{payload['run_id']}.jsonl"
     summary_path = output / f"{payload['run_id']}.summary.json"

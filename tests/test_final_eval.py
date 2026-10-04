@@ -6,7 +6,7 @@ import httpx
 import pytest
 
 from eval.cloud_eval import evaluate_snapshot
-from eval.final_eval import FrozenTestIndexes, run_final_test_evaluation
+from eval.final_eval import FrozenTestIndexes, assert_frozen_behavior, run_final_test_evaluation
 from tests.filing_helpers import filing_corpus
 
 
@@ -68,3 +68,23 @@ def test_final_runner_writes_artifacts_without_a_public_export(tmp_path, cloud_c
     assert payload["metrics"]["questions"] == 2
     assert payload["metrics"]["provider_usage"]["total_tokens"] == 20
     assert results_path.is_file() and summary_path.is_file()
+
+
+def test_frozen_contract_matches_current_indexing_behavior():
+    contract = assert_frozen_behavior()
+    assert len(contract["snapshot_id"]) == 64
+    assert len(contract["index_config_id"]) == 64
+
+
+def test_frozen_contract_rejects_behavior_drift(monkeypatch):
+    import eval.final_eval as final_eval
+
+    def drifted():
+        from etl_pipeline.cloud_identity import index_configuration
+
+        identity = index_configuration()
+        return {**identity, "chunking": {**identity["chunking"], "max_characters": 1}}
+
+    monkeypatch.setattr(final_eval, "index_configuration", drifted)
+    with pytest.raises(ValueError, match="drifted from the frozen contract"):
+        assert_frozen_behavior()
