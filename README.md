@@ -12,6 +12,24 @@ internal to the repository.
 
 The backend uses local files without a vector database or orchestration framework.
 
+## Screenshots & demo
+
+Media lives under `docs/` (tracked). Fill the TODOs below with real captures from the live URL:
+
+- [ ] `docs/screenshot-chat.png` — chat answering a question with retrieved passages and the SEC source link
+- [ ] `docs/screenshot-catalog.png` — six ready filings in the filing selector
+- [ ] `docs/architecture.png` — one-origin diagram: browser → Vercel services (`web`, `api`) → frozen export + Groq/Cloudflare
+- [ ] Demo video (2 minutes): select a filing, ask a revenue question, show the evidence and retry after a quota error
+
+## What I built (author notes)
+
+> Fill this in with your own words — it is the CV-visible record of manual work.
+
+- Designed and implemented the [..] — e.g. SEC parsing, semantic chunking, cosine retrieval, eval harness
+- [..] — hardest bug you fixed yourself and how
+- [..] — a decision you made against AI advice and why it was right
+- Operated the deployment: Vercel project, secrets, staged releases, smoke checks, rollback readiness
+
 ## Current Scope
 
 Implemented:
@@ -111,6 +129,43 @@ and stop with:
 ```bash
 docker compose down
 ```
+
+Verify each layer as you go (localhost):
+
+```bash
+curl http://127.0.0.1:8000/api/health                       # {"status":"ok"} — process is up
+curl http://127.0.0.1:8000/api/ready                        # {"status":"ready"} or 503 while models download
+curl http://127.0.0.1:8000/api/filings | python3 -m json.tool  # six filings with preparation statuses
+```
+
+Compose exposes only the web port; the API port above works when you run the API natively
+(`python3 -m uvicorn api.main:app --host 127.0.0.1 --port 8000`).
+
+### Cloud profile on your machine
+
+You need free Groq and Cloudflare accounts (no billing, no paid fallback). Export the backend-only variables
+from [MODEL_PROVIDERS.md](MODEL_PROVIDERS.md), then prepare one filing into an ignored directory and query it:
+
+```sh
+export RAG_RUNTIME=cloud RAG_MODEL=openai/gpt-oss-20b FILING_PREPARATION_ACCESS=operator
+export GROQ_API_KEY=... CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=...
+python -m etl_pipeline.cloud_indexing --ticker NVDA --year 2026 --output /tmp/opencode/cloud-candidate
+RAG_SNAPSHOT_DIR=/tmp/opencode/cloud-candidate python ask.py 'How does NVIDIA assign revenue geographically?' \
+  --ticker NVDA --year 2026
+```
+
+### Troubleshooting
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| `/api/ready` is 503 `Ollama model not installed` | models still downloading | wait, then `docker compose logs models` |
+| Chat answers 503 `Filing index unavailable` | filing not prepared yet | pick it in the UI and wait for `ready`, or prepare via CLI |
+| Chat answers 429 | shared Free quota exhausted | wait for reset; do not hammer retry — it prolongs the outage |
+| Chat answers 504 | provider timeout | retry once manually; lower `RAG_QUERY_TIMEOUT_SECONDS` if frequent |
+| `prepare` returns 403 | operator-only mode (cloud default) | prepare from an operator shell, not HTTP |
+| `Snapshot ... checksum mismatch` at startup | code changed after the export was built | rebuild the export with `python -m etl_pipeline.cloud_indexing --output deploy/indexes` into a new directory |
+| Port 8080 taken | another service | set `WEB_PORT` in `.env` |
+| `npm run build` fails on Node < 22 | wrong toolchain | use Node 22 (`frontend/.nvmrc`, `engines` pin) |
 
 The `filings` and `ollama_models` named volumes persist across `down` and image rebuilds; don't use `down -v` unless
 you intend to delete downloaded filings, indexes and models. Configure `WEB_PORT` in `.env` if port 8080 is taken.
@@ -305,18 +360,21 @@ Historical machine-specific measurements are in [`perf/results.md`](perf/results
 ask.py                         Question CLI
 api/                           FastAPI filing discovery, chat, readiness and runbook
 etl_pipeline/
-  ingest.py                    SEC EDGAR download
-  filings.py                   Verified SEC filing identities
-  filing_store.py              Persistent filing index catalog and preparation
-  indexing.py                  Explicit-output indexing workflow
-  pipeline.py                  Single-filing CLI preparation adapter
-  parser.py                    SEC submission extraction
-  cleaner.py                   HTML and table cleanup
-  chunker.py                   Chunk creation and Ollama embeddings
-  vector_store.py              Local cosine-similarity retrieval
-  rag_engine.py                Ollama prompt and answer generation
-perf/                          ETL and embedding-batch benchmarks
-tests/                         Unit and integration-style tests with mocks
+  ingest.py / filings.py       SEC EDGAR download and verified filing identities
+  parser.py / cleaner.py       Submission extraction, HTML/table cleanup
+  chunker.py / vector_store.py Local semantic chunks, Ollama embeddings, cosine retrieval
+  cloud_tokens.py / cloud_chunker.py  Pinned BGE tokenizer, token-bounded cloud chunking
+  cloud_embeddings.py / groq.py       Cloudflare embeddings, Groq generation (bounded, no auto-retry)
+  cloud_identity.py / snapshot_provenance.py  Embedding identity and source bindings
+  cloud_indexing.py            Offline preparation into the operator cache
+  snapshot_export.py / snapshot_format.py / runtime_snapshot.py  Checksummed export and read-only reader
+  snapshot_query.py            Shared retrieval+generation deadline for API/CLI/eval
+  rag_engine.py                Prompts and provider dispatch
+eval/                          Corpus manifest, dev/test questions, runners, rubric, frozen behavior contract
+scripts/smoke_candidate.py     Pre-promotion smoke for staged Vercel candidates
+deploy/indexes/                Frozen six-filing cloud export with manifest (tracked)
+frontend/src/                  Chat-only React/Vite UI (no tests by project decision)
+tests/                         Unit and integration-style tests with mocks and real tempfiles
 ```
 
 ## Known Limitations
@@ -329,3 +387,24 @@ tests/                         Unit and integration-style tests with mocks
 - Ollama requests have configurable timeouts, but no retry or streaming support.
 - The generation prompt does not enforce a context token budget.
 - Generated answers can misstate numerical units even when evidence is retrieved correctly.
+
+## Challenges, open problems, room to grow
+
+Solved during this project (see the commit history for evidence):
+
+- Same dimension count is not the same embedding space: Nomic/768 vs BGE/384 indexes are strictly separated and
+  the reader refuses mismatched identity, not just mismatched size.
+- Cloud token budgets are real budgets: a pinned, checksummed tokenizer counts every input including special
+  tokens and the query prefix; the provisional 480-byte guard was replaced, not patched.
+- Groq occasionally returns empty content with `finish_reason: stop`; batch evaluation fails loudly instead of
+  scoring blanks, and one flaky question was diagnosed by direct payload inspection.
+- Vercel's multi-service detection fought the single-origin design twice (missing `version` for `uv lock`,
+  missing runtime dependencies); both were fixed from build logs, not guesses.
+
+Open for future work (good first issues for a new dev):
+
+- [ ] Per-user/IP rate limiting (currently per-instance semaphore + fail-closed quotas only)
+- [ ] Claim-level citations with page/section anchors from the cleaned 10-K
+- [ ] Streaming answers and cancellable generation in the UI
+- [ ] Cold-start breakdown on Vercel (tokenizer load vs index load vs first provider call)
+- [ ] Multilingual retrieval quality (Romanian): compare BGE-M3 on dev only, per the plan's gate
