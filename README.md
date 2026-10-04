@@ -1,7 +1,11 @@
 # SEC 10-K RAG
 
 Chat with SEC annual reports and inspect the passages behind each answer.
-**[Live demo](https://sec-10k-rag-rauls-projects-2096a6fa.vercel.app)** · [Video walkthrough](docs/demo_final.mp4)
+**[Live demo](https://sec-10k-rag-rauls-projects-2096a6fa.vercel.app)**
+
+## Demo video
+
+https://github.com/user-attachments/assets/572999e0-1d28-47ff-9820-442d7df0f8ad
 
 The public app serves six prepared 10-K filings: NVIDIA, Amazon, Starbucks, Adobe, Pfizer and Ford.
 React/Vite provides the chat UI; FastAPI handles retrieval and generation. Each question is independent,
@@ -48,6 +52,13 @@ prin servicii cloud complet gestionate:
   Groq (`gpt-oss-20b`) pentru latență minimă.
 
 ![Arhitectură de Producție Serverless](docs/architecture_serverless.png)
+
+### RAG pipeline — request flow (one cloud question)
+
+Slot de generare rezervat, filing rezolvat din exportul înghețat, întrebare încorporată via Cloudflare
+(cu cache), similaritate cosinus, răspuns generat via Groq — totul sub un singur deadline comun:
+
+![RAG pipeline sequence](docs/sequence_diagram.png)
 
 ### Arhitectură Containerizată Locală (Self-Hosted / Isolated Docker Stack)
 
