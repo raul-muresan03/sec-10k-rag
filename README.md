@@ -37,45 +37,45 @@ preparation runs separately in an operator shell. Cloud providers have no automa
 
 Code: [pipeline](etl_pipeline/) · [API](api/) · [UI](frontend/src/) · [evaluation](eval/).
 
-### Arhitectură de Producție Serverless (Cloud Runtime — Vercel & Managed APIs)
+### Serverless production architecture (cloud runtime — Vercel & managed APIs)
 
-Topologia de rulare în producție, optimizată pentru scalare automată și mentenanță operațională zero
-prin servicii cloud complet gestionate:
+The production runtime topology, optimized for automatic scaling and zero operational maintenance
+through fully managed cloud services:
 
-- **Punct unic de intrare:** un domeniu HTTPS Vercel; rutarea separă asset-urile statice (React/Vite)
-  de cererile dinamice de date.
-- **Backend efemer:** FastAPI ca funcție serverless cu `maxDuration: 120 s`, pentru interogări analitice lungi.
-- **Index vectorial integrat:** artefact binar read-only în pachetul de deployment (`deploy/indexes/`) —
-  6 documente SEC, vectori BGE cu 384 dimensiuni — validat și încărcat în memorie la pornire (cold start),
-  fără bază de date vectorială externă.
-- **Inferență decuplată:** embeddings via Cloudflare Workers AI (`bge-small-en-v1.5`), răspunsuri via
-  Groq (`gpt-oss-20b`) pentru latență minimă.
+- **Single entry point:** one Vercel HTTPS domain; routing separates static assets (React/Vite)
+  from dynamic data requests.
+- **Ephemeral backend:** FastAPI as a serverless function with `maxDuration: 120 s`, for long analytical queries.
+- **Built-in vector index:** read-only binary artifact in the deployment bundle (`deploy/indexes/`) —
+  6 SEC documents, 384-dimension BGE vectors — validated and loaded into memory at startup (cold start),
+  with no external vector database.
+- **Decoupled inference:** embeddings via Cloudflare Workers AI (`bge-small-en-v1.5`), answers via
+  Groq (`gpt-oss-20b`) for minimal latency.
 
-![Arhitectură de Producție Serverless](docs/architecture_serverless.png)
+![Serverless production architecture](docs/architecture_serverless.png)
 
 ### RAG pipeline — request flow (one cloud question)
 
-Slot de generare rezervat, filing rezolvat din exportul înghețat, întrebare încorporată via Cloudflare
-(cu cache), similaritate cosinus, răspuns generat via Groq — totul sub un singur deadline comun:
+Generation slot reserved, filing resolved from the frozen export, question embedded via Cloudflare
+(cached), cosine similarity, answer generated via Groq — all under one shared deadline:
 
 ![RAG pipeline sequence](docs/sequence_diagram.png)
 
-### Arhitectură Containerizată Locală (Self-Hosted / Isolated Docker Stack)
+### Local containerized architecture (self-hosted / isolated Docker stack)
 
-Implementarea autonomă locală, pentru confidențialitate completă a datelor și funcționare independentă
-de furnizorii terți de cloud:
+The self-sufficient local deployment, for full data privacy and operation independent
+of third-party cloud providers:
 
-- **Perimetru izolat:** rețea Docker privată; un singur port (`8080`) mapat pe host. `api` și `ollama`
-  nu își expun porturile direct, prevenind accesul neautorizat.
-- **Ingress & reverse proxy (Caddy):** traficul `127.0.0.1:8080` ajunge la fișierele statice din `/srv`,
-  iar `/api/*` este rutat către backend.
-- **Orchestrare RAG locală:** FastAPI/Uvicorn apelează Ollama prin HTTP REST pentru embeddings și generare.
-- **Bootstrap automat:** containerul efemer `models` descarcă o singură dată ponderile
-  (`nomic-embed-text`, `gemma3:1b`), fără intervenții manuale.
-- **Persistență prin named volumes:** `filings` (`/app/data`) și `ollama_models`, decuplate de ciclul
-  de viață al containerelor.
+- **Isolated perimeter:** private Docker network; a single port (`8080`) mapped to the host. `api` and `ollama`
+  do not expose their ports directly, preventing unauthorized access.
+- **Ingress & reverse proxy (Caddy):** `127.0.0.1:8080` traffic reaches the static files in `/srv`,
+  while `/api/*` is routed to the backend.
+- **Local RAG orchestration:** FastAPI/Uvicorn calls Ollama over HTTP REST for embeddings and generation.
+- **Automatic bootstrap:** the ephemeral `models` container downloads the weights once
+  (`nomic-embed-text`, `gemma3:1b`), with no manual steps.
+- **Persistence via named volumes:** `filings` (`/app/data`) and `ollama_models`, decoupled from the
+  containers' lifecycle.
 
-![Arhitectură Containerizată Locală](docs/architecture_docker.png)
+![Local containerized architecture](docs/architecture_docker.png)
 
 ## Get started
 
