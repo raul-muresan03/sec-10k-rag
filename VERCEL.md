@@ -72,7 +72,10 @@ For the first launch there is no previous release; the same flow promotes the fi
 ### Secrets and recovery
 
 Required repository secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`; optional `VERCEL_BYPASS_TOKEN`
-for candidates behind deployment protection. Test the gates safely with a manual `Release` dispatch
-(`promote: false`): it stages and smokes without promoting. Roll back via the `Rollback` dispatch with a previous
+for candidates behind deployment protection. Promotion passes `--scope` with the team slug (overridable via
+`VERCEL_SCOPE`) because the CLI cannot resolve the team from the token alone. In the project dashboard, under
+Production branch tracking, **auto-assignment of production domains must be off**; otherwise staged candidates
+receive traffic before promotion and the pipeline's core guarantee is void. Test the gates safely with a manual
+`Release` dispatch (`promote: false`): it stages and smokes without promoting. Roll back via the `Rollback` dispatch with a previous
 production deployment URL from the dashboard Deployments list; the target is smoked (without chat, to save quota)
 before promotion. A rollback cannot fix an exhausted provider quota or a down provider.
