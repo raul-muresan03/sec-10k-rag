@@ -53,21 +53,21 @@
   <g stroke="#2d6d5f" stroke-width="2" fill="none">
     <line x1="222" y1="170" x2="290" y2="151"/>
     <line x1="222" y1="210" x2="290" y2="247"/>
-    <line x1="522" y1="160" x2="590" y2="169"/>
-    <line x1="522" y1="250" x2="590" y2="278"/>
-    <line x1="822" y1="180" x2="890" y2="175" stroke-dasharray="6,4"/>
-    <line x1="822" y1="280" x2="890" y2="285" stroke-dasharray="6,4"/>
+    <line x1="522" y1="230" x2="590" y2="178"/>
+    <line x1="522" y1="258" x2="590" y2="280"/>
+    <line x1="898" y1="175" x2="824" y2="176" stroke-dasharray="6,4"/>
+    <path d="M 1010,330 V 380 H 410 V 314" stroke-dasharray="6,4"/>
   </g>
   <g fill="#2d6d5f">
     <polygon points="296,150 285.7,157.9 283.1,148.3"/>
     <polygon points="296,250 283,248.7 287.8,239.9"/>
-    <polygon points="596,170 583.4,173.3 584.8,163.4"/>
-    <polygon points="596,280 583,280.1 586.8,270.9"/>
-    <polygon points="896,175 884.4,180.8 883.7,170.8"/>
-    <polygon points="896,285 883.7,289.2 884.4,279.2"/>
+    <polygon points="596,176 584.5,180.6 585.2,170.6"/>
+    <polygon points="596,281 583.2,282.4 586.3,272.9"/>
+    <polygon points="818,176 829.6,171.4 828.9,181.4"/>
+    <polygon points="410,308 404,319.5 416,319.5"/>
   </g>
 
-  <text x="40" y="400" font-size="13" fill="#72817c">solid: request path (question -> evidence -> answer) · dashed: release path (prepare offline, publish after smoke)</text>
+  <text x="40" y="400" font-size="13" fill="#72817c">solid: request path (browser -> api -> export/models -> answer) · dashed: release path (laptop prepares export, GitHub publishes after smoke)</text>
   <text x="40" y="424" font-size="13" fill="#72817c">no accounts · no database · no history · Ollama stays local-only, never in production</text>
   <text x="40" y="470" font-size="12" fill="#9aa5a0">snapshot 9b77d19945eb0d8000d1137d5be2ff6ffda03c8ea7e5f641ee4298039f4e00d8 · model openai/gpt-oss-20b · embeddings @cf/baai/bge-small-en-v1.5</text>
 </svg>
