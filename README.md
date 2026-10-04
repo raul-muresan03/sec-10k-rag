@@ -1,8 +1,14 @@
 # SEC 10-K RAG
 
-A local SEC 10-K RAG pipeline with a live FastAPI endpoint. It verifies manifest-listed filings, persists separate
-indexes per filing, retrieves relevant chunks with cosine similarity, and generates answers through Ollama. The
-frontend is a filing-scoped chat; saved evaluation results remain internal to the repository.
+Live demo: **https://sec-10k-rag-rauls-projects-2096a6fa.vercel.app** — chat over six prepared 10-K filings,
+served as one Vercel project (Vite frontend + FastAPI backend) with Groq generation and Cloudflare embeddings.
+No accounts, no history, no database; each question is answered independently from a frozen, checksummed index
+snapshot (`9b77d199…4e00d8`).
+
+Locally the same repository runs a complete SEC 10-K RAG pipeline with a live FastAPI endpoint. It verifies
+manifest-listed filings, persists separate indexes per filing, retrieves relevant chunks with cosine similarity,
+and generates answers through Ollama. The frontend is a filing-scoped chat; saved evaluation results remain
+internal to the repository.
 
 The backend uses local files without a vector database or orchestration framework.
 
@@ -20,7 +26,10 @@ Implemented:
 - Generate an answer with a local Ollama model
 - Select explicit local/cloud model profiles; test Groq generation and Cloudflare embedding adapters offline
 - Answer filing-scoped questions through the [live API](api/README.md) or the chat interface
+- Serve the public demo from Vercel with explicit cloud providers and a verified read-only index snapshot
+- Publish controlled releases: CI-gated staged candidates, pre-promotion smoke, exact-artifact promotion, rollback
 - Validate saved dev answers, evidence, and retrieval metrics in internal evaluation artifacts
+- Run the final test-split evaluation on frozen offline indexes with full provenance (16 questions, 4 filings)
 - Prepare the six dev filings with `python3 -m etl_pipeline.filing_store` or prepare one through `ask.py`
 - Log questions, answers, retrieved chunks, latency, and Ollama metrics as JSONL
 - Run the frontend, API and Ollama together with Docker Compose; open a dev filing from the chat interface
@@ -30,7 +39,7 @@ Not implemented:
 - Claim-level citations to exact locations in a filing (the interface shows source passages and a link to the full filing)
 - Confidence scores or similarity thresholds
 - Cross-filing, multi-company, or year-over-year answers; each query selects one filing
-- Cloud-compatible filing snapshots or a complete cloud query/deployment workflow
+- Per-user rate limiting (per-instance generation cap plus fail-closed Free quotas instead)
 - Pinecone, LangChain, or hybrid search
 
 ## How It Works
@@ -45,6 +54,13 @@ Question -> embed -> cosine similarity in selected filing -> top N chunks
 
 Each query loads the selected filing's chunks and embeddings and compares them to its question embedding.
 Index preparation keeps intermediate artifacts in a temporary directory rather than changing `etl_pipeline.DATA_DIR`.
+
+```text
+Public demo: browser -> Vercel services (web + api)
+  api reads deploy/indexes (frozen) -> Cloudflare embeds the question
+  -> cosine retrieval -> Groq openai/gpt-oss-20b answers
+Laptop prepares indexes offline; GitHub main + green CI publishes staged candidates after smoke.
+```
 
 ## Requirements
 
@@ -117,10 +133,40 @@ question embeddings and generation. Native Python commands read exported environ
 `RAG_MODEL` now sets the CLI default as well as the API; `--model` overrides it for CLI/evaluation.
 
 The explicit `cloud` profile selects Groq `openai/gpt-oss-20b` and Cloudflare `@cf/baai/bge-small-en-v1.5`.
-It never falls back to Ollama or a different model. **This release implements provider adapters, not a deployable cloud
-application:** API startup, preparation, `ask.py` and evaluation refuse cloud mode until compatible immutable filing
-snapshots are implemented. Existing Nomic indexes cannot be reused. See [MODEL_PROVIDERS.md](MODEL_PROVIDERS.md) for
-configuration, bounds, errors and remaining compatibility gates. No live cloud-provider result is claimed by mock tests.
+It never falls back to Ollama or a different model. The public runtime reads the frozen export selected by
+`RAG_SNAPSHOT_DIR` (default `deploy/indexes`); API, CLI and evaluation share one absolute query deadline
+(`RAG_QUERY_TIMEOUT_SECONDS`, default 60). See [MODEL_PROVIDERS.md](MODEL_PROVIDERS.md) for configuration, bounds
+and errors, [CLOUD_INDEXES.md](CLOUD_INDEXES.md) for the snapshot contract, and [VERCEL.md](VERCEL.md) for packaging,
+controlled releases and recovery.
+
+## Frozen release and final evaluation
+
+Frozen behavior contract: [`eval/frozen_behavior.v1.json`](eval/frozen_behavior.v1.json) (BGE tokenizer, 480 content /
+512 final tokens, mean pooling, 384 dimensions, token-bounded adjacent-cosine chunking). The final test evaluation
+refuses to run on any drift. Public snapshot `9b77d19945eb0d8000d1137d5be2ff6ffda03c8ea7e5f641ee4298039f4e00d8`:
+six dev filings, 2,869 chunks, 4.812 MiB compressed / 21.325 MiB expanded.
+
+Cloud scores are new measurements, not a rename of the historical Ollama evaluations:
+
+| Run | Split | Retrieval hit@5 | Multi-hop complete | No-answer correct | Notes |
+| --- | --- | --- | --- | --- | --- |
+| `20261002T133927181691Z-dev-cloud` | dev, 24 q | 15/18 | 6/6 | — (retrieval-only) | top-10; misses: nvda narrative, sbux numeric, f narrative |
+| `20261004T162542904468Z-test-cloud` | test, 16 q | 10/12 | 3/4 | 4/4, 0 false | top-5, full generation; ~29K tokens; retrieval mean 0.41 s, generation mean 0.72 s |
+
+The 16 test questions target four filings (AAPL 2024, CVX 2019, JPM 2023, WMT 2014) indexed separately offline with
+the frozen configuration; they were never exported, published, or served. Historical Ollama dev baseline
+(`eval/reviews/dev_baseline.v1.json`, run `20260923T125212753976Z-dev`): 11 pass / 6 partial / 7 incorrect with all
+four medium-confidence Adobe/Pfizer verdicts owner-confirmed. No question labels were changed to mask regressions.
+
+Reproduce the export offline (needs the approved cloud environment; writes only to ignored directories):
+
+```sh
+python -m etl_pipeline.cloud_indexing --output /tmp/opencode/snapshot-check
+python -m eval.final_eval --question-interval-seconds 61
+```
+
+Quotas are fail-closed Free on both providers; a burst silences the demo until reset, and no rollback fixes that.
+Back up `deploy/indexes/` with its manifest before any reindexing; a reindex never rewrites history in place.
 
 ## Setup
 
@@ -276,7 +322,7 @@ tests/                         Unit and integration-style tests with mocks
 ## Known Limitations
 
 - The direct module demos target NVIDIA; `ask.py` accepts only the verified dev filings.
-- Chunk limits use characters rather than model tokens.
+- Local chunk limits use characters rather than model tokens (cloud chunking is token-bounded).
 - Indexing embeds paragraph pieces and final chunks, which repeats embedding work.
 - Retrieval reads the complete store for every query and performs a linear scan in Python.
 - Retrieved chunks have no source metadata, so generated answers cannot provide citations.
