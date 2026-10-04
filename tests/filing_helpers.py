@@ -6,7 +6,7 @@ import json
 from etl_pipeline.filing_store import FilingIndexStore
 
 
-def filing_corpus(root):
+def filing_corpus(root, split: str = "dev"):
     entries = []
     for ticker, year in (("NVDA", 2026), ("F", 2014)):
         accession = f"0000000000-{str(year)[-2:]}-000001"
@@ -18,7 +18,7 @@ def filing_corpus(root):
             f"<DOCUMENT><TYPE>10-K\n<TEXT><div>{ticker} evidence</div></TEXT></DOCUMENT>"
         )
         entries.append({
-            "ticker": ticker, "filing_year": year, "split": "dev", "accession": accession,
+            "ticker": ticker, "filing_year": year, "split": split, "accession": accession,
             "path": relative, "sha256": sha256(source.read_bytes()).hexdigest(),
             "sec_url": f"https://www.sec.gov/Archives/edgar/data/0/{accession.replace('-', '')}/{accession}.txt",
         })

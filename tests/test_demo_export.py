@@ -147,7 +147,7 @@ def test_committed_snapshot_validates_with_only_tracked_inputs():
     snapshot = json.loads((ROOT / "demo" / "snapshot.v1.json").read_text(encoding="utf-8"))
     validate_snapshot(snapshot)
     assert len(snapshot["examples"]) == 8
-    assert snapshot["answer_review"]["summary"]["publication_status"] == "provisional"
+    assert snapshot["answer_review"]["summary"]["publication_status"] == "owner_checkpoint_complete"
 
 
 def test_public_check_detects_outdated_review_and_selection(replay):

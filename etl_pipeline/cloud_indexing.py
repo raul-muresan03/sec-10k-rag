@@ -50,13 +50,17 @@ def _prepare(filing: VerifiedFiling, root: Path, config: ModelConfig, identity: 
         os.rename(workspace, directory)
 
 
-def prepare_snapshot(manifest_path: Path, index_root: Path, destination: Path, config: ModelConfig,
-                     *, selected: set[tuple[str, int]] | None = None) -> None:
+def build_filing_indexes(manifest_path: Path, index_root: Path, config: ModelConfig,
+                         *, selected: set[tuple[str, int]] | None = None,
+                         split: str = "dev") -> tuple[str, dict, list[tuple[VerifiedFiling, Path]]]:
+    """Verify filings and build (or reuse) their cloud indexes; never publishes an export."""
     if config.runtime != "cloud":
         raise ValueError("Cloud preparation requires the explicit cloud profile")
-    catalog = catalog_filings(manifest_path)
+    if split not in ("dev", "test"):
+        raise ValueError("Cloud indexing supports only dev and test splits")
+    catalog = catalog_filings(manifest_path, split)
     keys = selected if selected is not None else {(filing.ticker, filing.year) for filing in catalog.values()}
-    _, manifest_hash, verified = verify_filings(manifest_path, keys, "dev")
+    _, manifest_hash, verified = verify_filings(manifest_path, keys, split)
     identity = index_configuration()
     indexes = []
     for filing in verified.values():
@@ -64,6 +68,13 @@ def prepare_snapshot(manifest_path: Path, index_root: Path, destination: Path, c
         indexes.append((filing, _index_path(filing, index_root, identity)))
     if hash_file(manifest_path) != manifest_hash:
         raise ValueError("Corpus manifest changed during cloud preparation")
+    return manifest_hash, identity, indexes
+
+
+def prepare_snapshot(manifest_path: Path, index_root: Path, destination: Path, config: ModelConfig,
+                     *, selected: set[tuple[str, int]] | None = None) -> None:
+    manifest_hash, identity, indexes = build_filing_indexes(
+        manifest_path, index_root, config, selected=selected, split="dev")
     export_snapshot(indexes, identity, manifest_hash, destination)
 
 

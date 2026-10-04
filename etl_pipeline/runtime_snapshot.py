@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from copy import deepcopy
 from pathlib import Path
 import os
+from typing import Protocol
 
 from etl_pipeline.snapshot_format import (
     DEFAULT_SNAPSHOT_ROOT, MAX_MANIFEST_BYTES, parse_json, read_bounded, read_index, validate_manifest,
@@ -22,6 +23,48 @@ class SnapshotFiling:
     index_sha256: str
     chunk_count: int
     source_sha256: str
+
+
+class FilingReference(Protocol):
+    """Filing identity used by retrieval and evaluation."""
+
+    @property
+    def filing_id(self) -> str:
+        ...
+
+    @property
+    def ticker(self) -> str:
+        ...
+
+    @property
+    def year(self) -> int:
+        ...
+
+    @property
+    def source_sha256(self) -> str:
+        ...
+
+
+class SnapshotReader(Protocol):
+    """Verified filing vectors behind a manifest; implemented by exports and frozen test indexes."""
+
+    @property
+    def snapshot_id(self) -> str:
+        ...
+
+    @property
+    def embedding_config_id(self) -> str:
+        ...
+
+    @property
+    def manifest(self) -> dict:
+        ...
+
+    def index(self, selected_id: str) -> tuple[tuple[str, ...], tuple[tuple[float, ...], ...]]:
+        ...
+
+    def resolve(self, ticker: str, year: int) -> FilingReference:
+        ...
 
 
 class SnapshotStore:

@@ -13,7 +13,7 @@ from etl_pipeline.model_config import ModelConfig
 from etl_pipeline.model_errors import ModelInputError
 from etl_pipeline.query_deadline import check_deadline
 from etl_pipeline.rag_engine import get_llm_response
-from etl_pipeline.runtime_snapshot import SnapshotStore
+from etl_pipeline.runtime_snapshot import SnapshotReader
 
 
 _cache: OrderedDict[tuple[str, str, str], tuple[float, ...]] = OrderedDict()
@@ -31,7 +31,7 @@ class SnapshotAnswer:
     total_seconds: float
 
 
-def retrieve_snapshot(store: SnapshotStore, selected_id: str, question: str, top_n: int,
+def retrieve_snapshot(store: SnapshotReader, selected_id: str, question: str, top_n: int,
                       config: ModelConfig, *, deadline: float) -> list[tuple[float, str]]:
     check_deadline(deadline)
     if config.runtime != "cloud":
@@ -64,7 +64,7 @@ def retrieve_snapshot(store: SnapshotStore, selected_id: str, question: str, top
     return result
 
 
-def query_snapshot(store: SnapshotStore, selected_id: str, question: str, top_n: int, config: ModelConfig,
+def query_snapshot(store: SnapshotReader, selected_id: str, question: str, top_n: int, config: ModelConfig,
                    *, deadline: float | None = None, generate: bool = True) -> SnapshotAnswer:
     started = time.monotonic()
     deadline = started + config.query_timeout_seconds if deadline is None else deadline

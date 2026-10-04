@@ -110,29 +110,24 @@
   "answer_review": {
     "run_id": "20260923T125212753976Z-dev",
     "run_sha256": "69db1f90d8e1bc7125c3eda20246f6cc56a448d8d040a73be336a8cc68eac60d",
-    "reviews_sha256": "0169a4c31814035711f67304ec21c51ba77f0c10fa83a49e91214286dc3fc794",
+    "reviews_sha256": "ed49960c7647a38d89fb3ba29acb77ffc89ff02679aee53b2193f1a14e050226",
     "rubric_version": "answer-review-v1",
     "assessment_source": "AI-assisted failure analysis; medium-confidence cases need owner confirmation",
     "summary": {
       "questions": 24,
       "reviewed": 24,
       "unreviewed": 0,
-      "pending_owner_confirmation": 4,
-      "pending_owner_question_ids": [
-        "adbe-2018-multi-hop",
-        "adbe-2018-narrative",
-        "pfe-2015-multi-hop",
-        "pfe-2015-narrative"
-      ],
+      "pending_owner_confirmation": 0,
+      "pending_owner_question_ids": [],
       "unreviewed_question_ids": [],
       "ai_reviewed": 20,
-      "owner_confirmed": 0,
+      "owner_confirmed": 4,
       "verdicts": {
         "pass": 11,
         "partial": 6,
         "incorrect": 7
       },
-      "publication_status": "provisional"
+      "publication_status": "owner_checkpoint_complete"
     }
   },
   "examples": [
@@ -576,7 +571,7 @@
         false
       ],
       "review": {
-        "status": "needs_owner_confirmation",
+        "status": "owner_confirmed",
         "confidence": "medium",
         "verdict": "incorrect",
         "dimensions": {
