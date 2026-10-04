@@ -138,7 +138,7 @@ def test_retrieval_only_run_cannot_be_answer_reviewed(tmp_path):
         create_review_template(run)
 
 
-def test_tracked_baseline_has_every_dev_question_and_keeps_owner_checkpoint_open():
+def test_tracked_baseline_has_every_dev_question_and_records_owner_confirmation():
     root = Path(__file__).resolve().parent.parent
     payload = json.loads((root / "eval/reviews/dev_baseline.v1.json").read_text(encoding="utf-8"))
     gold = [json.loads(line) for line in (root / "eval/questions.jsonl").read_text(encoding="utf-8").splitlines()]
@@ -151,7 +151,7 @@ def test_tracked_baseline_has_every_dev_question_and_keeps_owner_checkpoint_open
     assert sum(review["verdict"] == "pass" for review in reviews) == 11
     assert sum(review["verdict"] == "partial" for review in reviews) == 6
     assert sum(review["verdict"] == "incorrect" for review in reviews) == 7
-    assert {review["question_id"] for review in reviews if review["status"] == "needs_owner_confirmation"} == {
+    assert {review["question_id"] for review in reviews if review["status"] == "owner_confirmed"} == {
         "adbe-2018-narrative", "adbe-2018-multi-hop", "pfe-2015-narrative", "pfe-2015-multi-hop",
     }
-    assert not any(review["status"] == "owner_confirmed" for review in reviews)
+    assert not any(review["status"] == "needs_owner_confirmation" for review in reviews)
