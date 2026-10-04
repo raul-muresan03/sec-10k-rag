@@ -14,19 +14,16 @@ The backend uses local files without a vector database or orchestration framewor
 
 ## Screenshots & demo
 
-Media lives under `docs/` (tracked). Fill the TODOs below with real captures from the live URL:
+![Chat answering a question with retrieved passages and the SEC source link](docs/screenshot-chat.png)
 
-- [x] `docs/screenshot-chat.png` — chat answering a question with retrieved passages and the SEC source link
-- [x] `docs/demo_final.mp4` — 2-minute walkthrough: select a filing, ask a revenue question, show the evidence
-- [x] `docs/architecture.png` ([source](docs/architecture.svg)) — one-origin diagram: browser → Vercel services → frozen export + Groq/Cloudflare
+[Demo video (2 minutes)](docs/demo_final.mp4): select a filing, ask a revenue question, show the evidence.
+
+![One-origin architecture: browser → Vercel services → frozen export + Groq/Cloudflare](docs/architecture.png)
+([source](docs/architecture.svg))
 
 ## What I built myself
-- Implemented the pipeline and product code by hand across the roadmap (SEC parsing/cleaning, semantic chunking,
-  cosine retrieval, RAG orchestration, FastAPI backend, chat UI, evaluation harness with rubric and owner review).
-- A decision made against the grain: [..] — e.g. keeping the public bundle to six dev filings with test filings
-  indexed strictly offline, or accepting per-instance generation limits over new infrastructure.
-- Operated the deployment end to end: Vercel project and secrets, staged candidates, smoke checks, controlled
-  promotion, and the key-rotation/exposure hygiene around them.
+- Implemented the pipeline and product code by hand across the roadmap (SEC parsing/cleaning, semantic chunking, cosine similarity, retrieval, RAG orchestration).
+- Operated the deployment end to end: Vercel project and secrets, staged candidates, smoke checks, controlled promotion, and the key-rotation/exposure hygiene around them.
 
 ## Current Scope
 
@@ -46,11 +43,11 @@ Implemented:
 - Publish controlled releases: CI-gated staged candidates, pre-promotion smoke, exact-artifact promotion, rollback
 - Validate saved dev answers, evidence, and retrieval metrics in internal evaluation artifacts
 - Run the final test-split evaluation on frozen offline indexes with full provenance (16 questions, 4 filings)
-- Prepare the six dev filings with `python3 -m etl_pipeline.filing_store` or prepare one through `ask.py`
-- Log questions, answers, retrieved chunks, latency, and Ollama metrics as JSONL
+- Download and prepare the six dev filings with `python3 -m api.prepare_filings` (verified download plus index build)
+- Log local CLI questions, answers, retrieved chunks, latency, and Ollama metrics as JSONL
 - Run the frontend, API and Ollama together with Docker Compose; open a dev filing from the chat interface
 
-Not implemented:
+Not implemented yet:
 
 - Claim-level citations to exact locations in a filing (the interface shows source passages and a link to the full filing)
 - Confidence scores or similarity thresholds
@@ -61,31 +58,47 @@ Not implemented:
 ## How It Works
 
 ```text
-Manifest-verified SEC EDGAR submission
-  -> parse -> clean HTML/tables -> chunk -> embed with Ollama
-  -> data/indexes/<CIK>-<ACCESSION>/<INDEX_VERSION>/all_chunks_embeddings.json
-Question -> embed -> cosine similarity in selected filing -> top N chunks
-  -> Ollama generation -> CLI or API answer
+Manifest-verified SEC EDGAR submission -> parse -> clean HTML/tables -> chunk -> embed with Ollama -> data/indexes/<CIK>-<ACCESSION>/<INDEX_VERSION>/all_chunks_embeddings.json
+Question -> embed -> cosine similarity in selected filing -> top N chunks -> Ollama generation -> CLI or API answer
 ```
 
-Each query loads the selected filing's chunks and embeddings and compares them to its question embedding.
+Each local query loads the selected filing's chunks and embeddings and compares them to its question embedding.
+The cloud runtime instead loads the frozen export once at startup and keeps it in memory; every question then reuses
+those in-memory vectors.
 Index preparation keeps intermediate artifacts in a temporary directory rather than changing `etl_pipeline.DATA_DIR`.
 
 ```text
-Public demo: browser -> Vercel services (web + api)
-  api reads deploy/indexes (frozen) -> Cloudflare embeds the question
-  -> cosine retrieval -> Groq openai/gpt-oss-20b answers
+Public demo: browser -> Vercel services (web + api) api reads deploy/indexes (frozen) -> Cloudflare embeds the question -> cosine retrieval -> Groq openai/gpt-oss-20b answers
 Laptop prepares indexes offline; GitHub main + green CI publishes staged candidates after smoke.
 ```
 
 ## Requirements
 
-- Python 3.12 recommended (cloud adapters require Python 3.11 or newer)
+### With Docker Compose
+
+- Docker with the Compose plugin
+- A contact email for SEC EDGAR (`SEC_API_EMAIL` in `.env`)
+- Internet access and several gigabytes of disk for the first model and filing downloads
+
+No separate Python, Node.js, or Ollama install is needed on the host; Compose provides them as services.
+
+### Native local development (Ollama)
+
+- Python 3.12 recommended
 - [Ollama](https://ollama.com/) running at `http://localhost:11434`
-- The manifest-listed raw filings at their recorded `data/sec-edgar-filings/` paths
-- Network access and a contact email only when obtaining SEC submissions separately
+- Node.js 22 with npm (see `frontend/.nvmrc` and the `engines` pin) for the chat UI
+- The manifest-listed raw filings at their recorded `data/sec-edgar-filings/` paths (downloaded via `api.prepare_filings`, not shipped with the clone)
+- Network access and a contact email only when obtaining SEC submissions
 - `nomic-embed-text` for indexing and retrieval
 - `gemma3:1b` by default for answer generation, or another installed Ollama model selected with `--model`
+
+### Native cloud queries
+
+- Python 3.12 (cloud adapters require Python 3.11 or newer)
+- Node.js 22 with npm if you also run the chat UI
+- Free Groq and Cloudflare accounts (no billing, no paid fallback); backend-only `GROQ_API_KEY`,
+  `CLOUDFLARE_API_TOKEN`, and `CLOUDFLARE_ACCOUNT_ID`
+- The tracked frozen export under `deploy/indexes/` (no SEC download needed just to ask questions)
 
 ## Docker Compose (simplest local start)
 
@@ -128,29 +141,33 @@ and stop with:
 docker compose down
 ```
 
-Verify each layer as you go (localhost):
+Verify each layer as you go (Compose exposes only the web port on localhost):
 
 ```bash
-curl http://127.0.0.1:8000/api/health                       # {"status":"ok"} — process is up
-curl http://127.0.0.1:8000/api/ready                        # {"status":"ready"} or 503 while models download
-curl http://127.0.0.1:8000/api/filings | python3 -m json.tool  # six filings with preparation statuses
+curl http://localhost:8080/api/health                       # {"status":"ok"} — process is up
+curl http://localhost:8080/api/ready                        # {"status":"ready"} or 503 while models download
+curl http://localhost:8080/api/filings | python3 -m json.tool  # six filings with preparation statuses
 ```
 
-Compose exposes only the web port; the API port above works when you run the API natively
-(`python3 -m uvicorn api.main:app --host 127.0.0.1 --port 8000`).
+Port `8000` below is only for the native API (`python -m uvicorn api.main:app --host 127.0.0.1 --port 8000`).
+It is not exposed by Compose.
 
 ### Cloud profile on your machine
 
 You need free Groq and Cloudflare accounts (no billing, no paid fallback). Export the backend-only variables
-from [MODEL_PROVIDERS.md](MODEL_PROVIDERS.md), then prepare one filing into an ignored directory and query it:
+from [MODEL_PROVIDERS.md](MODEL_PROVIDERS.md), then query the tracked frozen export directly — no SEC download
+or rebuild is needed for a first cloud question:
 
 ```sh
 export RAG_RUNTIME=cloud RAG_MODEL=openai/gpt-oss-20b FILING_PREPARATION_ACCESS=operator
 export GROQ_API_KEY=... CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=...
-python -m etl_pipeline.cloud_indexing --ticker NVDA --year 2026 --output /tmp/opencode/cloud-candidate
-RAG_SNAPSHOT_DIR=/tmp/opencode/cloud-candidate python ask.py 'How does NVIDIA assign revenue geographically?' \
-  --ticker NVDA --year 2026
+python ask.py 'How does NVIDIA assign revenue geographically?' --ticker NVDA --year 2026
 ```
+
+This reads `deploy/indexes/` by default (`RAG_SNAPSHOT_DIR`). Rebuilding the export is a separate operator task
+for when sources or the frozen configuration change; it needs the raw dev submissions locally and writes to a new,
+ignored candidate directory first (see [CLOUD_INDEXES.md](CLOUD_INDEXES.md)). Never rebuild directly into the
+tracked `deploy/indexes/`.
 
 ### Troubleshooting
 
@@ -159,9 +176,9 @@ RAG_SNAPSHOT_DIR=/tmp/opencode/cloud-candidate python ask.py 'How does NVIDIA as
 | `/api/ready` is 503 `Ollama model not installed` | models still downloading | wait, then `docker compose logs models` |
 | Chat answers 503 `Filing index unavailable` | filing not prepared yet | pick it in the UI and wait for `ready`, or prepare via CLI |
 | Chat answers 429 | shared Free quota exhausted | wait for reset; do not hammer retry — it prolongs the outage |
-| Chat answers 504 | provider timeout | retry once manually; lower `RAG_QUERY_TIMEOUT_SECONDS` if frequent |
+| Chat answers 504 | provider timeout or the shared query deadline expired | retry once manually; if frequent, check provider status and whether slow embeddings consume the `RAG_QUERY_TIMEOUT_SECONDS` budget (local Ollama uses its own per-call `OLLAMA_TIMEOUT_SECONDS`) |
 | `prepare` returns 403 | operator-only mode (cloud default) | prepare from an operator shell, not HTTP |
-| `Snapshot ... checksum mismatch` at startup | code changed after the export was built | rebuild the export with `python -m etl_pipeline.cloud_indexing --output deploy/indexes` into a new directory |
+| `Snapshot ... checksum mismatch` at startup | export on disk is inconsistent with its manifest or the expected configuration | verify or restore the export from version control; to rebuild, publish into a new candidate directory (the exporter refuses an existing destination) |
 | Port 8080 taken | another service | set `WEB_PORT` in `.env` |
 | `npm run build` fails on Node < 22 | wrong toolchain | use Node 22 (`frontend/.nvmrc`, `engines` pin) |
 
@@ -182,7 +199,8 @@ The commands below describe the alternative native Python/Vite setup.
 ## Model profiles
 
 `RAG_RUNTIME=local` is the default; Compose explicitly uses this profile. Ollama remains responsible for indexing,
-question embeddings and generation. Native Python commands read exported environment variables, not `.env` automatically.
+question embeddings and generation. Load `.env` explicitly before native commands (`set -a; . ./.env; set +a`);
+do not rely on implicit loading — only some helpers (for example via `etl_pipeline/ingest.py`) read `.env`.
 `RAG_MODEL` now sets the CLI default as well as the API; `--model` overrides it for CLI/evaluation.
 
 The explicit `cloud` profile selects Groq `openai/gpt-oss-20b` and Cloudflare `@cf/baai/bge-small-en-v1.5`.
@@ -196,20 +214,23 @@ controlled releases and recovery.
 
 Frozen behavior contract: [`eval/frozen_behavior.v1.json`](eval/frozen_behavior.v1.json) (BGE tokenizer, 480 content /
 512 final tokens, mean pooling, 384 dimensions, token-bounded adjacent-cosine chunking). The final test evaluation
-refuses to run on any drift. Public snapshot `9b77d19945eb0d8000d1137d5be2ff6ffda03c8ea7e5f641ee4298039f4e00d8`:
+refuses to run when the embedding or chunking behavior drifts from this contract; it does not guard prompt,
+`top-n`, or other generation-code changes. Public snapshot `9b77d19945eb0d8000d1137d5be2ff6ffda03c8ea7e5f641ee4298039f4e00d8`:
 six dev filings, 2,869 chunks, 4.812 MiB compressed / 21.325 MiB expanded.
 
 Cloud scores are new measurements, not a rename of the historical Ollama evaluations:
 
 | Run | Split | Retrieval hit@5 | Multi-hop complete | No-answer correct | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `20261002T133927181691Z-dev-cloud` | dev, 24 q | 15/18 | 6/6 | — (retrieval-only) | top-10; misses: nvda narrative, sbux numeric, f narrative |
+| `20261002T133927181691Z-dev-cloud` | dev, 24 q | 14/18 | 6/6 | — (retrieval-only) | top-10 (hit@10 15/18); misses: nvda narrative, sbux numeric, f narrative |
 | `20261004T162542904468Z-test-cloud` | test, 16 q | 10/12 | 3/4 | 4/4, 0 false | top-5, full generation; ~29K tokens; retrieval mean 0.41 s, generation mean 0.72 s |
 
 The 16 test questions target four filings (AAPL 2024, CVX 2019, JPM 2023, WMT 2014) indexed separately offline with
 the frozen configuration; they were never exported, published, or served. Historical Ollama dev baseline
 (`eval/reviews/dev_baseline.v1.json`, run `20260923T125212753976Z-dev`): 11 pass / 6 partial / 7 incorrect with all
 four medium-confidence Adobe/Pfizer verdicts owner-confirmed. No question labels were changed to mask regressions.
+These are automatic retrieval/abstention/token metrics; answer quality review for the cloud runs is `not_applied`.
+The latency and token figures come from local evaluation against the cloud providers, not from Vercel measurements.
 
 Reproduce the export offline (needs the approved cloud environment; writes only to ignored directories):
 
@@ -232,10 +253,18 @@ python3 -m pip install -r etl_pipeline/requirements.txt -r requirements-api.txt 
 cp .env.example .env
 ```
 
-If downloading additional SEC filings, set the SEC EDGAR contact email in `.env`:
+Set the SEC EDGAR contact email in `.env` before downloading any filing:
 
 ```ini
 SEC_API_EMAIL=your_email@example.com
+```
+
+Then load it for native commands:
+
+```bash
+set -a
+. ./.env
+set +a
 ```
 
 Install and start Ollama, then pull the models used by the application:
@@ -247,9 +276,17 @@ ollama pull gemma3:1b
 
 ## Prepare Filing Indexes
 
-`eval/corpus_manifest.v1.json` pins the filing paths, accessions, SEC URLs and source SHA-256s. Place the six dev
-submissions at those exact paths before preparing indexes. The test-split filings are reserved for final evaluation.
-Preparation verifies every dev filing before building any index:
+`eval/corpus_manifest.v1.json` pins the filing paths, accessions, SEC URLs and source SHA-256s. The test-split
+filings are reserved for final evaluation. `etl_pipeline.filing_store` only verifies and indexes; it does not
+download. Download and prepare with the verified operator command (omit `--filing-id` to prepare all six dev
+filings after the first download):
+
+```bash
+python3 -m api.prepare_filings --filing-id 1045810-0001045810-26-000021
+```
+
+Preparation verifies every dev filing before building any index. Alternatively, place the six dev submissions at
+their manifest paths manually and then run:
 
 ```bash
 python3 -m etl_pipeline.filing_store
@@ -258,7 +295,8 @@ python3 -m etl_pipeline.filing_store
 Each index is built in a temporary directory and published under
 `data/indexes/<CIK>-<ACCESSION>/<INDEX_VERSION>/` after validation. A rerun reuses complete matching indexes; an
 interrupted build leaves no published partial index. Source, preprocessing or Ollama embedding-model digest changes
-select a new index version. `ask.py` can prepare one selected dev filing if it is missing, without downloading it.
+select a new index version. `ask.py` reuses a prepared local index and can build one selected dev filing if its
+submission is already on disk, without downloading it.
 
 `--year` means the SEC filing year, not the fiscal year. The CLI accepts only manifest-verified dev filings.
 
@@ -285,19 +323,29 @@ python3 ask.py --ticker NVDA --year 2026 --top-n 3 --model gemma3:1b "What risks
 The CLI prints indexing progress when rebuilding, the selected index path, retrieval time, generation time, and final
 answer. The default values are `--top-n 5` and `--model gemma3:1b`.
 
-Each completed query appends one record to `data/query_log.jsonl`. Records include the ticker, filing year,
+Each completed local CLI query appends one record to `data/query_log.jsonl`. Records include the ticker, filing year,
 question, answer, model, retrieved chunk text and scores, retrieval and generation latency, and the token counts and
-durations returned by Ollama. Ollama duration fields are stored unchanged in nanoseconds.
+durations returned by Ollama. Ollama duration fields are stored unchanged in nanoseconds. Cloud API/CLI answers are
+not appended to this log.
 
 To ask through HTTP, see the [API runbook](api/README.md). The API does not append to the CLI query log.
 
-To ask through the Chat UI, start the API, then run the frontend dev server (it proxies `/api` to
-`http://127.0.0.1:8000`):
+To ask through the Chat UI, start the API in one terminal, then run the frontend dev server in a second terminal
+(it proxies `/api` to `http://127.0.0.1:8000`):
 
 ```bash
+# terminal 1, from the repository root with the venv active and `.env` loaded
+python3 -m uvicorn api.main:app --host 127.0.0.1 --port 8000 --reload --env-file .env
+```
+
+```bash
+# terminal 2, from the repository root (needs Node.js 22)
 npm --prefix frontend ci
 npm --prefix frontend run dev -- --port 5173
 ```
+
+Open **http://localhost:5173**. The six dev filings must already be prepared (see above); the chat lists only
+prepared filings in operator mode.
 
 The frontend presents only the live chat. Changing filings starts a new conversation; questions in the same filing
 appear together, but each answer is generated independently and the conversation clears on refresh. In production the
@@ -380,7 +428,8 @@ tests/                         Unit and integration-style tests with mocks and r
 - The direct module demos target NVIDIA; `ask.py` accepts only the verified dev filings.
 - Local chunk limits use characters rather than model tokens (cloud chunking is token-bounded).
 - Indexing embeds paragraph pieces and final chunks, which repeats embedding work.
-- Retrieval reads the complete store for every query and performs a linear scan in Python.
+- Local retrieval reads the complete filing index for every query and performs a linear scan in Python (the cloud
+  runtime reuses the in-memory snapshot but still scores every vector linearly).
 - Retrieved chunks have no source metadata, so generated answers cannot provide citations.
 - Ollama requests have configurable timeouts, but no retry or streaming support.
 - The generation prompt does not enforce a context token budget.
