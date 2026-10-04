@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" font-family="sans-serif">
+  <rect x="0" y="0" width="1200" height="520" fill="#f6f5f1"/>
+  <text x="40" y="48" font-size="26" font-weight="bold" fill="#20353b">SEC 10-K RAG — one origin</text>
+  <text x="40" y="74" font-size="14" fill="#72817c">https://sec-10k-rag-rauls-projects-2096a6fa.vercel.app</text>
+
+  <g>
+    <rect x="40" y="130" width="180" height="120" rx="12" fill="#192b3b"/>
+    <text x="60" y="165" font-size="16" font-weight="bold" fill="#e2cea9">Browser</text>
+    <text x="60" y="190" font-size="13" fill="#e2cea9">chat UI (Vite)</text>
+    <text x="60" y="212" font-size="13" fill="#e2cea9">question + filing</text>
+  </g>
+
+  <g>
+    <rect x="300" y="110" width="220" height="70" rx="12" fill="#ffffff" stroke="#9ebfad" stroke-width="2"/>
+    <text x="320" y="138" font-size="15" font-weight="bold" fill="#2d6855">web service</text>
+    <text x="320" y="160" font-size="13" fill="#62746e">static files, CDN</text>
+  </g>
+  <g>
+    <rect x="300" y="200" width="220" height="110" rx="12" fill="#ffffff" stroke="#9ebfad" stroke-width="2"/>
+    <text x="320" y="228" font-size="15" font-weight="bold" fill="#2d6855">api service</text>
+    <text x="320" y="250" font-size="13" fill="#62746e">FastAPI, Python 3.12</text>
+    <text x="320" y="270" font-size="13" fill="#62746e">maxDuration 120 s</text>
+    <text x="320" y="290" font-size="13" fill="#62746e">read-only snapshot</text>
+  </g>
+  <text x="300" y="340" font-size="13" fill="#72817c">one Vercel project · rewrites: /api/* -> api, rest -> web</text>
+
+  <g>
+    <rect x="600" y="130" width="220" height="90" rx="12" fill="#e9f3ec" stroke="#5aa47b" stroke-width="2"/>
+    <text x="620" y="158" font-size="15" font-weight="bold" fill="#2d6855">frozen export</text>
+    <text x="620" y="180" font-size="13" fill="#345a51">6 filings · 2,869 chunks</text>
+    <text x="620" y="200" font-size="13" fill="#345a51">BGE/384 · mean pooling</text>
+  </g>
+  <g>
+    <rect x="600" y="240" width="220" height="90" rx="12" fill="#fff4e8" stroke="#c98a2e" stroke-width="2"/>
+    <text x="620" y="268" font-size="15" font-weight="bold" fill="#8a5a17">cloud models</text>
+    <text x="620" y="290" font-size="13" fill="#6b5320">Groq gpt-oss-20b</text>
+    <text x="620" y="310" font-size="13" fill="#6b5320">Cloudflare bge-small</text>
+  </g>
+
+  <g>
+    <rect x="900" y="130" width="220" height="90" rx="12" fill="#ffffff" stroke="#bdd0c4" stroke-width="2"/>
+    <text x="920" y="158" font-size="15" font-weight="bold" fill="#20353b">laptop (offline)</text>
+    <text x="920" y="180" font-size="13" fill="#62746e">SEC -> chunk + embed</text>
+    <text x="920" y="200" font-size="13" fill="#62746e">export -> release</text>
+  </g>
+  <g>
+    <rect x="900" y="240" width="220" height="90" rx="12" fill="#ffffff" stroke="#bdd0c4" stroke-width="2"/>
+    <text x="920" y="268" font-size="15" font-weight="bold" fill="#20353b">GitHub main</text>
+    <text x="920" y="290" font-size="13" fill="#62746e">CI green -> staged</text>
+    <text x="920" y="310" font-size="13" fill="#62746e">smoke -> promote</text>
+  </g>
+
+  <g stroke="#2d6d5f" stroke-width="2" fill="none">
+    <line x1="222" y1="170" x2="290" y2="151"/>
+    <line x1="222" y1="210" x2="290" y2="247"/>
+    <line x1="522" y1="160" x2="590" y2="169"/>
+    <line x1="522" y1="250" x2="590" y2="278"/>
+    <line x1="822" y1="180" x2="890" y2="175" stroke-dasharray="6,4"/>
+    <line x1="822" y1="280" x2="890" y2="285" stroke-dasharray="6,4"/>
+  </g>
+  <g fill="#2d6d5f">
+    <polygon points="296,150 285.7,157.9 283.1,148.3"/>
+    <polygon points="296,250 283,248.7 287.8,239.9"/>
+    <polygon points="596,170 583.4,173.3 584.8,163.4"/>
+    <polygon points="596,280 583,280.1 586.8,270.9"/>
+    <polygon points="896,175 884.4,180.8 883.7,170.8"/>
+    <polygon points="896,285 883.7,289.2 884.4,279.2"/>
+  </g>
+
+  <text x="40" y="400" font-size="13" fill="#72817c">solid: request path (question -> evidence -> answer) · dashed: release path (prepare offline, publish after smoke)</text>
+  <text x="40" y="424" font-size="13" fill="#72817c">no accounts · no database · no history · Ollama stays local-only, never in production</text>
+  <text x="40" y="470" font-size="12" fill="#9aa5a0">snapshot 9b77d19945eb0d8000d1137d5be2ff6ffda03c8ea7e5f641ee4298039f4e00d8 · model openai/gpt-oss-20b · embeddings @cf/baai/bge-small-en-v1.5</text>
+</svg>

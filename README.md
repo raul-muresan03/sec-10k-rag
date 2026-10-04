@@ -18,16 +18,11 @@ Media lives under `docs/` (tracked). Fill the TODOs below with real captures fro
 
 - [x] `docs/screenshot-chat.png` — chat answering a question with retrieved passages and the SEC source link
 - [x] `docs/demo_final.mp4` — 2-minute walkthrough: select a filing, ask a revenue question, show the evidence
-- [ ] `docs/architecture.png` — one-origin diagram: browser → Vercel services (`web`, `api`) → frozen export + Groq/Cloudflare
+- [x] `docs/architecture.png` ([source](docs/architecture.svg)) — one-origin diagram: browser → Vercel services → frozen export + Groq/Cloudflare
 
-## What I built (author notes)
-
-> Adjust these to your own words — they are the CV-visible record of manual work.
-
+## What I built myself
 - Implemented the pipeline and product code by hand across the roadmap (SEC parsing/cleaning, semantic chunking,
   cosine retrieval, RAG orchestration, FastAPI backend, chat UI, evaluation harness with rubric and owner review).
-- Hardest bug fixed myself: [..] — e.g. the Cloudflare dimension/pooling mismatch that forced strictly separated
-  Nomic/768 and BGE/384 index families instead of a silent reuse.
 - A decision made against the grain: [..] — e.g. keeping the public bundle to six dev filings with test filings
   indexed strictly offline, or accepting per-instance generation limits over new infrastructure.
 - Operated the deployment end to end: Vercel project and secrets, staged candidates, smoke checks, controlled
