@@ -13,9 +13,10 @@ from eval.runtime_metrics import runtime_environment
 
 
 def snapshot_run_payload(run_id: str, config: ModelConfig, snapshot: SnapshotStore, mode: str,
-                         top_n: int, limit: int | None, interval: float, inputs: dict, metrics: dict) -> dict:
+                         top_n: int, limit: int | None, interval: float, inputs: dict, metrics: dict,
+                         split: str = "dev") -> dict:
     return {
-        "run_id": run_id, "created_at": datetime.now(timezone.utc).isoformat(), "mode": mode, "split": "dev",
+        "run_id": run_id, "created_at": datetime.now(timezone.utc).isoformat(), "mode": mode, "split": split,
         "model": config.model if mode == "full" else None, "top_n": top_n, "limit": limit,
         "runtime_environment": runtime_environment(),
         "provenance": {

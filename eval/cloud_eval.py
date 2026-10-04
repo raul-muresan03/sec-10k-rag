@@ -33,7 +33,7 @@ def _load_inputs(questions_path: Path, manifest_path: Path, snapshot: SnapshotSt
     manifest_hash = hash_file(manifest_path)
     if manifest_hash != snapshot.manifest["corpus_manifest_sha256"]:
         raise ValueError("Cloud evaluation corpus does not match the frozen snapshot")
-    catalog = catalog_filings(manifest_path)
+    catalog = catalog_filings(manifest_path, split)
     questions_hash = hash_file(questions_path)
     questions = load_questions(questions_path, split, limit)
     if questions_hash != hash_file(questions_path) or manifest_hash != hash_file(manifest_path):
@@ -56,7 +56,8 @@ def _question_result(question: dict, snapshot: SnapshotStore, top_n: int, config
     filing = snapshot.resolve(question["ticker"], question["year"])
     outcome = query_snapshot(snapshot, filing.filing_id, question["question"], top_n, config, generate=mode == "full")
     result = {
-        "run_id": run_id, "id": question["id"], "split": "dev", "ticker": filing.ticker, "year": filing.year,
+        "run_id": run_id, "id": question["id"], "split": question["split"], "ticker": filing.ticker,
+        "year": filing.year,
         "question_type": question["type"], "question": question["question"],
         "reference_answer": question["answer"], "section": question.get("section"),
         "expected_evidence": question["evidence"],
@@ -118,16 +119,18 @@ def _provider_usage(results: list[dict]) -> dict[str, int]:
 
 def evaluate_snapshot(split: str, limit: int | None, top_n: int, config: ModelConfig, questions_path: Path,
                        manifest_path: Path, mode: str, store: SnapshotStore | None = None,
-                       question_interval_seconds: float = 0.0) -> tuple[dict, list[dict]]:
-    if split != "dev":
-        raise ValueError("Public cloud snapshots support only dev evaluation; test is reserved for final evaluation")
+                       question_interval_seconds: float = 0.0, final: bool = False) -> tuple[dict, list[dict]]:
+    if split == "test" and (not final or store is None):
+        raise ValueError("Test questions are reserved for final evaluation with explicit frozen indexes")
+    if split not in ("dev", "test"):
+        raise ValueError(f"split must be dev or test, got {split}")
     if top_n > 10:
         raise ValueError("Cloud top-n must be at most 10")
     if not isfinite(question_interval_seconds) or not 0 <= question_interval_seconds <= 120:
         raise ValueError("Cloud evaluation question interval must be between 0 and 120 seconds")
     snapshot = store if store is not None else SnapshotStore.from_env()
     inputs = _load_inputs(questions_path, manifest_path, snapshot, split, limit)
-    run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ") + "-dev-cloud"
+    run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ") + f"-{split}-cloud"
     results, scored = _question_results(inputs, config, top_n, mode, run_id, question_interval_seconds)
     metrics = _metrics(results, scored, len(inputs.selected_ids), mode, top_n)
     provenance = {
@@ -136,5 +139,5 @@ def evaluate_snapshot(split: str, limit: int | None, top_n: int, config: ModelCo
         "filings": [entry for entry in snapshot.manifest["filings"] if entry["filing_id"] in inputs.selected_ids],
     }
     payload = snapshot_run_payload(run_id, config, snapshot, mode, top_n, limit, question_interval_seconds,
-                                   provenance, metrics)
+                                   provenance, metrics, split)
     return payload, results
