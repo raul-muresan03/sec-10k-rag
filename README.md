@@ -16,19 +16,22 @@ The backend uses local files without a vector database or orchestration framewor
 
 Media lives under `docs/` (tracked). Fill the TODOs below with real captures from the live URL:
 
-- [ ] `docs/screenshot-chat.png` — chat answering a question with retrieved passages and the SEC source link
-- [ ] `docs/screenshot-catalog.png` — six ready filings in the filing selector
+- [x] `docs/screenshot-chat.png` — chat answering a question with retrieved passages and the SEC source link
+- [x] `docs/demo_final.mp4` — 2-minute walkthrough: select a filing, ask a revenue question, show the evidence
 - [ ] `docs/architecture.png` — one-origin diagram: browser → Vercel services (`web`, `api`) → frozen export + Groq/Cloudflare
-- [ ] Demo video (2 minutes): select a filing, ask a revenue question, show the evidence and retry after a quota error
 
 ## What I built (author notes)
 
-> Fill this in with your own words — it is the CV-visible record of manual work.
+> Adjust these to your own words — they are the CV-visible record of manual work.
 
-- Designed and implemented the [..] — e.g. SEC parsing, semantic chunking, cosine retrieval, eval harness
-- [..] — hardest bug you fixed yourself and how
-- [..] — a decision you made against AI advice and why it was right
-- Operated the deployment: Vercel project, secrets, staged releases, smoke checks, rollback readiness
+- Implemented the pipeline and product code by hand across the roadmap (SEC parsing/cleaning, semantic chunking,
+  cosine retrieval, RAG orchestration, FastAPI backend, chat UI, evaluation harness with rubric and owner review).
+- Hardest bug fixed myself: [..] — e.g. the Cloudflare dimension/pooling mismatch that forced strictly separated
+  Nomic/768 and BGE/384 index families instead of a silent reuse.
+- A decision made against the grain: [..] — e.g. keeping the public bundle to six dev filings with test filings
+  indexed strictly offline, or accepting per-instance generation limits over new infrastructure.
+- Operated the deployment end to end: Vercel project and secrets, staged candidates, smoke checks, controlled
+  promotion, and the key-rotation/exposure hygiene around them.
 
 ## Current Scope
 
