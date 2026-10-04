@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      promote:
+        description: 'Promote the smoked candidate to production (leave false for safe gate testing)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out the release ref
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.ref || github.event.workflow_run.head_sha }}
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+      - name: Deploy the staged candidate without touching production traffic
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npx -y vercel@62.1.0 deploy --prod --skip-domain --token "$VERCEL_TOKEN" | tee deploy.log
+          CANDIDATE_URL=$(tail -n 1 deploy.log | tr -d '\r')
+          test -n "$CANDIDATE_URL"
+          echo "CANDIDATE_URL=$CANDIDATE_URL" >> "$GITHUB_ENV"
+      - name: Reject stale releases
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        run: |
+          git fetch origin main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" || {
+            echo 'A newer main exists; this release is stale and must not be promoted.'
+            exit 1
+          }
+      - name: Smoke-test the staged candidate
+        env:
+          VERCEL_BYPASS_TOKEN: ${{ secrets.VERCEL_BYPASS_TOKEN }}
+        run: |
+          if [ -n "$VERCEL_BYPASS_TOKEN" ]; then
+            python scripts/smoke_candidate.py --url "$CANDIDATE_URL" --bypass-token "$VERCEL_BYPASS_TOKEN"
+          else
+            python scripts/smoke_candidate.py --url "$CANDIDATE_URL"
+          fi
+      - name: Promote the exact smoked candidate
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.promote }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: npx -y vercel@62.1.0 promote "$CANDIDATE_URL" --token "$VERCEL_TOKEN"
+      - name: Record the release
+        if: always()
+        run: |
+          {
+            echo '## Release'
+            echo "- sha: $(git rev-parse HEAD)"
+            echo "- candidate: ${CANDIDATE_URL:-none}"
+            echo "- snapshot: $(python3 -c 'import json; print(json.load(open("deploy/indexes/manifest.json"))["snapshot_id"])')"
+            echo '- previous production: see the Vercel dashboard Deployments list before promoting'
+          } >> "$GITHUB_STEP_SUMMARY"

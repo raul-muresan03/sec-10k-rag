@@ -1,0 +1,50 @@
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployment_url:
+        description: 'Previous production deployment URL to restore (from the Vercel dashboard Deployments list)'
+        required: true
+      reason:
+        description: 'Why this rollback happens'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Verify the rollback target before promoting it
+        env:
+          VERCEL_BYPASS_TOKEN: ${{ secrets.VERCEL_BYPASS_TOKEN }}
+        run: |
+          if [ -n "$VERCEL_BYPASS_TOKEN" ]; then
+            python scripts/smoke_candidate.py --url "${{ inputs.deployment_url }}" --quick --bypass-token "$VERCEL_BYPASS_TOKEN"
+          else
+            python scripts/smoke_candidate.py --url "${{ inputs.deployment_url }}" --quick
+          fi
+      - name: Promote the previous production deployment
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: npx -y vercel@62.1.0 promote "${{ inputs.deployment_url }}" --token "$VERCEL_TOKEN"
+      - name: Record the rollback
+        if: always()
+        run: |
+          {
+            echo '## Rollback'
+            echo "- restored: ${{ inputs.deployment_url }}"
+            echo "- reason: ${{ inputs.reason }}"
+          } >> "$GITHUB_STEP_SUMMARY"

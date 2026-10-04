@@ -53,3 +53,26 @@ bindings exist: the browser reaches the backend on the same origin, and the back
 3. Verify the export is not web-accessible: no index JSON/gzip under static paths, `/_src`, mounts or rewrites.
 4. Smoke: health, readiness with snapshot ID, exactly six filings, prepare refused (403), one live dev chat.
 5. Record the deployment ID, SHA, snapshot ID and previous production release before any promotion (stage 5).
+
+## Controlled releases (stage 5)
+
+Vercel auto-builds are disabled for `main` via per-service `ignoreCommand`, so Git pushes alone never publish.
+Only the `Release` GitHub Actions workflow publishes, and only after every CI check passes for the exact `main` SHA:
+
+1. `vercel deploy --prod --skip-domain` builds a staged candidate with production variables but no traffic.
+2. The release is rejected if `main` moved meanwhile (stale-SHA gate); releases serialize one at a time.
+3. `scripts/smoke_candidate.py` checks health, readiness with the repository snapshot ID, exactly six ready filings,
+   refused preparation, export privacy and one live dev chat. No secrets appear in its output.
+4. Only the exact smoked artifact is promoted with `vercel promote`; the SHA, candidate URL and snapshot ID are
+   recorded in the job summary along with the previous production release.
+
+A green-CI failure never reaches the domain; if smoke fails, production is untouched because nothing was promoted.
+For the first launch there is no previous release; the same flow promotes the first staged candidate.
+
+### Secrets and recovery
+
+Required repository secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`; optional `VERCEL_BYPASS_TOKEN`
+for candidates behind deployment protection. Test the gates safely with a manual `Release` dispatch
+(`promote: false`): it stages and smokes without promoting. Roll back via the `Rollback` dispatch with a previous
+production deployment URL from the dashboard Deployments list; the target is smoked (without chat, to save quota)
+before promotion. A rollback cannot fix an exhausted provider quota or a down provider.
